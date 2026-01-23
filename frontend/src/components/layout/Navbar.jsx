@@ -47,16 +47,11 @@ export default function Navbar() {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`relative text-sm font-medium transition-colors ${
-                    isActive
-                      ? "text-primary"
-                      : "text-black/70 hover:text-primary"
+                  className={`nav-link ${
+                    isActive ? "text-teal" : "text-black/70"
                   }`}
                 >
                   {link.name}
-                  {isActive && (
-                    <span className="absolute -bottom-2 left-0 w-full h-0.5 bg-primary rounded-full" />
-                  )}
                 </Link>
               );
             })}
@@ -66,7 +61,7 @@ export default function Navbar() {
           <div className="hidden lg:block">
             <Link
               to="/contacto"
-              className="px-5 py-2.5 rounded-full bg-primary text-white text-sm font-semibold shadow-md hover:shadow-lg hover:scale-[1.03] transition-all"
+              className="px-5 py-2.5 rounded-full bg-teal text-white text-sm font-semibold shadow-md hover:shadow-lg hover:scale-[1.03] hover:bg-teal-dark transition-all"
             >
               Reservar ahora
             </Link>
@@ -103,10 +98,10 @@ export default function Navbar() {
                   <Link
                     to={link.path}
                     onClick={() => setIsOpen(false)}
-                    className={`block px-4 py-3 rounded-xl font-medium ${
+                    className={`block px-4 py-3 rounded-xl font-medium transition-colors ${
                       location.pathname === link.path
-                        ? "bg-primary text-white"
-                        : "hover:bg-black/5"
+                        ? "bg-teal text-white"
+                        : "text-black/70 hover:text-teal hover:bg-teal/5"
                     }`}
                   >
                     {link.name}
@@ -117,7 +112,7 @@ export default function Navbar() {
               <Link
                 to="/contacto"
                 onClick={() => setIsOpen(false)}
-                className="mt-4 text-center px-5 py-3 rounded-full bg-primary text-white font-semibold"
+                className="mt-4 text-center px-5 py-3 rounded-full bg-teal text-white font-semibold hover:bg-teal-dark transition-colors"
               >
                 Reservar ahora
               </Link>

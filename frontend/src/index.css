@@ -121,10 +121,6 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
@@ -156,11 +152,11 @@
   }
 
   .nav-link {
-    @apply relative text-foreground/80 hover:text-primary font-medium transition-colors duration-300;
+    @apply relative font-medium transition-colors duration-300;
   }
 
   .nav-link::after {
-    @apply content-[''] absolute left-0 bottom-0 w-0 h-0.5 bg-primary transition-all duration-300;
+    @apply content-[''] absolute left-0 bottom-0 w-0 h-0.5 bg-teal transition-all duration-300;
   }
 
   .nav-link:hover::after {
