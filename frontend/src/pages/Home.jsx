@@ -2,6 +2,7 @@ import React from "react"
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import Hero from "../components/Hero";
+import StoriesCarousel from "../components/sections/StoriesCarousel";
 import FeaturedDestinations from "../components/sections/FeaturedDestinations";
 import WhyChooseUs from "../components/WhyChooseUs";
 import WhatsAppButton from "../components/WhatsAppButton";

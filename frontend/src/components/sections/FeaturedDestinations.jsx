@@ -62,12 +62,11 @@ const FeaturedDestinations = () => {
           <span className="inline-block px-4 py-2 rounded-full bg-teal/10 text-teal font-medium text-sm uppercase tracking-wider mb-4">
             Explora el Mundo
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6 font-display">
+          <h2 className="text-4xl md:text-5xl font-bold text-forest mb-6 font-display">
             Destinos Destacados
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-            Descubre los lugares más increíbles del mundo con nuestras ofertas
-            exclusivas
+            Descubre los lugares más increíbles del mundo con nuestras ofertas exclusivas
           </p>
         </motion.div>
 
