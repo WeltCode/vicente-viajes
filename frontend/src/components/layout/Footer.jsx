@@ -22,32 +22,32 @@ const itemVariants = {
 export default function Footer() {
   return (
     <footer className="bg-black text-white/80">
-      <div className="max-w-7xl mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+      <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
           
           {/* Brand */}
           <div>
-            <Link to="/" className="inline-block mb-6">
+            <Link to="/" className="inline-block mb-4 md:mb-6">
               <img
                 src={logo}
                 alt="Vicente Viajes"
-                className="h-14 w-auto"
+                className="h-12 md:h-14 w-auto"
               />
             </Link>
 
-            <p className="text-sm text-white/60 mb-6 leading-relaxed">
+            <p className="text-xs md:text-sm text-white/60 mb-4 md:mb-6 leading-relaxed">
               Tu agencia de viajes de confianza. Diseñamos experiencias únicas
               para que descubras el mundo con comodidad, seguridad y estilo.
             </p>
 
-            <div className="flex gap-3">
+            <div className="flex gap-2 md:gap-3">
               {[Facebook, Instagram, Twitter, Youtube].map((Icon, i) => (
                 <a
                   key={i}
                   href="#"
-                  className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary transition-colors"
+                  className="w-9 md:w-10 h-9 md:h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-teal transition-colors"
                 >
-                  <Icon size={18} />
+                  <Icon size={16} className="md:w-[18px] md:h-[18px]" />
                 </a>
               ))}
             </div>
@@ -55,8 +55,8 @@ export default function Footer() {
 
           {/* Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-6">Explorar</h3>
-            <ul className="space-y-3 text-sm">
+            <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6">Explorar</h3>
+            <ul className="space-y-2 md:space-y-3 text-xs md:text-sm">
               {[
                 { name: "Excursiones", path: "/excursiones" },
                 { name: "Playas", path: "/playas" },
@@ -78,8 +78,8 @@ export default function Footer() {
 
           {/* Destinos */}
           <div>
-            <h3 className="text-lg font-semibold mb-6">Destinos Populares</h3>
-            <ul className="space-y-3 text-sm">
+            <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6">Destinos Populares</h3>
+            <ul className="space-y-2 md:space-y-3 text-xs md:text-sm">
               {["Cancún", "Maldivas", "París", "Nueva York", "Tokio"].map(
                 (dest) => (
                   <li key={dest}>
@@ -94,8 +94,8 @@ export default function Footer() {
 
           {/* Contacto */}
           <div>
-            <h3 className="text-lg font-semibold mb-6">Contacto</h3>
-            <ul className="space-y-4 text-sm">
+            <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6">Contacto</h3>
+            <ul className="space-y-3 text-xs md:text-sm">
               <li className="flex gap-3">
                 <MapPin size={18} className="text-primary mt-0.5" />
                 <span>Calle Principal 123, Ciudad</span>
@@ -113,7 +113,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom */}
-        <div className="mt-14 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-white/40">
+        <div className="mt-12 md:mt-14 pt-6 md:pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6 text-xs md:text-sm text-white/40">
           {/* Left - Copyright */}
           <p className="whitespace-nowrap">
             © {new Date().getFullYear()} Vicente Viajes.
@@ -155,7 +155,7 @@ export default function Footer() {
           </motion.div>
 
           {/* Right - Legal Links */}
-          <div className="flex gap-6 whitespace-nowrap">
+          <div className="flex flex-col md:flex-row gap-3 md:gap-6 whitespace-nowrap text-center md:text-right text-xs md:text-sm">
             <a href="#" className="hover:text-primary transition-colors">
               Política de Privacidad
             </a>
