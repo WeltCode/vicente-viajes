@@ -9,8 +9,15 @@ import {
   Twitter,
   Youtube,
 } from "lucide-react";
+import { motion } from "framer-motion";
 
 import logo from "../../assets/images/vicentelogo.png";
+
+/* ✅ Animación mínima para WeltBrave */
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0 },
+};
 
 export default function Footer() {
   return (
@@ -106,12 +113,49 @@ export default function Footer() {
         </div>
 
         {/* Bottom */}
-        <div className="mt-14 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-white/40">
-          <p>
-            © {new Date().getFullYear()} Vicente Viajes. Todos los derechos
-            reservados.
+        <div className="mt-14 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-white/40">
+          {/* Left - Copyright */}
+          <p className="whitespace-nowrap">
+            © {new Date().getFullYear()} Vicente Viajes.
           </p>
-          <div className="flex gap-6">
+
+          {/* Center - Powered by WeltBrave */}
+          <motion.div
+            variants={itemVariants}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+          >
+            <a 
+              href="https://weltbrave.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              <motion.div className="flex items-center space-x-3 bg-[#303030]/50 backdrop-blur-sm rounded-2xl px-4 py-3 border border-[#E33C09]/10 whitespace-nowrap hover:bg-[#303030]/70 transition-colors">
+                <span className="text-[#A9A9A9] text-sm">Powered by</span>
+
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="font-bold inline-flex items-center space-x-2"
+                >
+                  <span className="cursor-pointer text-[#E33C09]">
+                    Welt<span className="text-[#E0E0E0]">Brave</span>
+                  </span>
+
+                  <motion.img
+                    src="https://res.cloudinary.com/da6ggvegj/image/upload/v1760310551/solo_logo_nv0q0b.png"
+                    alt="WeltBrave Logo"
+                    className="w-5 h-5 rounded-sm"
+                    whileHover={{ scale: 1.2, rotate: 5 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </motion.div>
+              </motion.div>
+            </a>
+          </motion.div>
+
+          {/* Right - Legal Links */}
+          <div className="flex gap-6 whitespace-nowrap">
             <a href="#" className="hover:text-primary transition-colors">
               Política de Privacidad
             </a>
@@ -120,6 +164,7 @@ export default function Footer() {
             </a>
           </div>
         </div>
+
       </div>
     </footer>
   );
