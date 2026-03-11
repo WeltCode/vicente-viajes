@@ -14,6 +14,8 @@ const navLinks = [
   { name: "Ofertas", path: "/ofertas" },
   { name: "Nosotros", path: "/nosotros" },
   { name: "Contacto", path: "/contacto" },
+  // link to admin panel
+  { name: "Admin", path: "/admin" },
 ];
 
 export default function Navbar() {

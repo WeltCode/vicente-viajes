@@ -3,7 +3,7 @@ from django.db import models
 class Excursion(models.Model):
     # Información básica
     title = models.CharField(max_length=150)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(unique=True, null=True, blank=True)
     short_description = models.CharField(max_length=255)
     description = models.TextField()
 
@@ -15,6 +15,15 @@ class Excursion(models.Model):
     duration = models.CharField(max_length=50)  # Ej: "5 horas"
     price = models.DecimalField(max_digits=8, decimal_places=2)
     currency = models.CharField(max_length=10, default="€")
+
+    # Planificación
+    month = models.CharField(max_length=20, blank=True)
+    departure_date = models.DateField(null=True, blank=True)
+    return_date = models.DateField(null=True, blank=True)
+    group_size = models.CharField(max_length=100, blank=True)
+    rating = models.DecimalField(max_digits=3, decimal_places=2, default=0)
+    itinerary = models.JSONField(null=True, blank=True)
+    not_includes = models.TextField(blank=True)
 
     # Extras
     includes = models.TextField(

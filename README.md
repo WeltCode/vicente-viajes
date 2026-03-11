@@ -206,6 +206,12 @@ python manage.py collectstatic
 | `PUT` | `/api/excursiones/<id>/` | Actualizar excursión |
 | `DELETE` | `/api/excursiones/<id>/` | Eliminar excursión |
 
+Además del catálogo público, se ha añadido una pequeña interfaz de administración accesible
+desde el frontend en `http://localhost:5173/admin`. El usuario por defecto es
+`dedsec` con contraseña `dedsec` y puede crear/editar/eliminar tanto excursiones como playas.
+Nota: al iniciar el servidor Django se crean automáticamente entradas de ejemplo para
+la tabla de excursiones y playas, y se configura un token de autenticación para el usuario.
+
 **Ejemplo de Respuesta:**
 ```json
 {

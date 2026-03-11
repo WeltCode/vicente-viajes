@@ -8,7 +8,7 @@ import WhatsAppButton from "../components/WhatsAppButton";
 import PageHeader from "../components/sections/PageHeader";
 import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane, Hotel, Utensils, Camera } from "lucide-react";
 
-const excursions = [
+/* const excursions = [
   {
     id: 1,
     title: "Tour Machu Picchu",
@@ -324,7 +324,9 @@ const excursions = [
     includes: ["Hotel 4 estrellas", "Desayunos buffet", "Concierto Navidad", "Guía local", "Transporte"],
     notIncludes: ["Vuelos", "Almuerzos y cenas", "Entradas extra", "Gastos personales"],
   },
-];
+]; */
+
+const excursions = [];
 
 const months = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -332,11 +334,51 @@ const months = [
 ];
 
 const Excursiones = () => {
+  const [excursions, setExcursions] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [selectedExcursion, setSelectedExcursion] = useState(null);
   const [isPressed, setIsPressed] = useState(false);
   const [startX, setStartX] = useState(0);
   const scrollContainerRef = useRef(null);
+
+  // normalize backend response into the shape frontend expects
+  const normalizeExcursion = (e) => {
+    const formatDate = (d) => {
+      if (!d) return "";
+      try {
+        return new Date(d).toLocaleDateString("es-ES", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+      } catch {
+        return d;
+      }
+    };
+
+    return {
+      ...e,
+      includes: Array.isArray(e.includes) ? e.includes : (e.includes || "").split("\n").filter(Boolean),
+      notIncludes: Array.isArray(e.not_includes) ? e.not_includes : (e.not_includes || "").split("\n").filter(Boolean),
+      month: e.month || "",
+      departureDate: formatDate(e.departure_date),
+      returnDate: formatDate(e.return_date),
+      groupSize: e.group_size || "",
+      itinerary: e.itinerary || [],
+      price: e.price ? `€${e.price}` : "",
+      rating: e.rating || 0,
+    };
+  };
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:8000/api/excursiones/")
+      .then((resp) => {
+        const data = resp.data.map(normalizeExcursion);
+        setExcursions(data);
+      })
+      .catch((err) => console.error("Error cargando excursiones:", err));
+  }, []);
 
   const handleMouseDown = (e) => {
     setIsPressed(true);
@@ -525,6 +567,18 @@ const ExcursionCard = ({ excursion, index, onViewDetails }) => (
         {excursion.location}
       </div>
       <h3 className="text-xl font-display font-bold text-foreground mb-2">{excursion.title}</h3>
+      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mb-2">
+        {excursion.departureDate && (
+          <span className="flex items-center gap-1">
+            <Calendar className="w-3 h-3" />Salida {excursion.departureDate}
+          </span>
+        )}
+        {excursion.returnDate && (
+          <span className="flex items-center gap-1">
+            <Calendar className="w-3 h-3" />Regreso {excursion.returnDate}
+          </span>
+        )}
+      </div>
       <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{excursion.description}</p>
       <div className="flex items-center gap-4 text-sm text-muted-foreground mb-5">
         <span className="flex items-center gap-1.5 bg-mist px-3 py-1.5 rounded-full">
