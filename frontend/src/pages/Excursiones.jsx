@@ -1,6 +1,7 @@
 import React from "react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect  } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import WhatsAppButton from "../components/WhatsAppButton";
