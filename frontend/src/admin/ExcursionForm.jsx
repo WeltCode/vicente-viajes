@@ -42,7 +42,6 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
         }
       : {
           title: "",
-          slug: "",
           short_description: "",
           description: "",
           image: "",
@@ -121,15 +120,6 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
     });
   };
 
-  // Auto-generate slug from title if not filled
-  const generateSlug = (title) => {
-    return title
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "-")
-      .replace(/[^\w-]/g, "");
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -138,7 +128,6 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
       // Preparar datos finales
       const finalData = {
         ...data,
-        slug: data.slug || generateSlug(data.title),
         // Normalize includes / not_includes back to newline-separated strings
         includes: Array.isArray(data.includes)
           ? data.includes.join("\n")
@@ -239,34 +228,22 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
             </div>
           </div>
 
-          {/* Fila 2: Slug y Mes (dropdown) */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block font-semibold mb-1">Slug (auto-generado)</label>
-              <input
-                name="slug"
-                value={data.slug}
-                onChange={handleChange}
-                placeholder="tour-machu-picchu"
-                className="w-full border border-gray-300 px-3 py-2 rounded"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Mes</label>
-              <select
-                name="month"
-                value={data.month}
-                onChange={handleChange}
-                className="w-full border border-gray-300 px-3 py-2 rounded"
-              >
-                <option value="">-- Selecciona un mes --</option>
-                {MESES.map((mes) => (
-                  <option key={mes} value={mes}>
-                    {mes}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* Fila 2: Mes */}
+          <div>
+            <label className="block font-semibold mb-1">Mes</label>
+            <select
+              name="month"
+              value={data.month}
+              onChange={handleChange}
+              className="w-full border border-gray-300 px-3 py-2 rounded"
+            >
+              <option value="">-- Selecciona un mes --</option>
+              {MESES.map((mes) => (
+                <option key={mes} value={mes}>
+                  {mes}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Fila 3: Fechas de salida y regreso */}

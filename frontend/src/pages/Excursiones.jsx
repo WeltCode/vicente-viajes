@@ -358,6 +358,10 @@ const Excursiones = () => {
 
     return {
       ...e,
+      short_description: e.short_description,
+      description: e.description,
+      is_featured: e.is_featured,
+      is_active: e.is_active,
       includes: Array.isArray(e.includes) ? e.includes : (e.includes || "").split("\n").filter(Boolean),
       notIncludes: Array.isArray(e.not_includes) ? e.not_includes : (e.not_includes || "").split("\n").filter(Boolean),
       month: e.month || "",
@@ -374,7 +378,7 @@ const Excursiones = () => {
     axios
       .get("http://localhost:8000/api/excursiones/")
       .then((resp) => {
-        const data = resp.data.map(normalizeExcursion);
+        const data = resp.data.map(normalizeExcursion).filter(e => e.is_active);
         setExcursions(data);
       })
       .catch((err) => console.error("Error cargando excursiones:", err));
@@ -550,12 +554,17 @@ const ExcursionCard = ({ excursion, index, onViewDetails }) => (
         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-forest/70 via-transparent to-transparent" />
-      <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-white/95 px-3 py-1.5 rounded-full text-sm shadow-lg">
-        <Star className="w-4 h-4 text-sunset fill-sunset" />
-        <span className="font-semibold text-forest">{excursion.rating}</span>
-      </div>
+      {excursion.is_featured && (
+        <div className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black px-3 py-1.5 rounded-full text-sm font-bold shadow-lg">
+          Destacado
+        </div>
+      )}
       <div className="absolute top-4 left-4 bg-gradient-to-r from-teal to-sage text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-lg">
         {excursion.price}
+      </div>
+      <div className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-white/95 px-3 py-1.5 rounded-full text-sm shadow-lg">
+        <Star className="w-4 h-4 text-sunset fill-sunset" />
+        <span className="font-semibold text-forest">{excursion.rating}</span>
       </div>
       <div className="absolute bottom-4 left-4 bg-white/20 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-medium border border-white/30">
         {excursion.month}
@@ -579,7 +588,7 @@ const ExcursionCard = ({ excursion, index, onViewDetails }) => (
           </span>
         )}
       </div>
-      <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{excursion.description}</p>
+      <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{excursion.short_description}</p>
       <div className="flex items-center gap-4 text-sm text-muted-foreground mb-5">
         <span className="flex items-center gap-1.5 bg-mist px-3 py-1.5 rounded-full">
           <Clock className="w-4 h-4 text-teal" />
@@ -669,6 +678,12 @@ const ExcursionModal = ({ excursion, onClose }) => (
         <div className="bg-gradient-to-r from-primary to-sage p-6 rounded-2xl mb-8 text-white text-center">
           <p className="text-sm opacity-80 mb-1">Precio por persona</p>
           <p className="text-4xl font-bold">{excursion.price}</p>
+        </div>
+
+        {/* Description */}
+        <div className="mb-8">
+          <h3 className="text-2xl font-display font-bold text-foreground mb-4">Descripción</h3>
+          <p className="text-muted-foreground text-base leading-relaxed">{excursion.description}</p>
         </div>
 
         {/* Itinerary */}
