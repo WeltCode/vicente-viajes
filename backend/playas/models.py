@@ -23,5 +23,5 @@ class Playa(models.Model):
     class Meta:
         ordering = ['-created_at']
 
-    def __str__(self):
-        return self.title
+    def __str__(self) -> str:
+        return str(self.title)

@@ -1,3 +1,4 @@
+# pylint: disable=no-member
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
@@ -14,9 +15,9 @@ from .serializers import PlayaSerializer
 def playas_list(request):
     if request.method == 'GET':
         if request.user and request.user.is_authenticated:
-            playas = Playa.objects.all()
+            playas = Playa.objects.all()  # pyright: ignore[reportAttributeAccessIssue]
         else:
-            playas = Playa.objects.filter(is_active=True)
+            playas = Playa.objects.filter(is_active=True)  # pyright: ignore[reportAttributeAccessIssue]
         serializer = PlayaSerializer(playas, many=True)
         return Response(serializer.data)
 
@@ -33,8 +34,8 @@ def playas_list(request):
 @permission_classes([IsAuthenticatedOrReadOnly])
 def playas_detail(request, pk):
     try:
-        playa = Playa.objects.get(pk=pk)
-    except Playa.DoesNotExist:
+        playa = Playa.objects.get(pk=pk)  # pyright: ignore[reportAttributeAccessIssue]
+    except Playa.DoesNotExist:  # pyright: ignore[reportAttributeAccessIssue]
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':

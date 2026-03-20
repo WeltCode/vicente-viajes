@@ -1,7 +1,7 @@
 from django.db import migrations
 
 
-def create_default_user(apps, schema_editor):
+def create_default_user(apps, _schema_editor):
     User = apps.get_model('auth', 'User')
     Token = apps.get_model('authtoken', 'Token')
     if not User.objects.filter(username='dedsec').exists():
@@ -53,7 +53,7 @@ def create_default_user(apps, schema_editor):
         )
 
 
-def reverse_func(apps, schema_editor):
+def reverse_func(apps, _schema_editor):
     User = apps.get_model('auth', 'User')
     User.objects.filter(username='dedsec').delete()
 

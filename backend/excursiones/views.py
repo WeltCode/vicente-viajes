@@ -1,3 +1,5 @@
+# pyright: reportAttributeAccessIssue=false
+# pylint: disable=no-member
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
@@ -30,7 +32,7 @@ def login_view(request):
             status=status.HTTP_401_UNAUTHORIZED
         )
     
-    token, _ = Token.objects.get_or_create(user=user)
+    token, _ = Token.objects.get_or_create(user=user)  # pyright: ignore[reportAttributeAccessIssue]
     return Response({'token': token.key})
 
 
@@ -41,9 +43,9 @@ def excursiones_list(request):
     if request.method == 'GET':
         # Public listing only exposes active excursions.
         if request.user and request.user.is_authenticated:
-            excursiones = Excursion.objects.all()
+            excursiones = Excursion.objects.all()  # pyright: ignore[reportAttributeAccessIssue]
         else:
-            excursiones = Excursion.objects.filter(is_active=True)
+            excursiones = Excursion.objects.filter(is_active=True)  # pyright: ignore[reportAttributeAccessIssue]
         serializer = ExcursionSerializer(excursiones, many=True)
         return Response(serializer.data)
 
@@ -60,8 +62,8 @@ def excursiones_list(request):
 @permission_classes([IsAuthenticatedOrReadOnly])
 def excursiones_detail(request, pk):
     try:
-        excursion = Excursion.objects.get(pk=pk)
-    except Excursion.DoesNotExist:
+        excursion = Excursion.objects.get(pk=pk)  # pyright: ignore[reportAttributeAccessIssue]
+    except Excursion.DoesNotExist:  # pyright: ignore[reportAttributeAccessIssue]
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':

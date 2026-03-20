@@ -1,7 +1,7 @@
 from django.db import migrations
 
 
-def add_samples(apps, schema_editor):
+def add_samples(apps, _schema_editor):
     Excursion = apps.get_model('excursiones', 'Excursion')
     if not Excursion.objects.exists():
         Excursion.objects.create(
@@ -28,7 +28,7 @@ def add_samples(apps, schema_editor):
         )
 
 
-def reverse_func(apps, schema_editor):
+def reverse_func(apps, _schema_editor):
     Excursion = apps.get_model('excursiones', 'Excursion')
     Excursion.objects.filter(slug__in=["tour-machu-picchu", "safari-africa"]).delete()
 
