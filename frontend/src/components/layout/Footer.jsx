@@ -22,7 +22,85 @@ const itemVariants = {
 export default function Footer() {
   return (
     <footer className="bg-black text-white/80">
-      <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
+      {/* Mobile Footer - Simplified */}
+      <div className="md:hidden px-4 py-8">
+        <div className="flex flex-col items-center gap-6">
+          {/* Logo */}
+          <Link to="/" className="inline-block">
+            <img
+              src={logo}
+              alt="Vicente Viajes"
+              className="h-10 w-auto"
+            />
+          </Link>
+
+          {/* Social Icons */}
+          <div className="flex gap-3">
+            {[Facebook, Instagram, Twitter, Youtube].map((Icon, i) => (
+              <a
+                key={i}
+                href="#"
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-teal transition-colors"
+              >
+                <Icon size={16} />
+              </a>
+            ))}
+          </div>
+
+          {/* Copyright */}
+          <p className="text-xs text-white/50 text-center">
+            © {new Date().getFullYear()} Vicente Viajes.
+          </p>
+
+          {/* Powered by WeltBrave */}
+          <motion.div
+            variants={itemVariants}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+          >
+            <a 
+              href="https://weltbrave.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              <motion.div className="flex items-center space-x-2 bg-[#303030]/50 rounded-xl px-3 py-2 border border-[#E33C09]/10 whitespace-nowrap hover:bg-[#303030]/70 transition-colors">
+                <span className="text-[#A9A9A9] text-xs">Powered by</span>
+
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="font-bold inline-flex items-center space-x-1"
+                >
+                  <span className="cursor-pointer text-[#E33C09] text-xs">
+                    Welt<span className="text-[#E0E0E0]">Brave</span>
+                  </span>
+
+                  <motion.img
+                    src="https://res.cloudinary.com/da6ggvegj/image/upload/v1760310551/solo_logo_nv0q0b.png"
+                    alt="WeltBrave Logo"
+                    className="w-4 h-4 rounded-sm"
+                    whileHover={{ scale: 1.2, rotate: 5 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </motion.div>
+              </motion.div>
+            </a>
+          </motion.div>
+
+          {/* Legal Links */}
+          <div className="flex flex-col gap-2 text-xs text-white/50 text-center">
+            <a href="#" className="hover:text-primary transition-colors">
+              Política de Privacidad
+            </a>
+            <a href="#" className="hover:text-primary transition-colors">
+              Términos y Condiciones
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Footer - Original */}
+      <div className="hidden md:block max-w-7xl mx-auto px-4 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
           
           {/* Brand */}
