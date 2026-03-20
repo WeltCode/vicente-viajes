@@ -15,7 +15,7 @@ import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane
     location: "Perú",
     duration: "5 días",
     groupSize: "Max 15 personas",
-    price: "$1,299",
+    price: "€1,299",
     rating: 4.9,
     image: "https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=800&q=80",
     description: "Descubre la maravilla del mundo antiguo con nuestro tour completo.",
@@ -38,7 +38,7 @@ import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane
     location: "Kenia",
     duration: "7 días",
     groupSize: "Max 12 personas",
-    price: "$2,499",
+    price: "€2,499",
     rating: 4.8,
     image: "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800&q=80",
     description: "Vive la experiencia única de ver los Big Five en su hábitat natural.",
@@ -63,7 +63,7 @@ import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane
     location: "Islandia",
     duration: "6 días",
     groupSize: "Max 10 personas",
-    price: "$1,899",
+    price: "€1,899",
     rating: 4.9,
     image: "https://images.unsplash.com/photo-1520769945061-0a448c463865?w=800&q=80",
     description: "Glaciares, auroras boreales y paisajes únicos te esperan.",
@@ -87,7 +87,7 @@ import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane
     location: "España",
     duration: "4 días",
     groupSize: "Max 20 personas",
-    price: "$899",
+    price: "€899",
     rating: 4.7,
     image: "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&q=80",
     description: "Recorre las mejores bodegas de La Rioja y Ribera del Duero.",
@@ -109,7 +109,7 @@ import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane
     location: "Camboya",
     duration: "5 días",
     groupSize: "Max 15 personas",
-    price: "$1,199",
+    price: "€1,199",
     rating: 4.8,
     image: "https://images.unsplash.com/photo-1569288063643-5d29ad64df09?w=800&q=80",
     description: "Explora los antiguos templos de la civilización Khmer.",
@@ -132,7 +132,7 @@ import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane
     location: "Argentina/Chile",
     duration: "8 días",
     groupSize: "Max 12 personas",
-    price: "$2,199",
+    price: "€2,199",
     rating: 4.9,
     image: "https://images.unsplash.com/photo-1531761535209-180857e963b9?w=800&q=80",
     description: "Glaciares, montañas y naturaleza salvaje en el fin del mundo.",
@@ -158,7 +158,7 @@ import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane
     location: "Japón",
     duration: "10 días",
     groupSize: "Max 14 personas",
-    price: "$3,299",
+    price: "€3,299",
     rating: 4.9,
     image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&q=80",
     description: "Descubre la magia del país del sol naciente.",
@@ -186,7 +186,7 @@ import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane
     location: "Grecia",
     duration: "7 días",
     groupSize: "Max 30 personas",
-    price: "$1,899",
+    price: "€1,899",
     rating: 4.8,
     image: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=800&q=80",
     description: "Navega por las islas más hermosas del Mediterráneo.",
@@ -211,7 +211,7 @@ import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane
     location: "Finlandia",
     duration: "5 días",
     groupSize: "Max 12 personas",
-    price: "$2,299",
+    price: "€2,299",
     rating: 4.9,
     image: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&q=80",
     description: "Vive la magia de las luces del norte en Laponia.",
@@ -234,7 +234,7 @@ import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane
     location: "Estados Unidos",
     duration: "5 días",
     groupSize: "Max 25 personas",
-    price: "$1,599",
+    price: "€1,599",
     rating: 4.7,
     image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&q=80",
     description: "Vive Halloween en la Gran Manzana.",
@@ -257,7 +257,7 @@ import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane
     location: "Tailandia",
     duration: "12 días",
     groupSize: "Max 16 personas",
-    price: "$2,199",
+    price: "€2,199",
     rating: 4.8,
     image: "https://images.unsplash.com/photo-1528181304800-259b08848526?w=800&q=80",
     description: "Templos, playas y cultura del país de las sonrisas.",
@@ -287,7 +287,7 @@ import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane
     location: "Austria",
     duration: "5 días",
     groupSize: "Max 20 personas",
-    price: "$1,299",
+    price: "€1,299",
     rating: 4.9,
     image: "https://images.unsplash.com/photo-1513415277900-a62401e19be4?w=800&q=80",
     description: "Mercados navideños y música clásica en la capital imperial.",
@@ -310,7 +310,7 @@ import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane
     location: "Barcelona, España",
     duration: "2 días",
     groupSize: "Max 20 personas",
-    price: "$700",
+    price: "€700",
     rating: 4.9,
     image: "https://images.unsplash.com/photo-1650964836750-d70bf63fe27e?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     description: "Alturas impresionantes y vistas panorámicas en Montserrat.",
@@ -356,6 +356,19 @@ const Excursiones = () => {
       }
     };
 
+    const normalizeDuration = (value) => {
+      const days = String(value || "").replace(/\D/g, "");
+      return days ? `${days} dias` : "";
+    };
+
+    const normalizeRating = (value) => {
+      const ratingValue = Number(value);
+      if (Number.isNaN(ratingValue)) {
+        return "0.0";
+      }
+      return ratingValue.toFixed(1);
+    };
+
     return {
       ...e,
       short_description: e.short_description,
@@ -370,7 +383,8 @@ const Excursiones = () => {
       groupSize: e.group_size || "",
       itinerary: e.itinerary || [],
       price: e.price ? `€${e.price}` : "",
-      rating: e.rating || 0,
+      rating: normalizeRating(e.rating),
+      duration: normalizeDuration(e.duration),
     };
   };
 

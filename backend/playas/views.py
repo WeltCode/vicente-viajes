@@ -13,7 +13,10 @@ from .serializers import PlayaSerializer
 @permission_classes([IsAuthenticatedOrReadOnly])
 def playas_list(request):
     if request.method == 'GET':
-        playas = Playa.objects.all()
+        if request.user and request.user.is_authenticated:
+            playas = Playa.objects.all()
+        else:
+            playas = Playa.objects.filter(is_active=True)
         serializer = PlayaSerializer(playas, many=True)
         return Response(serializer.data)
 

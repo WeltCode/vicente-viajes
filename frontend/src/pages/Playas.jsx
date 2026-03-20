@@ -1,89 +1,59 @@
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { motion } from "framer-motion";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
-import { MapPin, Star, Waves, Sun, ArrowRight } from "lucide-react";
+import { MapPin, Star, ArrowRight } from "lucide-react";
 import WhatsAppButton from "../components/WhatsAppButton";
 import PageHeader from "../components/sections/PageHeader";
 
-const beaches = [
-  {
-    id: 1,
-    name: "Playa del Carmen",
-    location: "México",
-    price: "desde $799",
-    rating: 4.9,
-    image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80",
-    features: ["Arena blanca", "Snorkel", "Vida nocturna"],
-    description: "Uno de los destinos de playa más populares de México con una vibrante vida nocturna y aguas turquesas.",
-    duration: "7 días",
-    groupSize: "Grupos desde 2 personas",
-  },
-  {
-    id: 2,
-    name: "Playa Bávaro",
-    location: "República Dominicana",
-    price: "desde $699",
-    rating: 4.8,
-    image: "https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?w=800&q=80",
-    features: ["Todo incluido", "Palmeras", "Aguas cristalinas"],
-    description: "Paradise Beach con resorts de lujo frente al mar y playas de arena blanca interminable.",
-    duration: "5-10 días",
-    groupSize: "Familias y parejas",
-  },
-  {
-    id: 3,
-    name: "Phi Phi Islands",
-    location: "Tailandia",
-    price: "desde $999",
-    rating: 4.9,
-    image: "https://images.unsplash.com/photo-1520454974749-611b7248ffdb?w=800&q=80",
-    features: ["Kayak", "Buceo", "Paisajes únicos"],
-    description: "Islas tropicales con acantilados espectaculares, cuevas y arrecifes de coral únicos.",
-    duration: "4-8 días",
-    groupSize: "Aventureros",
-  },
-  {
-    id: 4,
-    name: "Bora Bora",
-    location: "Polinesia Francesa",
-    price: "desde $2,499",
-    rating: 5.0,
-    image: "https://images.unsplash.com/photo-1589197331516-4d84b72ebde3?w=800&q=80",
-    features: ["Bungalows", "Luna de miel", "Exclusivo"],
-    description: "Destino de lujo con bungalows privados sobre agua cristalina y servicio impecable.",
-    duration: "7-14 días",
-    groupSize: "Parejas",
-  },
-  {
-    id: 5,
-    name: "Varadero",
-    location: "Cuba",
-    price: "desde $599",
-    rating: 4.7,
-    image: "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=800&q=80",
-    features: ["20km playa", "Cultura", "Música"],
-    description: "La playa más larga de Cuba con una atmósfera auténtica y cultura vibrante.",
-    duration: "5-7 días",
-    groupSize: "Todos",
-  },
-  {
-    id: 6,
-    name: "Zanzibar",
-    location: "Tanzania",
-    price: "desde $1,199",
-    rating: 4.8,
-    image: "https://images.unsplash.com/photo-1586285299890-b09c9a3a63a2?w=800&q=80",
-    features: ["Especias", "Cultura Swahili", "Atardeceres"],
-    description: "Isla histórica con playas exóticas, mercados de especias y atardeceres mágicos.",
-    duration: "6-9 días",
-    groupSize: "Viajeros culturales",
-  },
-];
+const normalizeGroupSize = (value) => {
+  const str = String(value || "").trim();
+  if (!str || str === "-") return "-";
+  if (/^\d+$/.test(str)) return `${str} personas`;
+  return str;
+};
+
+const normalizeBeach = (b) => {
+  const price = Number(b.price);
+  const priceStr = `desde €${Number.isNaN(price) ? "0" : price.toLocaleString("es-ES")}`;
+  const rating = parseFloat(Number(b.rating).toFixed(1));
+  const features = String(b.characteristics || "")
+    .split(",")
+    .map((f) => f.trim())
+    .filter(Boolean);
+  const duration = String(b.duration || "").trim() || "-";
+  return {
+    id: b.id,
+    name: b.title,
+    location: b.location,
+    price: priceStr,
+    rating: Number.isNaN(rating) ? 0 : rating,
+    image: b.image,
+    features,
+    description: b.description || b.short_description || "",
+    duration,
+    groupSize: normalizeGroupSize(b.group_size),
+    is_active: Boolean(b.is_active),
+  };
+};
 
 const Playas = () => {
+  const [beaches, setBeaches] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedBeach, setSelectedBeach] = useState(null);
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:8000/api/playas/")
+      .then((res) => {
+        const data = (res.data || []).map(normalizeBeach).filter((b) => b.is_active);
+        setBeaches(data);
+      })
+      .catch(() => setBeaches([]))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <div className="min-h-screen bg-mist">
@@ -99,6 +69,11 @@ const Playas = () => {
       {/* Beaches Grid */}
       <section className="py-12 md:py-16 bg-mist">
         <div className="container mx-auto px-4">
+          {loading ? (
+            <p className="text-center text-forest/60 py-16">Cargando playas...</p>
+          ) : beaches.length === 0 ? (
+            <p className="text-center text-forest/60 py-16">No hay playas disponibles en este momento.</p>
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {beaches.map((beach, index) => (
               <motion.div
@@ -174,6 +149,7 @@ const Playas = () => {
               </motion.div>
             ))}
           </div>
+          )}
         </div>
       </section>
 

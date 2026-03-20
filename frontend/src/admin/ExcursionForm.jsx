@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
-import { Trash2 } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 
 const MESES = [
   "Enero",
@@ -24,7 +24,7 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
     initialData
       ? {
           ...initialData,
-          // convert arrays back to textarea-friendly strings
+          duration: String(initialData.duration || "").replace(/\D/g, ""),
           includes: Array.isArray(initialData.includes)
             ? initialData.includes.join("\n")
             : initialData.includes,
@@ -73,23 +73,6 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
     }));
   };
 
-  // legacy handler left in case we need raw JSON textarea anywhere
-  const handleItineraryChange = (e) => {
-    const { value } = e.target;
-    try {
-      const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) {
-        setData((prev) => ({
-          ...prev,
-          itinerary: parsed,
-        }));
-      }
-    } catch (err) {
-      // ignore parse errors until submission
-    }
-  };
-
-  // helpers for new itinerary UI
   const addDay = () => {
     setData((prev) => ({
       ...prev,
@@ -104,7 +87,6 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
     setData((prev) => {
       const arr = [...prev.itinerary];
       arr.splice(index, 1);
-      // re-number days
       return {
         ...prev,
         itinerary: arr.map((d, i) => ({ ...d, day: i + 1 })),
@@ -125,17 +107,16 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
     setError(null);
 
     try {
-      // Preparar datos finales
       const finalData = {
         ...data,
-        // Normalize includes / not_includes back to newline-separated strings
+        short_description:
+          data.short_description?.trim() || data.description?.trim() || data.title?.trim() || "",
         includes: Array.isArray(data.includes)
           ? data.includes.join("\n")
           : data.includes,
         not_includes: Array.isArray(data.not_includes)
           ? data.not_includes.join("\n")
           : data.not_includes,
-        // Convert itinerary entries
         itinerary: (data.itinerary || []).map((d) => ({
           day: d.day,
           title: d.title,
@@ -147,10 +128,10 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
                 .filter(Boolean)
             : [],
         })),
-        // Convertir strings vacíos a null donde sea necesario
         departure_date: data.departure_date || null,
         return_date: data.return_date || null,
-        rating: data.rating ? parseFloat(data.rating) : 0,
+        rating: data.rating ? Math.min(5, Math.max(0, parseFloat(data.rating))) : 0,
+        duration: String(data.duration || "").replace(/\D/g, ""),
         price: parseFloat(data.price),
       };
 
@@ -166,10 +147,9 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
       }
       onSaved();
     } catch (err) {
-      console.error("Error completo:", err.response?.data);
-      const errorMessage = 
-        err.response?.data?.detail || 
-        (err.response?.data && typeof err.response.data === 'object'
+      const errorMessage =
+        err.response?.data?.detail ||
+        (err.response?.data && typeof err.response.data === "object"
           ? JSON.stringify(err.response.data)
           : err.message);
       setError(`Error: ${errorMessage}`);
@@ -177,314 +157,315 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-4 backdrop-blur-[2px]">
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-lg w-full max-w-2xl overflow-auto max-h-[95vh]"
+        className="flex h-[88vh] w-full max-w-[570px] flex-col overflow-hidden rounded-2xl border border-[#d7dfdc] bg-[#f5f7f6] shadow-[0_24px_52px_rgba(0,0,0,0.22)]"
       >
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-2xl font-bold">
+        <div className="flex items-center justify-between border-b border-[#d7dfdc] px-5 py-3">
+          <h3 className="font-display text-3xl font-semibold text-[#222f3a]">
             {data.id ? "Editar Excursión" : "Nueva Excursión"}
           </h3>
           <button
             type="button"
             onClick={onCancel}
-            className="text-2xl font-bold text-gray-400 hover:text-gray-600"
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#cdd4d2] text-[#3b4b4b] transition hover:bg-[#c0c9c6]"
           >
-            ×
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-            <strong>Error:</strong> {error}
-          </div>
-        )}
-
-        <div className="space-y-4">
-          {/* Fila 1: Título y Destino */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block font-semibold mb-1">Título *</label>
-              <input
-                name="title"
-                value={data.title}
-                onChange={handleChange}
-                required
-                placeholder="Tour Machu Picchu"
-                className="w-full border border-gray-300 px-3 py-2 rounded"
-              />
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          {error && (
+            <div className="mb-4 rounded-xl border border-[#f0bdbd] bg-[#fae4e4] px-4 py-3 text-sm text-[#9e3f3f]">
+              {error}
             </div>
-            <div>
-              <label className="block font-semibold mb-1">Destino / Ubicación *</label>
-              <input
-                name="location"
-                value={data.location}
-                onChange={handleChange}
-                required
-                placeholder="Perú"
-                className="w-full border border-gray-300 px-3 py-2 rounded"
-              />
-            </div>
-          </div>
+          )}
 
-          {/* Fila 2: Mes */}
-          <div>
-            <label className="block font-semibold mb-1">Mes</label>
-            <select
-              name="month"
-              value={data.month}
-              onChange={handleChange}
-              className="w-full border border-gray-300 px-3 py-2 rounded"
-            >
-              <option value="">-- Selecciona un mes --</option>
-              {MESES.map((mes) => (
-                <option key={mes} value={mes}>
-                  {mes}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Fila 3: Fechas de salida y regreso */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block font-semibold mb-1">Fecha de Salida</label>
-              <input
-                name="departure_date"
-                type="date"
-                value={data.departure_date || ""}
-                onChange={handleChange}
-                className="w-full border border-gray-300 px-3 py-2 rounded"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Fecha de Regreso</label>
-              <input
-                name="return_date"
-                type="date"
-                value={data.return_date || ""}
-                onChange={handleChange}
-                className="w-full border border-gray-300 px-3 py-2 rounded"
-              />
-            </div>
-          </div>
-
-          {/* Fila 4: Duración y Tamaño de grupo */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block font-semibold mb-1">Duración</label>
-              <input
-                name="duration"
-                value={data.duration}
-                onChange={handleChange}
-                placeholder="5 días"
-                className="w-full border border-gray-300 px-3 py-2 rounded"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Tamaño de Grupo</label>
-              <input
-                name="group_size"
-                value={data.group_size}
-                onChange={handleChange}
-                placeholder="Máx 15 personas"
-                className="w-full border border-gray-300 px-3 py-2 rounded"
-              />
-            </div>
-          </div>
-
-          {/* Fila 5: Precio y Rating */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block font-semibold mb-1">Precio *</label>
-              <input
-                name="price"
-                type="number"
-                step="0.01"
-                value={data.price}
-                onChange={handleChange}
-                required
-                placeholder="1299"
-                className="w-full border border-gray-300 px-3 py-2 rounded"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Rating (0-5)</label>
-              <input
-                name="rating"
-                type="number"
-                step="0.1"
-                min="0"
-                max="5"
-                value={data.rating}
-                onChange={handleChange}
-                placeholder="4.5"
-                className="w-full border border-gray-300 px-3 py-2 rounded"
-              />
-            </div>
-          </div>
-
-          {/* Descripción corta */}
-          <div>
-            <label className="block font-semibold mb-1">Descripción Corta *</label>
-            <input
-              name="short_description"
-              value={data.short_description}
-              onChange={handleChange}
-              required
-              placeholder="Descubre la maravilla del mundo antiguo..."
-              className="w-full border border-gray-300 px-3 py-2 rounded"
-            />
-          </div>
-
-          {/* Descripción completa */}
-          <div>
-            <label className="block font-semibold mb-1">Descripción Completa *</label>
-            <textarea
-              name="description"
-              value={data.description}
-              onChange={handleChange}
-              required
-              placeholder="Descripción detallada de la excursión..."
-              className="w-full border border-gray-300 px-3 py-2 rounded"
-              rows={4}
-            />
-          </div>
-
-          {/* Imagen URL */}
-          <div>
-            <label className="block font-semibold mb-1">URL de Imagen *</label>
-            <input
-              name="image"
-              value={data.image}
-              onChange={handleChange}
-              required
-              placeholder="https://example.com/image.jpg"
-              className="w-full border border-gray-300 px-3 py-2 rounded"
-            />
-          </div>
-
-          {/* Incluye */}
-          <div>
-            <label className="block font-semibold mb-1">Incluye (separado por líneas)</label>
-            <textarea
-              name="includes"
-              value={data.includes}
-              onChange={handleChange}
-              placeholder="Vuelos&#10;Hoteles&#10;Desayunos..."
-              className="w-full border border-gray-300 px-3 py-2 rounded"
-              rows={3}
-            />
-          </div>
-
-          {/* No incluye */}
-          <div>
-            <label className="block font-semibold mb-1">No Incluye (separado por líneas)</label>
-            <textarea
-              name="not_includes"
-              value={data.not_includes}
-              onChange={handleChange}
-              placeholder="Propinas&#10;Gastos personales..."
-              className="w-full border border-gray-300 px-3 py-2 rounded"
-              rows={3}
-            />
-          </div>
-
-          {/* Itinerario JSON */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
-            <label className="block font-semibold mb-1">Itinerario</label>
-            <button
-              type="button"
-              onClick={addDay}
-              className="mb-2 inline-block text-sm text-blue-600 hover:underline"
-            >
-              + Añadir día
-            </button>
-            <div className="space-y-4 max-h-64 overflow-y-auto">
-              {data.itinerary.map((day, idx) => (
-                <div
-                  key={idx}
-                  className="relative border border-gray-200 rounded-lg p-4 pt-8"
+                <label className="mb-1 block text-sm font-semibold text-[#344443]">Título *</label>
+                <input
+                  name="title"
+                  value={data.title}
+                  onChange={handleChange}
+                  required
+                  placeholder="Tour Machu Picchu"
+                  className="h-10 w-full rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-[#344443]">Destino *</label>
+                <input
+                  name="location"
+                  value={data.location}
+                  onChange={handleChange}
+                  required
+                  placeholder="Perú"
+                  className="h-10 w-full rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-[#344443]">Mes</label>
+                <select
+                  name="month"
+                  value={data.month}
+                  onChange={handleChange}
+                  className="h-10 w-full rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
                 >
-                  <button
-                    type="button"
-                    onClick={() => removeDay(idx)}
-                    className="absolute top-2 right-2 text-red-500 hover:text-red-700"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                  <div className="absolute -top-3 left-4 bg-white px-2 text-xs font-semibold">
-                    Día {day.day}
-                  </div>
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      placeholder="Título del día"
-                      value={day.title}
-                      onChange={(e) => handleDayChange(idx, "title", e.target.value)}
-                      className="w-full border border-gray-300 px-2 py-1 rounded"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Highlights (coma)"
-                      value={day.highlights}
-                      onChange={(e) => handleDayChange(idx, "highlights", e.target.value)}
-                      className="w-full border border-gray-300 px-2 py-1 rounded"
-                    />
+                  <option value="">Selecciona</option>
+                  {MESES.map((mes) => (
+                    <option key={mes} value={mes}>
+                      {mes}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-[#344443]">Duración</label>
+                <input
+                  name="duration"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={data.duration}
+                  onChange={handleChange}
+                  placeholder="5"
+                  className="h-10 w-full rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-[#344443]">Tamaño grupo</label>
+                <input
+                  name="group_size"
+                  value={data.group_size}
+                  onChange={handleChange}
+                  placeholder="Máx 15 personas"
+                  className="h-10 w-full rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-[#344443]">Precio *</label>
+                <input
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  value={data.price}
+                  onChange={handleChange}
+                  required
+                  placeholder="1299"
+                  className="h-10 w-full rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-[#344443]">Rating (0-5)</label>
+                <input
+                  name="rating"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="5"
+                  value={data.rating}
+                  onChange={handleChange}
+                  placeholder="4.5"
+                  className="h-10 w-full rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-[#344443]">Fecha Salida</label>
+                <input
+                  name="departure_date"
+                  type="date"
+                  value={data.departure_date || ""}
+                  onChange={handleChange}
+                  className="h-10 w-full rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-[#344443]">Fecha Regreso</label>
+                <input
+                  name="return_date"
+                  type="date"
+                  value={data.return_date || ""}
+                  onChange={handleChange}
+                  className="h-10 w-full rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-[#344443]">URL de Imagen *</label>
+              <input
+                name="image"
+                value={data.image}
+                onChange={handleChange}
+                required
+                placeholder="https://example.com/image.jpg"
+                className="h-10 w-full rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-[#344443]">Descripción</label>
+              <textarea
+                name="description"
+                value={data.description}
+                onChange={handleChange}
+                required
+                placeholder="Descripción detallada de la excursión"
+                className="w-full rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 py-2.5 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
+                rows={3}
+              />
+            </div>
+
+            <div className="border-t border-[#d7dfdc] pt-3">
+              <div className="mb-2 flex items-center justify-between">
+                <label className="block text-2xl font-semibold text-[#24343a]">Itinerario</label>
+                <button
+                  type="button"
+                  onClick={addDay}
+                  className="rounded-xl border border-[#c9d2cf] bg-[#e5ebe8] px-3 py-1.5 text-sm font-semibold text-[#374a49] transition hover:bg-[#d9e1de]"
+                >
+                  + Añadir día
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {data.itinerary.map((day, idx) => (
+                  <div key={idx} className="rounded-xl border border-[#cbd4d1] bg-[#dce2df] p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-sm font-semibold text-[#2f7770]">Día {day.day}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeDay(idx)}
+                        className="text-[#d95f5f] transition hover:text-[#bf4646]"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                      <input
+                        type="text"
+                        placeholder="Título"
+                        value={day.title}
+                        onChange={(e) => handleDayChange(idx, "title", e.target.value)}
+                        className="h-9 w-full rounded-lg border border-[#c6cfcc] bg-[#e3e8e6] px-3 text-sm text-[#3a4c4b] outline-none"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Highlights (coma)"
+                        value={day.highlights}
+                        onChange={(e) => handleDayChange(idx, "highlights", e.target.value)}
+                        className="h-9 w-full rounded-lg border border-[#c6cfcc] bg-[#e3e8e6] px-3 text-sm text-[#3a4c4b] outline-none"
+                      />
+                    </div>
+
                     <textarea
                       placeholder="Descripción del día"
                       value={day.description}
                       onChange={(e) => handleDayChange(idx, "description", e.target.value)}
-                      className="w-full border border-gray-300 px-2 py-1 rounded"
+                      className="mt-2 w-full rounded-lg border border-[#c6cfcc] bg-[#e3e8e6] px-3 py-2 text-sm text-[#3a4c4b] outline-none"
                       rows={2}
                     />
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Checkboxes */}
-          <div className="grid grid-cols-2 gap-4">
-            <label className="flex items-center gap-2">
-              <input
-                name="is_featured"
-                type="checkbox"
-                checked={data.is_featured}
-                onChange={handleChange}
-                className="w-4 h-4"
-              />
-              <span className="font-semibold">Destacado</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                name="is_active"
-                type="checkbox"
-                checked={data.is_active}
-                onChange={handleChange}
-                className="w-4 h-4"
-              />
-              <span className="font-semibold">Activo</span>
-            </label>
-          </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-[#344443]">Incluye (usa Enter para agregar cada elemento en una linea)</label>
+                <textarea
+                  name="includes"
+                  value={data.includes}
+                  onChange={handleChange}
+                  placeholder={"Vuelos internos\nHoteles 4 estrellas\nDesayunos diarios\nGuia en espanol"}
+                  className="h-28 w-full resize-none overflow-y-auto rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 py-2.5 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
+                  rows={4}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-[#344443]">No incluye (usa Enter para agregar cada elemento en una linea)</label>
+                <textarea
+                  name="not_includes"
+                  value={data.not_includes}
+                  onChange={handleChange}
+                  placeholder={"Vuelos internacionales\nPropinas\nGastos personales\nSeguro de viaje"}
+                  className="h-28 w-full resize-none overflow-y-auto rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 py-2.5 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
+                  rows={4}
+                />
+              </div>
+            </div>
 
-          {/* Botones */}
-          <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="px-5 py-2 border border-gray-300 rounded hover:bg-gray-100"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-semibold"
-            >
-              Guardar
-            </button>
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <label className="inline-flex items-center gap-2 text-sm font-semibold text-[#3b4b4a]">
+                <input
+                  name="is_featured"
+                  type="checkbox"
+                  checked={data.is_featured}
+                  onChange={handleChange}
+                  className="h-4 w-4"
+                />
+                Destacado
+              </label>
+              <label className="inline-flex items-center gap-2 text-sm font-semibold text-[#3b4b4a]">
+                <input
+                  name="is_active"
+                  type="checkbox"
+                  checked={data.is_active}
+                  onChange={handleChange}
+                  className="h-4 w-4"
+                />
+                Activo
+              </label>
+            </div>
+
+            <input
+              type="hidden"
+              name="short_description"
+              value={data.short_description}
+              onChange={handleChange}
+            />
+            <input
+              type="hidden"
+              name="seo_title"
+              value={data.seo_title}
+              onChange={handleChange}
+            />
+            <input
+              type="hidden"
+              name="seo_description"
+              value={data.seo_description}
+              onChange={handleChange}
+            />
           </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-[#d7dfdc] bg-[#f2f5f4] px-5 py-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-xl border border-[#c8d1ce] bg-[#ebefed] px-4 py-2 text-sm font-semibold text-[#334746] transition hover:bg-[#e0e7e4]"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="rounded-xl bg-[#1f7770] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#196862]"
+          >
+            {data.id ? "Actualizar" : "Crear"}
+          </button>
         </div>
       </form>
     </div>

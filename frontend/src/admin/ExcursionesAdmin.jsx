@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { CalendarDays, Map, Search, Plus, Pencil, Trash2, Star } from "lucide-react";
 import ExcursionForm from "./ExcursionForm";
 
 const ExcursionesAdmin = () => {
   const { token } = useAuth();
   const [items, setItems] = useState([]);
   const [editing, setEditing] = useState(null);
+  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -50,11 +52,75 @@ const ExcursionesAdmin = () => {
     }
   };
 
+  const filteredItems = items.filter((item) => {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      return true;
+    }
+    return (
+      item.title?.toLowerCase().includes(q) ||
+      item.location?.toLowerCase().includes(q) ||
+      item.month?.toLowerCase().includes(q)
+    );
+  });
+
+  const formatPrice = (value) => {
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) {
+      return "€0";
+    }
+    return `€${numeric.toLocaleString("es-ES")}`;
+  };
+
+  const formatRating = (value) => {
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) {
+      return "0.0";
+    }
+    return numeric.toFixed(1);
+  };
+
+  const formatDuration = (value) => {
+    const numeric = String(value || "").replace(/\D/g, "");
+    return numeric ? `${numeric} dias` : "-";
+  };
+
   return (
-    <div className="p-8">
-      <h2 className="text-2xl font-bold mb-4">Gestión de Excursiones</h2>
+    <section className="space-y-4">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#c4d6d2] text-[#1f7770]">
+            <Map className="h-4 w-4" />
+          </div>
+          <div>
+            <h1 className="font-display text-3xl font-semibold text-[#1a2632]">Gestion de Excursiones</h1>
+            <p className="text-sm text-[#687674]">{items.length} elementos</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="relative block">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6f7f7e]" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar..."
+              className="h-10 w-56 rounded-xl border border-[#c7d0cd] bg-[#e7ecea] pl-9 pr-3 text-sm text-[#213136] outline-none transition focus:border-[#1f7770]"
+            />
+          </label>
+
+          <button
+            onClick={() => setEditing({})}
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#1f7770] px-4 text-sm font-semibold text-white transition hover:bg-[#1a6862]"
+          >
+            <Plus className="h-4 w-4" />
+            Anadir
+          </button>
+        </div>
+      </header>
+
       {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+        <div className="rounded-xl border border-[#f0bdbd] bg-[#fae4e4] px-4 py-3 text-sm text-[#9e3f3f]">
           {error}
           <button
             onClick={() => setError(null)}
@@ -64,51 +130,103 @@ const ExcursionesAdmin = () => {
           </button>
         </div>
       )}
-      <button
-        className="mb-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-        onClick={() => setEditing({})}
-      >
-        Añadir
-      </button>
+
       {loading ? (
-        <p>Cargando...</p>
-      ) : items.length === 0 ? (
-        <p className="text-gray-500">No hay excursiones registradas</p>
+        <div className="rounded-xl border border-[#ccd4d2] bg-white p-5 text-sm text-[#5f6f6d]">Cargando...</div>
+      ) : filteredItems.length === 0 ? (
+        <div className="rounded-xl border border-[#ccd4d2] bg-white p-5 text-sm text-[#5f6f6d]">No hay excursiones registradas</div>
       ) : (
-        <table className="w-full table-auto border">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border p-2 text-left">Título</th>
-              <th className="border p-2 text-left">Destino</th>
-              <th className="border p-2 text-left">Precio</th>
-              <th className="border p-2 text-left">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id} className="border-t hover:bg-gray-50">
-                <td className="border p-2">{item.title}</td>
-                <td className="border p-2">{item.location}</td>
-                <td className="border p-2">€{item.price}</td>
-                <td className="border p-2 space-x-2">
-                  <button
-                    className="text-blue-600 hover:underline"
-                    onClick={() => setEditing(item)}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    className="text-red-600 hover:underline"
-                    onClick={() => handleDelete(item.id)}
-                  >
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-hidden rounded-2xl border border-[#ccd4d2] bg-white">
+          <div className="overflow-x-auto">
+            <table className="min-w-[980px] w-full table-auto">
+              <thead>
+                <tr className="border-b border-[#d5ddda] bg-white text-sm text-[#203035]">
+                  <th className="px-5 py-3 text-left font-semibold">Imagen</th>
+                  <th className="px-5 py-3 text-left font-semibold">Titulo</th>
+                  <th className="px-5 py-3 text-left font-semibold">Destino</th>
+                  <th className="px-5 py-3 text-left font-semibold">Mes</th>
+                  <th className="px-5 py-3 text-left font-semibold">Duracion</th>
+                  <th className="px-5 py-3 text-left font-semibold">Precio</th>
+                  <th className="px-5 py-3 text-left font-semibold">Rating</th>
+                  <th className="px-5 py-3 text-left font-semibold">Estado</th>
+                  <th className="px-5 py-3 text-left font-semibold">Destacada</th>
+                  <th className="px-5 py-3 text-right font-semibold">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredItems.map((item) => (
+                  <tr key={item.id} className="border-b border-[#dce3e0] last:border-b-0 hover:bg-[#f6f8f7]">
+                    <td className="px-5 py-3">
+                      <img
+                        src={item.image || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=320&q=80"}
+                        alt={item.title}
+                        className="h-11 w-14 rounded-lg object-cover"
+                      />
+                    </td>
+                    <td className="px-5 py-3 text-base font-semibold text-[#1f2d31]">{item.title}</td>
+                    <td className="px-5 py-3 text-base text-[#2f4a49]">{item.location}</td>
+                    <td className="px-5 py-3 text-base text-[#2f7770]">
+                      <span className="inline-flex items-center gap-1.5">
+                        <CalendarDays className="h-4 w-4" />
+                        {item.month || "-"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-base text-[#1f2d31]">{formatDuration(item.duration)}</td>
+                    <td className="px-5 py-3 text-base text-[#1f2d31]">{formatPrice(item.price)}</td>
+                    <td className="px-5 py-3 text-base text-[#1f2d31]">
+                      <span className="inline-flex items-center gap-1 text-[#1f2d31]">
+                        <Star className="h-4 w-4 fill-[#c6943d] text-[#c6943d]" />
+                        {formatRating(item.rating)}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          item.is_active
+                            ? "bg-[#d7ece2] text-[#2f7f66]"
+                            : "bg-[#f2dcdc] text-[#b55353]"
+                        }`}
+                      >
+                        {item.is_active ? "Activa" : "Desactivada"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          item.is_featured
+                            ? "bg-[#f1e8cf] text-[#9a7b30]"
+                            : "bg-[#e6ecea] text-[#637371]"
+                        }`}
+                      >
+                        {item.is_featured ? "Si" : "No"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex justify-end gap-3">
+                        <button
+                          className="text-[#2a8a83] transition hover:text-[#1f7770]"
+                          onClick={() => setEditing(item)}
+                          title="Editar"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          className="text-[#ea6a6a] transition hover:text-[#d55151]"
+                          onClick={() => handleDelete(item.id)}
+                          title="Eliminar"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
+
       {editing !== null && (
         <ExcursionForm
           initialData={editing}
@@ -119,7 +237,7 @@ const ExcursionesAdmin = () => {
           onCancel={() => setEditing(null)}
         />
       )}
-    </div>
+    </section>
   );
 };
 

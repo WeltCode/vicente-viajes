@@ -9,7 +9,7 @@ const destinations = [
     id: 1,
     name: "Cancún",
     country: "México",
-    price: "desde $899",
+    price: "desde €899",
     rating: 4.9,
     image:
       "https://images.unsplash.com/photo-1510097467424-192d713fd8b2?w=800&q=80",
@@ -18,7 +18,7 @@ const destinations = [
     id: 2,
     name: "Maldivas",
     country: "Asia",
-    price: "desde $1,599",
+    price: "desde €1,599",
     rating: 4.8,
     image:
       "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=800&q=80",
@@ -27,7 +27,7 @@ const destinations = [
     id: 3,
     name: "París",
     country: "Francia",
-    price: "desde $1,199",
+    price: "desde €1,199",
     rating: 4.7,
     image:
       "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80",
@@ -36,7 +36,7 @@ const destinations = [
     id: 4,
     name: "Santorini",
     country: "Grecia",
-    price: "desde $999",
+    price: "desde €999",
     rating: 4.9,
     image:
       "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=800&q=80",

@@ -21,7 +21,7 @@ def create_default_user(apps, schema_editor):
             location="Perú",
             duration="5 días",
             price="1299.00",
-            currency="$")
+            currency="€")
         Excursion.objects.create(
             title="Safari en África",
             slug="safari-africa",
@@ -31,7 +31,7 @@ def create_default_user(apps, schema_editor):
             location="Kenia",
             duration="7 días",
             price="2499.00",
-            currency="$")
+            currency="€")
 
     Playa = None
     try:

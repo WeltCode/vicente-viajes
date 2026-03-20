@@ -5,8 +5,6 @@ from rest_framework.authentication import TokenAuthentication, BasicAuthenticati
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
 
 from .models import Excursion
 from .serializers import ExcursionSerializer
@@ -41,7 +39,11 @@ def login_view(request):
 @permission_classes([IsAuthenticatedOrReadOnly])
 def excursiones_list(request):
     if request.method == 'GET':
-        excursiones = Excursion.objects.all()
+        # Public listing only exposes active excursions.
+        if request.user and request.user.is_authenticated:
+            excursiones = Excursion.objects.all()
+        else:
+            excursiones = Excursion.objects.filter(is_active=True)
         serializer = ExcursionSerializer(excursiones, many=True)
         return Response(serializer.data)
 

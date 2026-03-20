@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { Waves, Search, Plus, Pencil, Trash2, Star } from "lucide-react";
 import PlayaForm from "./PlayaForm";
 
 const PlayasAdmin = () => {
   const { token } = useAuth();
   const [items, setItems] = useState([]);
   const [editing, setEditing] = useState(null);
+  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -15,15 +17,11 @@ const PlayasAdmin = () => {
     setError(null);
     try {
       const resp = await axios.get("http://localhost:8000/api/playas/", {
-        headers: {
-          "Authorization": `Token ${token}`,
-        },
+        headers: { Authorization: `Token ${token}` },
       });
       setItems(resp.data);
     } catch (err) {
-      const errorMessage = err.response?.data?.detail || err.message;
-      setError(`Error al cargar: ${errorMessage}`);
-      console.error("Error al cargar playas:", err);
+      setError(`Error al cargar: ${err.response?.data?.detail || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -34,81 +32,200 @@ const PlayasAdmin = () => {
   }, [token]);
 
   const handleDelete = async (id) => {
-    if (window.confirm("¿Eliminar este elemento?")) {
-      try {
-        await axios.delete(`http://localhost:8000/api/playas/${id}/`, {
-          headers: {
-            "Authorization": `Token ${token}`,
-          },
-        });
-        fetchList();
-      } catch (err) {
-        const errorMessage = err.response?.data?.detail || err.message;
-        setError(`Error al eliminar: ${errorMessage}`);
-        console.error("Error al eliminar:", err);
-      }
+    if (!window.confirm("¿Eliminar este elemento?")) return;
+    try {
+      await axios.delete(`http://localhost:8000/api/playas/${id}/`, {
+        headers: { Authorization: `Token ${token}` },
+      });
+      fetchList();
+    } catch (err) {
+      setError(`Error al eliminar: ${err.response?.data?.detail || err.message}`);
     }
   };
 
+  const filteredItems = items.filter((item) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      item.title?.toLowerCase().includes(q) ||
+      item.location?.toLowerCase().includes(q)
+    );
+  });
+
+  const formatPrice = (value) => {
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) return "€0";
+    return `€${numeric.toLocaleString("es-ES")}`;
+  };
+
+  const formatRating = (value) => {
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) return "0.0";
+    return numeric.toFixed(1);
+  };
+
+  const parseFeatures = (value) =>
+    String(value || "")
+      .split(",")
+      .map((f) => f.trim())
+      .filter(Boolean);
+
   return (
-    <div className="p-8">
-      <h2 className="text-2xl font-bold mb-4">Gestión de Playas</h2>
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
-          {error}
+    <section className="space-y-4">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#c4d6d2] text-[#1f7770]">
+            <Waves className="h-4 w-4" />
+          </div>
+          <div>
+            <h1 className="font-display text-3xl font-semibold text-[#1a2632]">
+              Gestión de Playas
+            </h1>
+            <p className="text-sm text-[#687674]">{items.length} elementos</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="relative block">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6f7f7e]" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar..."
+              className="h-10 w-56 rounded-xl border border-[#c7d0cd] bg-[#e7ecea] pl-9 pr-3 text-sm text-[#213136] outline-none transition focus:border-[#1f7770]"
+            />
+          </label>
           <button
-            onClick={() => setError(null)}
-            className="ml-2 text-sm underline"
+            onClick={() => setEditing({})}
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#1f7770] px-4 text-sm font-semibold text-white transition hover:bg-[#1a6862]"
           >
+            <Plus className="h-4 w-4" />
+            Añadir
+          </button>
+        </div>
+      </header>
+
+      {error && (
+        <div className="rounded-xl border border-[#f0bdbd] bg-[#fae4e4] px-4 py-3 text-sm text-[#9e3f3f]">
+          {error}
+          <button onClick={() => setError(null)} className="ml-2 text-sm underline">
             Cerrar
           </button>
         </div>
       )}
-      <button
-        className="mb-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-        onClick={() => setEditing({})}
-      >
-        Añadir
-      </button>
+
       {loading ? (
-        <p>Cargando...</p>
-      ) : items.length === 0 ? (
-        <p className="text-gray-500">No hay playas registradas</p>
+        <div className="rounded-xl border border-[#ccd4d2] bg-white p-5 text-sm text-[#5f6f6d]">
+          Cargando...
+        </div>
+      ) : filteredItems.length === 0 ? (
+        <div className="rounded-xl border border-[#ccd4d2] bg-white p-5 text-sm text-[#5f6f6d]">
+          No hay playas registradas
+        </div>
       ) : (
-        <table className="w-full table-auto border">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border p-2 text-left">Título</th>
-              <th className="border p-2 text-left">Ubicación</th>
-              <th className="border p-2 text-left">Precio</th>
-              <th className="border p-2 text-left">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id} className="border-t hover:bg-gray-50">
-                <td className="border p-2">{item.title}</td>
-                <td className="border p-2">{item.location}</td>
-                <td className="border p-2">€{item.price}</td>
-                <td className="border p-2 space-x-2">
-                  <button
-                    className="text-blue-600 hover:underline"
-                    onClick={() => setEditing(item)}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    className="text-red-600 hover:underline"
-                    onClick={() => handleDelete(item.id)}
-                  >
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-hidden rounded-2xl border border-[#ccd4d2] bg-white">
+          <div className="overflow-x-auto">
+            <table className="min-w-[820px] w-full table-auto">
+              <thead>
+                <tr className="border-b border-[#d5ddda] bg-white text-sm text-[#203035]">
+                  <th className="px-5 py-3 text-left font-semibold">Imagen</th>
+                  <th className="px-5 py-3 text-left font-semibold">Nombre</th>
+                  <th className="px-5 py-3 text-left font-semibold">Ubicación</th>
+                  <th className="px-5 py-3 text-left font-semibold">Precio</th>
+                  <th className="px-5 py-3 text-left font-semibold">Rating</th>
+                  <th className="px-5 py-3 text-left font-semibold">Características</th>
+                  <th className="px-5 py-3 text-left font-semibold">Estado</th>
+                  <th className="px-5 py-3 text-right font-semibold">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredItems.map((item) => {
+                  const features = parseFeatures(item.characteristics);
+                  return (
+                    <tr
+                      key={item.id}
+                      className="border-b border-[#dce3e0] last:border-b-0 hover:bg-[#f6f8f7]"
+                    >
+                      <td className="px-5 py-3">
+                        <img
+                          src={
+                            item.image ||
+                            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=320&q=80"
+                          }
+                          alt={item.title}
+                          className="h-11 w-14 rounded-lg object-cover"
+                        />
+                      </td>
+                      <td className="px-5 py-3 text-base font-semibold text-[#1f2d31]">
+                        {item.title}
+                      </td>
+                      <td className="px-5 py-3 text-base text-[#2f4a49]">
+                        {item.location}
+                      </td>
+                      <td className="px-5 py-3 text-base text-[#1f2d31]">
+                        {formatPrice(item.price)}
+                      </td>
+                      <td className="px-5 py-3 text-base text-[#1f2d31]">
+                        <span className="inline-flex items-center gap-1">
+                          <Star className="h-4 w-4 fill-[#c6943d] text-[#c6943d]" />
+                          {formatRating(item.rating)}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {features.slice(0, 2).map((f) => (
+                            <span
+                              key={f}
+                              className="rounded-full bg-[#e0eeeb] px-2 py-0.5 text-xs font-medium text-[#1f7770]"
+                            >
+                              {f}
+                            </span>
+                          ))}
+                          {features.length > 2 && (
+                            <span className="rounded-full bg-[#e8eceb] px-2 py-0.5 text-xs font-medium text-[#637371]">
+                              +{features.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-5 py-3">
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            item.is_active
+                              ? "bg-[#d7ece2] text-[#2f7f66]"
+                              : "bg-[#f2dcdc] text-[#b55353]"
+                          }`}
+                        >
+                          {item.is_active ? "Activa" : "Desactivada"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <div className="inline-flex items-center gap-2">
+                          <button
+                            onClick={() => setEditing(item)}
+                            className="rounded-lg border border-[#c7d0cd] p-1.5 text-[#1f7770] transition hover:bg-[#e0eeeb]"
+                            title="Editar"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="rounded-lg border border-[#f0c4c4] p-1.5 text-[#c75252] transition hover:bg-[#fae4e4]"
+                            title="Eliminar"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
+
       {editing !== null && (
         <PlayaForm
           initialData={editing}
@@ -119,7 +236,7 @@ const PlayasAdmin = () => {
           onCancel={() => setEditing(null)}
         />
       )}
-    </div>
+    </section>
   );
 };
 
