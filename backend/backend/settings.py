@@ -11,9 +11,20 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Carga básica de variables de entorno desde backend/.env (opcional)
+env_file = BASE_DIR / '.env'
+if env_file.exists():
+    for raw_line in env_file.read_text(encoding='utf-8').splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        key, value = line.split('=', 1)
+        os.environ.setdefault(key.strip(), value.strip())
 
 
 # Quick-start development settings - unsuitable for production
@@ -23,9 +34,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-*ch=a!122prcpcs!1@s!fcvaipoy5sauadv&*f^$t@fdky-knb'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [host.strip() for host in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if host.strip()]
 
 
 # Application definition
@@ -43,6 +54,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'excursiones',
     'playas',
+    'contacto',
 ]
 
 
@@ -130,11 +142,12 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# CORS configuration so frontend at localhost:5173 can access the API
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:5175",
-]
+# CORS configuration
+cors_origins_raw = os.getenv(
+    'DJANGO_CORS_ALLOWED_ORIGINS',
+    'http://localhost:5173,http://localhost:5175'
+)
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_raw.split(',') if origin.strip()]
 CORS_ALLOW_METHODS = [
     "GET",
     "POST",
@@ -164,3 +177,23 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
 }
+
+# Email configuration
+# Para producción, configura estas variables de entorno en tu hosting.
+EMAIL_HOST = os.getenv('EMAIL_HOST', '')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() == 'true'
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '20'))
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@vicenteviajes.com')
+CONTACT_RECIPIENT_EMAIL = os.getenv('CONTACT_RECIPIENT_EMAIL', 'info@weltbrave.com')
+
+email_password_is_placeholder = EMAIL_HOST_PASSWORD.startswith('CAMBIA_')
+
+if EMAIL_HOST and EMAIL_HOST_USER and EMAIL_HOST_PASSWORD and not email_password_is_placeholder:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+else:
+    # Fallback para desarrollo local si faltan credenciales SMTP
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

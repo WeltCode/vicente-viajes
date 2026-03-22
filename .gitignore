@@ -1,0 +1,12 @@
+# Root secrets
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Python caches
+**/__pycache__/
+*.pyc
+
+# OS/editor
+.DS_Store
+Thumbs.db
