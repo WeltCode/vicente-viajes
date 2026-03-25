@@ -12,6 +12,7 @@ import AdminApp from "../admin/AdminApp";
 
 export default function AppRouter() {
   return (
+    // AuthProvider inyecta token/login/logout para todo el arbol de rutas.
     <AuthProvider>
       <BrowserRouter>
         <Routes>
@@ -19,6 +20,7 @@ export default function AppRouter() {
           <Route path="/excursiones" element={<Excursiones />} />
           <Route path="/playas" element={<Playas />} />
           <Route path="/ofertas" element={<Ofertas />} />
+          {/* Token de busqueda de vuelos codificado en URL para reconstruir payload. */}
           <Route path="/buscar/:searchToken" element={<BuscarVuelos />} />
           <Route path="/nosotros" element={<Nosotros />} />
           <Route path="/contacto" element={<Contacto />} />

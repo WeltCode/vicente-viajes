@@ -54,6 +54,7 @@ const FlightSearch = () => {
     setError("");
     setFormData({ ...formData, [field]: value });
     if (field === "origin" || field === "destination") {
+      // Si el usuario edita texto manualmente, se invalida la seleccion previa.
       setSelectedAirports((prev) => ({ ...prev, [field]: null }));
     }
   };
@@ -79,6 +80,7 @@ const FlightSearch = () => {
   };
 
   const validateAndResolveAirport = (field) => {
+    // Prioriza aeropuerto ya seleccionado; fallback a resolucion por texto libre.
     if (selectedAirports[field]) return selectedAirports[field];
     return resolveAirport(formData[field]);
   };
@@ -134,6 +136,7 @@ const FlightSearch = () => {
       babies: formData.babies,
     });
 
+    // Navega a vista interna, donde se reconstruye y envia el POST al motor externo.
     navigate(`/buscar/${encodeFlightSearchPayload(payload)}`);
   };
 

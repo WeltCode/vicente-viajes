@@ -15,7 +15,7 @@ from .serializers import ExcursionSerializer
 @api_view(['POST'])
 @permission_classes([])
 def login_view(request):
-    """Custom login endpoint that returns token"""
+    """Autentica usuario admin y devuelve token reutilizable por el frontend."""
     username = request.data.get('username')
     password = request.data.get('password')
     
@@ -41,7 +41,7 @@ def login_view(request):
 @permission_classes([IsAuthenticatedOrReadOnly])
 def excursiones_list(request):
     if request.method == 'GET':
-        # Public listing only exposes active excursions.
+        # Publico: solo activas. Admin autenticado: listado completo.
         if request.user and request.user.is_authenticated:
             excursiones = Excursion.objects.all()  # pyright: ignore[reportAttributeAccessIssue]
         else:
@@ -49,7 +49,7 @@ def excursiones_list(request):
         serializer = ExcursionSerializer(excursiones, many=True)
         return Response(serializer.data)
 
-    # POST
+    # POST permitido a usuarios autenticados por IsAuthenticatedOrReadOnly.
     serializer = ExcursionSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
@@ -61,6 +61,7 @@ def excursiones_list(request):
 @authentication_classes([TokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def excursiones_detail(request, pk):
+    # Endpoint detalle: lectura puntual, edicion y borrado por id.
     try:
         excursion = Excursion.objects.get(pk=pk)  # pyright: ignore[reportAttributeAccessIssue]
     except Excursion.DoesNotExist:  # pyright: ignore[reportAttributeAccessIssue]

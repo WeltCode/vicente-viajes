@@ -1,334 +1,209 @@
-# 🌴 Vicente Viajes - Plataforma de Agencia de Turismo
+## Vicente Viajes - Estado Actual del Proyecto
 
-Una plataforma digital moderna para la gestión y promoción de excursiones y tours turísticos. Combina un portal informativo atractivo con un catálogo completo de experiencias.
+Aplicacion full stack para mostrar y administrar contenido turistico (excursiones, playas, ofertas), recibir mensajes de contacto y ejecutar busquedas de vuelos contra un motor externo.
 
----
+## Stack Tecnologico
 
-## 📋 Tabla de Contenidos
+- Backend: Django + Django REST Framework + Token Auth
+- Frontend: React + Vite + React Router + Tailwind CSS + Framer Motion
+- Base de datos: SQLite (desarrollo)
+- Integracion externa: motor de vuelos por POST (QueryBridge)
 
-- [Descripción General](#descripción-general)
-- [Tecnologías](#tecnologías)
-- [Estructura del Proyecto](#estructura-del-proyecto)
-- [Setup e Instalación](#setup-e-instalación)
-- [Cómo Correr el Proyecto](#cómo-correr-el-proyecto)
-- [API Endpoints](#api-endpoints)
-- [Estructura de Base de Datos](#estructura-de-base-de-datos)
-- [Notas Importantes](#notas-importantes)
+## Estructura General
 
----
+- backend/: API REST, autenticacion y logica de negocio
+- frontend/: web publica, panel admin y buscador de vuelos
+- netlify.toml / _redirects: soporte de despliegue frontend
 
-## 🎯 Descripción General
+## Modulos Backend
 
-**Vicente Viajes** es una aplicación full-stack que permite:
+- excursiones: CRUD de excursiones + endpoint de login por token
+- playas: CRUD de playas
+- ofertas: CRUD de ofertas + reordenamiento drag and drop
+- contacto: recepcion de formulario y envio de correo SMTP
 
-- 📍 **Catálogo de Excursiones**: Visualizar tours con detalles, precios, itinerarios y disponibilidad
-- 🏠 **Portal de Marketing**: Página de inicio con destinos destacados, testimonios y razones para elegir
-- 💬 **Contacto Directo**: Integración con WhatsApp para consultas inmediatas
-- 🎨 **Interfaz Moderna**: Diseño responsivo y atractivo con animaciones
+## Rutas API Principales
 
-**Stack:**
-- **Frontend**: React 19 + Vite + TailwindCSS
-- **Backend**: Django 5.1 + Django REST Framework
-- **Base de Datos**: SQLite3
-- **Deploy**: Netlify (frontend)
+Base: `http://localhost:8000/api/`
 
----
+- POST `login/` -> devuelve token para admin
+- GET/POST `excursiones/`
+- GET/PUT/DELETE `excursiones/<id>/`
+- GET/POST `playas/`
+- GET/PUT/DELETE `playas/<id>/`
+- GET/POST `ofertas/`
+- GET/PUT/DELETE `ofertas/<id>/`
+- POST `ofertas/reorder/` -> persiste nuevo orden visual
+- POST `contacto/enviar/` -> guarda mensaje y envia email
 
-## 🛠️ Tecnologías
+Notas de permisos:
 
-### Frontend
+- Lectura publica: usuarios anonimos solo ven registros activos en listados publicos.
+- Escritura y acceso administrativo: requiere token o credenciales validas.
+
+## Flujo de Autenticacion Admin
+
+1. Frontend envia usuario/password a `POST /api/login/`.
+2. Backend valida credenciales y responde `{ token }`.
+3. Frontend guarda token en localStorage.
+4. Axios agrega `Authorization: Token <token>` automaticamente.
+
+## Flujo del Buscador de Vuelos
+
+Descripcion tecnica completa (inicio a fin):
+
+1. El usuario completa el formulario en `frontend/src/components/FlightSearch.jsx`:
+	- Origen y destino con autocompletado sobre `frontend/src/data/airports.json`.
+	- Tipo de viaje: ida y vuelta o solo ida.
+	- Fechas y pasajeros (adultos, ninos, bebes).
+
+2. Al escribir en origen/destino:
+	- `searchAirports(query)` en `frontend/src/services/flightBridge.js` normaliza texto (sin acentos, lowercase) y devuelve sugerencias rankeadas.
+	- Si el usuario selecciona una sugerencia, se guarda el objeto aeropuerto completo (id IATA + ciudad + texto visible).
+
+3. Al enviar el formulario (`handleSearch`):
+	- Se validan reglas de negocio:
+	  - origen valido
+	  - destino valido
+	  - origen != destino
+	  - fecha de salida obligatoria
+	  - si es ida/vuelta, fecha de regreso obligatoria
+	  - fecha regreso >= fecha salida
+	  - bebes <= adultos
+	- Si falla una regla, no se navega y se muestra error local.
+
+4. Resolucion final de aeropuertos:
+	- `validateAndResolveAirport` prioriza aeropuerto seleccionado.
+	- Si no hay seleccion, usa `resolveAirport(texto)` para intentar match exacto por IATA o valor completo.
+
+5. Construccion del payload externo:
+	- `buildFlightBridgePayload(...)` traduce datos UI a contrato QueryBridge.
+	- `formatBridgeDate(YYYY-MM-DD)` -> `YYYYMMDD`.
+
+6. Serializacion para ruta interna:
+	- El payload JSON se codifica con `encodeFlightSearchPayload` (base64url).
+	- Se navega a `frontend/src/pages/BuscarVuelos.jsx` via ruta `/buscar/:searchToken`.
+
+7. Carga de pagina de resultados interna:
+	- `BuscarVuelos` lee `searchToken` desde URL.
+	- `decodeFlightSearchPayload` decodifica y parsea JSON.
+	- Si token invalido/manipulado: estado `error` y mensaje al usuario.
+
+8. Envio real al motor de vuelos:
+	- `submitFlightBridge(payload, { target: IFRAME_NAME })` crea un `form` HTML oculto.
+	- El formulario hace `POST` a `https://vuelos.vicenteviajes.com/wtc/vv/vuelos/QueryBridge.aspx`.
+	- Se inyectan todos los campos como `input hidden`.
+	- Se ejecuta `form.submit()` apuntando al `iframe` interno.
+
+9. Render de resultados:
+	- El motor externo responde dentro del `iframe` nombrado `vicente-flight-results-frame`.
+	- Navbar y Footer del sitio permanecen visibles porque la pagina host es interna.
+
+10. Fallback y navegacion auxiliar:
+	- Boton "Abrir en pestana nueva": reusa `submitFlightBridge` con `target: _blank`.
+	- Boton "Nueva busqueda": vuelve a `/` para reiniciar el flujo.
+
+11. Consideraciones de seguridad/compatibilidad:
+	- Si el proveedor externo impone bloqueo de iframe (cabeceras), el fallback funcional es "Abrir en pestana nueva".
+	- No renombrar claves del payload (contrato externo fijo).
+
+Campos enviados al motor externo:
+
+- `startPt`, `endPt`, `startPtCode`, `endPtCode`
+- `startDt`, `endDt`
+- `flightType` (`1` ida y vuelta, `0` solo ida)
+- `adults`, `children`, `infants`
+
+Ejemplo de payload final enviado por POST:
+
 ```json
 {
-  "React": "19.2.3",
-  "Vite": "6.0.9",
-  "TailwindCSS": "3.4.1",
-  "React Router": "7.0.0",
-  "Framer Motion": "última",
-  "Axios": "1.4.0",
-  "Lucide React": "iconografía"
+  "startPt": "Madrid",
+  "endPt": "Punta Cana",
+  "startPtCode": "MAD",
+  "endPtCode": "PUJ",
+  "startDt": "20260415",
+  "endDt": "20260425",
+  "flightType": "1",
+  "adults": "2",
+  "children": "1",
+  "infants": "0"
 }
 ```
 
-### Backend
-```python
-Django==5.1.7
-djangorestframework==3.14.0
-# Pendiente: django-cors-headers, python-decouple
-```
+## Variables de Entorno Backend
 
----
+Archivo de referencia: `backend/.env.example`
 
-## 📁 Estructura del Proyecto
+- `DJANGO_DEBUG`
+- `DJANGO_ALLOWED_HOSTS`
+- `DJANGO_CORS_ALLOWED_ORIGINS`
+- `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`
+- `EMAIL_USE_TLS`, `EMAIL_USE_SSL`, `EMAIL_TIMEOUT`
+- `DEFAULT_FROM_EMAIL`
+- `CONTACT_RECIPIENT_EMAIL`
 
-```
-vicente-viajes/
-├── frontend/                  # Aplicación React con Vite
-│   ├── src/
-│   │   ├── pages/            # Componentes de páginas principales
-│   │   │   ├── Home.jsx
-│   │   │   ├── Excursiones.jsx
-│   │   │   └── Playas.jsx
-│   │   ├── components/       # Componentes reutilizables
-│   │   │   ├── excursions/   # Componentes específicos de excursiones
-│   │   │   ├── layout/       # Navbar, Footer
-│   │   │   ├── sections/     # Secciones de páginas
-│   │   │   └── ui/
-│   │   ├── routes/           # Configuración de rutas
-│   │   ├── services/         # Servicios API
-│   │   ├── context/          # Context API global
-│   │   ├── hooks/            # Hooks personalizados
-│   │   └── styles/           # Estilos globales
-│   ├── package.json
-│   ├── tailwind.config.js
-│   └── postcss.config.js
-│
-├── backend/                  # Aplicación Django
-│   ├── backend/             # Configuración principal
-│   │   ├── settings.py      # Configuración de Django
-│   │   ├── urls.py          # Rutas principales
-│   │   ├── wsgi.py
-│   │   └── asgi.py
-│   │
-│   ├── excursiones/         # App principal de Django
-│   │   ├── models.py        # Modelo Excursion
-│   │   ├── views.py         # ViewSets API
-│   │   ├── serializers.py   # Serialización JSON
-│   │   ├── urls.py          # Rutas de la app
-│   │   ├── admin.py         # Panel administrativo
-│   │   └── migrations/
-│   │
-│   ├── manage.py
-│   └── db.sqlite3           # Base de datos
-│
-└── netlify.toml             # Configuración de deploy en Netlify
-```
+Comportamiento email:
 
----
+- Si SMTP esta configurado, usa backend SMTP real.
+- Si faltan credenciales, usa backend de consola para desarrollo.
 
-## 🚀 Setup e Instalación
+## Instalacion y Ejecucion Local
 
-### Requisitos Previos
-- Python 3.9+
-- Node.js 18+
-- Git
-
-### 1. Clonar el Repositorio
-```bash
-git clone <tu-repo>
-cd vicente-viajes
-```
-
-### 2. Configurar Backend
+### 1) Backend
 
 ```bash
 cd backend
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# Linux/macOS
+source .venv/bin/activate
 
-# Crear entorno virtual
-python -m venv venv
-# En Windows:
-venv\Scripts\activate
-
-# Instalar dependencias
-pip install -r requirements.txt  # Si existe
-# O instalar manualmente:
-pip install django djangorestframework django-cors-headers python-decouple
-
-# Aplicar migraciones
+pip install django djangorestframework django-cors-headers
 python manage.py migrate
-
-# Crear superusuario (opcional, para admin)
-python manage.py createsuperuser
-
-# Ejecutar servidor
 python manage.py runserver
-# El backend estará en http://localhost:8000
 ```
 
-### 3. Configurar Frontend
+Backend por defecto en: `http://localhost:8000`
+
+### 2) Frontend
 
 ```bash
-cd ../frontend
-
-# Instalar dependencias
+cd frontend
 npm install
-
-# Ejecutar servidor de desarrollo
-npm run dev
-# El frontend estará en http://localhost:5173
-```
-
----
-
-## 🎮 Cómo Correr el Proyecto
-
-### Desarrollo Local
-
-**Terminal 1 - Backend:**
-```bash
-cd backend
-source venv/Scripts/activate  # En Windows: venv\Scripts\activate
-python manage.py runserver
-```
-
-**Terminal 2 - Frontend:**
-```bash
-cd frontend
 npm run dev
 ```
 
-Accede a `http://localhost:5173` en tu navegador.
+Frontend por defecto en: `http://localhost:5173`
 
-### Build para Producción
+## Panel Administrativo Frontend
 
-**Frontend:**
-```bash
-cd frontend
-npm run build  # Genera carpeta dist/
-```
+Ruta: `/admin`
 
-**Backend:**
-```bash
-# Recolectar archivos estáticos
-python manage.py collectstatic
-```
+Secciones actuales:
 
----
+- Dashboard
+- Gestion de Excursiones
+- Gestion de Playas
+- Gestion de Ofertas (incluye drag and drop y persistencia de orden)
 
-## 📡 API Endpoints
+## Convenciones Importantes del Proyecto
 
-### Excursiones
+- No cambiar nombres de campos del payload de vuelos: son contrato externo.
+- `Oferta.discount` se recalcula en backend al guardar para evitar inconsistencias.
+- `ofertas/reorder/` espera lista de objetos con `id` y `display_order`.
+- El frontend usa tokens en localStorage para continuidad de sesion admin.
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `GET` | `/api/excursiones/` | Lista todas las excursiones |
-| `GET` | `/api/excursiones/<id>/` | Detalle de una excursión |
-| `POST` | `/api/excursiones/` | Crear excursión (requiere permisos) |
-| `PUT` | `/api/excursiones/<id>/` | Actualizar excursión |
-| `DELETE` | `/api/excursiones/<id>/` | Eliminar excursión |
+## Riesgos y Consideraciones
 
-Además del catálogo público, se ha añadido una pequeña interfaz de administración accesible
-desde el frontend en `http://localhost:5173/admin`. El usuario por defecto es
-`dedsec` con contraseña `dedsec` y puede crear/editar/eliminar tanto excursiones como playas.
-Nota: al iniciar el servidor Django se crean automáticamente entradas de ejemplo para
-la tabla de excursiones y playas, y se configura un token de autenticación para el usuario.
+- Si el proveedor externo de vuelos bloquea iframe por cabeceras de seguridad, el boton "Abrir en pestana nueva" es el fallback.
+- SQLite es valido para desarrollo; para produccion se recomienda PostgreSQL.
+- Revisar `SECRET_KEY` y `DEBUG` antes de desplegar.
 
-**Ejemplo de Respuesta:**
-```json
-{
-  "id": 1,
-  "titulo": "Tour por las Playas del Caribe",
-  "slug": "tour-playas-caribe",
-  "descripcion_corta": "Disfruta de las mejores playas",
-  "descripcion_completa": "...",
-  "ubicacion": "Cancún, México",
-  "duracion": "3 días",
-  "precio": 299.99,
-  "moneda": "USD",
-  "imagen_url": "...",
-  "es_destacada": true,
-  "created_at": "2026-03-10T10:00:00Z"
-}
-```
+## Estado Funcional Actual
 
----
-
-## 🗄️ Estructura de Base de Datos
-
-### Modelo: Excursion
-
-```python
-class Excursion:
-    - titulo (CharField, 200)
-    - slug (SlugField, único)
-    - descripcion_corta (TextField)
-    - descripcion_completa (TextField)
-    - ubicacion (CharField, 255)
-    - duracion (CharField, 50)  # Ej: "3 días"
-    - precio (DecimalField)
-    - moneda (CharField)
-    - imagen_url (URLField)
-    - que_incluye (TextField)  # Items separados por líneas
-    - que_no_incluye (TextField)
-    - es_destacada (BooleanField, default=False)
-    - is_active (BooleanField, default=True)
-    - seo_title (CharField)
-    - seo_description (TextField)
-    - created_at (DateTimeField, auto_now_add=True)
-    - updated_at (DateTimeField, auto_now=True)
-```
-
----
-
-## ⚠️ Notas Importantes
-
-### Problemas Conocidos / TODO
-
-- [ ] **CORS no configurado**: Instalar y configurar `django-cors-headers`
-  ```python
-  # En settings.py
-  INSTALLED_APPS += ['corsheaders']
-  MIDDLEWARE.insert(0, 'corsheaders.middleware.CorsMiddleware')
-  CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "https://tudominio.com"]
-  ```
-
-- [ ] **DEBUG = True**: Cambiar a `False` en producción
-  ```python
-  DEBUG = os.getenv('DEBUG', 'False') == 'True'
-  ```
-
-- [ ] **SECRET_KEY expuesta**: Usar variables de entorno
-  ```bash
-  # Crear .env
-  SECRET_KEY=tu-clave-secreta-aqui
-  DEBUG=False
-  ```
-
-- [ ] **Frontend sin integración API**: Las excursiones están hardcodeadas
-  - Implementar llamadas a `/api/excursiones/`
-  - Usar axios en `services/api.js`
-
-- [ ] **ALLOWED_HOSTS vacío**: Configurar para producción
-  ```python
-  ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
-  ```
-
-### Variables de Entorno Necesarias
-
-Crear archivo `.env` en la raíz de `backend/`:
-```
-SECRET_KEY=your-secret-key-here
-DEBUG=False
-ALLOWED_HOSTS=localhost,127.0.0.1,tudominio.com
-CORS_ALLOWED_ORIGINS=http://localhost:5173,https://tudominio.com
-DATABASE_URL=sqlite:///db.sqlite3
-```
-
----
-
-## 📚 Recursos Útiles
-
-- [Documentación Django](https://docs.djangoproject.com/)
-- [Django REST Framework](https://www.django-rest-framework.org/)
-- [React Documentation](https://react.dev/)
-- [TailwindCSS](https://tailwindcss.com/)
-- [Vite Guide](https://vitejs.dev/)
-
----
-
-## 👥 Colaboración
-
-1. **Crear rama**: `git checkout -b feature/nueva-funcionalidad`
-2. **Hacer cambios** y commitear: `git commit -m "Descripción clara"`
-3. **Push**: `git push origin feature/nueva-funcionalidad`
-4. **Pull Request**: Describir cambios claramente
-
----
-
-## 📝 Licencia
-
-Especificar según corresponda
-
----
-
-**Última actualización**: Marzo 2026
-**Mantenedor**: [Tu nombre o equipo]
+- CRUD completo de excursiones, playas y ofertas.
+- Contacto funcional con persistencia y envio de correo.
+- Busqueda de vuelos integrada con pagina interna `/buscar/:searchToken`.
+- UI alineada al diseno general del sitio (navbar/footer/header visual consistente).

@@ -36,6 +36,7 @@ SECRET_KEY = 'django-insecure-*ch=a!122prcpcs!1@s!fcvaipoy5sauadv&*f^$t@fdky-knb
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() == 'true'
 
+# Hosts permitidos por Django; configurable por entorno.
 ALLOWED_HOSTS = [host.strip() for host in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if host.strip()]
 
 
@@ -143,7 +144,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# CORS configuration
+# CORS para permitir frontend local/deploy hablar con la API.
 cors_origins_raw = os.getenv(
     'DJANGO_CORS_ALLOWED_ORIGINS',
     'http://localhost:5173,http://localhost:5175'
@@ -168,7 +169,7 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-# REST framework default auth/permission
+# Seguridad base DRF: lectura publica, escritura autenticada.
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
@@ -179,7 +180,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-# Email configuration
+# SMTP para contacto: en local puede caer al backend de consola.
 # Para producción, configura estas variables de entorno en tu hosting.
 EMAIL_HOST = os.getenv('EMAIL_HOST', '')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))

@@ -2,6 +2,7 @@ from django.db import models
 
 
 class Playa(models.Model):
+    # Entidad principal de playas para listado publico y gestion admin.
     title = models.CharField(max_length=150)
     slug = models.SlugField(unique=True, null=True, blank=True)
     short_description = models.CharField(max_length=255)
@@ -21,7 +22,9 @@ class Playa(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        # Muestra primero los registros mas recientes.
         ordering = ['-created_at']
 
     def __str__(self) -> str:
+        # Etiqueta legible en admin y logs.
         return str(self.title)

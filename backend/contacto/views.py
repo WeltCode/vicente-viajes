@@ -10,16 +10,14 @@ from .serializers import MensajeContactoSerializer
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def enviar_mensaje_contacto(request):
-    """
-    Endpoint para recibir mensajes de contacto
-    """
+    """Recibe contacto publico, persiste en DB y notifica por email."""
     serializer = MensajeContactoSerializer(data=request.data)
     
     if serializer.is_valid():
-        # Guardar el mensaje en la base de datos
+        # Primero se persiste el mensaje para no perder trazabilidad.
         serializer.save()
         
-        # Enviar email
+        # Luego se intenta enviar notificacion al correo configurado.
         try:
             asunto = f"Nuevo mensaje de contacto: {serializer.validated_data['asunto']}"
             
@@ -48,6 +46,7 @@ Mensaje:
                 status=status.HTTP_201_CREATED
             )
         except (SMTPException, OSError, ValueError) as e:
+            # El registro queda guardado aunque falle SMTP.
             return Response(
                 {'error': f'Error al enviar el email: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

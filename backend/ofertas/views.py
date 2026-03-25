@@ -14,6 +14,7 @@ from .serializers import OfertaSerializer
 @permission_classes([IsAuthenticatedOrReadOnly])
 def ofertas_list(request):
     if request.method == 'GET':
+        # Publico: solo ofertas activas. Admin autenticado: todas.
         if request.user and request.user.is_authenticated:
             ofertas = Oferta.objects.all()  # pyright: ignore[reportAttributeAccessIssue]
         else:
@@ -32,6 +33,7 @@ def ofertas_list(request):
 @authentication_classes([TokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def ofertas_detail(request, pk):
+    # Endpoint detalle: lectura puntual, edicion y borrado por id.
     try:
         oferta = Oferta.objects.get(pk=pk)  # pyright: ignore[reportAttributeAccessIssue]
     except Oferta.DoesNotExist:  # pyright: ignore[reportAttributeAccessIssue]
@@ -57,6 +59,7 @@ def ofertas_detail(request, pk):
 @authentication_classes([TokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def ofertas_reorder(request):
+    # Espera lista: [{"id": <int>, "display_order": <int>}, ...].
     payload = request.data if isinstance(request.data, list) else []
     if not payload:
         return Response({'detail': 'Payload inválido'}, status=status.HTTP_400_BAD_REQUEST)

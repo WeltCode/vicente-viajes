@@ -47,6 +47,7 @@ class Excursion(models.Model):
         ordering = ["-created_at"]
 
     def save(self, *args, **kwargs):
+        # Slug de respaldo para URLs amigables si no llega desde admin.
         if not self.slug:
             self.slug = slugify(self.title)
         super().save(*args, **kwargs)

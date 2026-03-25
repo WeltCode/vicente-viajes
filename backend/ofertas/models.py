@@ -22,9 +22,11 @@ class Oferta(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        # Orden estable para render en frontend/admin.
         ordering = ['display_order', '-created_at']
 
     def save(self, *args, **kwargs):
+        # Fuente de verdad del descuento: evita inconsistencias si el frontend cambia.
         current = float(self.price or 0)
         original = float(self.original_price or 0)
 
@@ -36,6 +38,7 @@ class Oferta(models.Model):
             self.discount = "0%"
 
         if self.pk is None and not self.display_order:
+            # Asigna el siguiente orden disponible para nuevos registros.
             manager = self.__class__._default_manager
             max_order = manager.aggregate(max_value=Max('display_order')).get('max_value') or 0
             self.display_order = max_order + 1

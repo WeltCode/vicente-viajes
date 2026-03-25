@@ -13,6 +13,7 @@ import {
 
 const IFRAME_NAME = "vicente-flight-results-frame";
 
+// Convierte YYYYMMDD a formato legible para subtitulo.
 const fmtDate = (d) =>
   d ? `${d.slice(6)}/${d.slice(4, 6)}/${d.slice(0, 4)}` : "";
 
@@ -21,6 +22,7 @@ export default function BuscarVuelos() {
   const [status, setStatus] = useState("loading");
 
   const payload = useMemo(
+    // Decodifica token de la URL; si falla, se fuerza estado de error.
     () => decodeFlightSearchPayload(searchToken),
     [searchToken]
   );
@@ -32,6 +34,7 @@ export default function BuscarVuelos() {
     }
     setStatus("loading");
     const timer = window.setTimeout(() => {
+      // POST directo al iframe para mantener navbar/footer dentro del sitio.
       submitFlightBridge(payload, { target: IFRAME_NAME });
       setStatus("ready");
     }, 50);
@@ -40,6 +43,7 @@ export default function BuscarVuelos() {
 
   const handleOpenExternal = () => {
     if (!payload) return;
+    // Fallback para abrir resultados fuera del iframe.
     submitFlightBridge(payload, { target: "_blank" });
   };
 

@@ -22,6 +22,7 @@ const AdminApp = () => {
 
   return (
     <Routes>
+      {/* Guard simple: sin token muestra login; con token renderiza layout admin. */}
       <Route path="/" element={token ? <AdminLayout /> : <Login />}>
         <Route index element={<Dashboard />} />
         <Route path="excursiones" element={<ExcursionesAdmin />} />

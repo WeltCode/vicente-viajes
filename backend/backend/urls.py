@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 
+# Enrutador principal: centraliza todos los modulos API bajo /api/.
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('excursiones.urls')),      # 👈 excursiones API

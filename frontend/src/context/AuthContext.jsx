@@ -4,11 +4,13 @@ import axios from "axios";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  // Se hidrata token persistido para no cerrar sesion al recargar.
   const [token, setToken] = useState(() => localStorage.getItem("token") || null);
 
   useEffect(() => {
     if (token) {
       localStorage.setItem("token", token);
+      // Header global para todas las llamadas axios posteriores.
       axios.defaults.headers.common["Authorization"] = `Token ${token}`;
     } else {
       localStorage.removeItem("token");
@@ -18,6 +20,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
+      // Login contra endpoint custom de Django que devuelve Token DRF.
       const resp = await axios.post("http://localhost:8000/api/login/", {
         username,
         password,

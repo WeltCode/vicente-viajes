@@ -14,6 +14,7 @@ from .serializers import PlayaSerializer
 @permission_classes([IsAuthenticatedOrReadOnly])
 def playas_list(request):
     if request.method == 'GET':
+        # Publico: solo activas. Admin autenticado: listado completo.
         if request.user and request.user.is_authenticated:
             playas = Playa.objects.all()  # pyright: ignore[reportAttributeAccessIssue]
         else:
@@ -21,7 +22,7 @@ def playas_list(request):
         serializer = PlayaSerializer(playas, many=True)
         return Response(serializer.data)
 
-    # POST: create new
+    # POST permitido solo para sesiones autenticadas.
     serializer = PlayaSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
@@ -33,6 +34,7 @@ def playas_list(request):
 @authentication_classes([TokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def playas_detail(request, pk):
+    # Endpoint detalle: lectura puntual, edicion y borrado por id.
     try:
         playa = Playa.objects.get(pk=pk)  # pyright: ignore[reportAttributeAccessIssue]
     except Playa.DoesNotExist:  # pyright: ignore[reportAttributeAccessIssue]
