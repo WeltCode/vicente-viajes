@@ -53,7 +53,7 @@ const PageHeader = ({ title, subtitle, badge, children }) => {
       </div>
 
       {/* Curved bottom with layered waves */}
-      <div className="absolute bottom-0 left-0 right-0 overflow-hidden">
+      <div className="absolute bottom-0 left-0 right-0 overflow-hidden pointer-events-none">
         {/* First wave layer */}
         <svg 
           viewBox="0 0 1440 180" 

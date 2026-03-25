@@ -4,6 +4,7 @@ import Home from "../pages/Home"
 import Excursiones from "../pages/Excursiones";
 import Playas from "../pages/Playas";
 import Ofertas from "../pages/Ofertas";
+import BuscarVuelos from "../pages/BuscarVuelos";
 import Nosotros from "../pages/Nosotros";
 import Contacto from "../pages/Contacto";
 import { AuthProvider } from "../context/AuthContext";
@@ -18,6 +19,7 @@ export default function AppRouter() {
           <Route path="/excursiones" element={<Excursiones />} />
           <Route path="/playas" element={<Playas />} />
           <Route path="/ofertas" element={<Ofertas />} />
+          <Route path="/buscar/:searchToken" element={<BuscarVuelos />} />
           <Route path="/nosotros" element={<Nosotros />} />
           <Route path="/contacto" element={<Contacto />} />
           <Route path="/admin/*" element={<AdminApp />} />
