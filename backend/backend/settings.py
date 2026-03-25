@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'excursiones',
     'playas',
+    'ofertas',
     'contacto',
 ]
 

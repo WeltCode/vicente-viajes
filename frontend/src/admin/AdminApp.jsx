@@ -5,6 +5,7 @@ import Login from "./Login";
 import Dashboard from "./Dashboard";
 import ExcursionesAdmin from "./ExcursionesAdmin";
 import PlayasAdmin from "./PlayasAdmin";
+import OfertasAdmin from "./OfertasAdmin";
 import AdminLayout from "./AdminLayout";
 
 const PlaceholderSection = ({ title }) => {
@@ -26,7 +27,7 @@ const AdminApp = () => {
         <Route path="excursiones" element={<ExcursionesAdmin />} />
         <Route path="playas" element={<PlayasAdmin />} />
         <Route path="hoteles" element={<PlaceholderSection title="Gestion de Hoteles" />} />
-        <Route path="ofertas" element={<PlaceholderSection title="Gestion de Ofertas" />} />
+        <Route path="ofertas" element={<OfertasAdmin />} />
       </Route>
       <Route path="*" element={<Navigate to="/admin" replace />} />
     </Routes>

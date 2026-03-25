@@ -5,7 +5,7 @@ import { Map, Waves, Building2, Tag, CalendarDays, ArrowUpRight } from "lucide-r
 import { useAuth } from "../context/AuthContext";
 
 const Dashboard = () => {
-  const [counts, setCounts] = useState({ excursiones: 0, playas: 0, hoteles: 2, ofertas: 2 });
+  const [counts, setCounts] = useState({ excursiones: 0, playas: 0, hoteles: 2, ofertas: 0 });
   const [recent, setRecent] = useState([]);
   const { token, user } = useAuth();
 
@@ -15,17 +15,20 @@ const Dashboard = () => {
         const headers = {
           "Authorization": `Token ${token}`,
         };
-        const [eResp, pResp] = await Promise.all([
+        const [eResp, pResp, oResp] = await Promise.all([
           axios.get("http://localhost:8000/api/excursiones/", { headers }),
           axios.get("http://localhost:8000/api/playas/", { headers }),
+          axios.get("http://localhost:8000/api/ofertas/", { headers }),
         ]);
         const excursiones = eResp.data || [];
         const playas = pResp.data || [];
+        const ofertas = oResp.data || [];
 
         setCounts((prev) => ({
           ...prev,
           excursiones: excursiones.length,
           playas: playas.length,
+          ofertas: ofertas.length,
         }));
 
         const excursionItems = excursiones.map((item) => ({
@@ -42,7 +45,14 @@ const Dashboard = () => {
           created_at: item.created_at || "",
         }));
 
-        const combined = [...excursionItems, ...playaItems].sort(
+        const ofertaItems = ofertas.map((item) => ({
+          id: `o-${item.id}`,
+          title: item.title,
+          type: "Oferta",
+          created_at: item.created_at || "",
+        }));
+
+        const combined = [...excursionItems, ...playaItems, ...ofertaItems].sort(
           (a, b) => new Date(b.created_at) - new Date(a.created_at)
         );
 
