@@ -32,7 +32,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ["Poppins", "sans-serif"],
-        display: ["Playfair Display", "serif"],
+        display: ["Poppins", "sans-serif"],
       },
       boxShadow: {
         elevated: "0 8px 40px -8px rgba(33, 104, 105, 0.25)",

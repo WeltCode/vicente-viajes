@@ -7,20 +7,20 @@ import { Menu, X } from "lucide-react";
 import logo from "../../assets/images/vicentelogo.png";
 
 const navLinks = [
-  { name: "Inicio", path: "/" },
+  { name: "Vuelos", path: "/vuelos", externalUrl: "https://aereo.vicenteviajes.com" },
   { name: "Excursiones", path: "/excursiones" },
   { name: "Playas", path: "/playas" },
   { name: "Hoteles", path: "/hoteles" },
   { name: "Ofertas", path: "/ofertas" },
   { name: "Nosotros", path: "/nosotros" },
   { name: "Contacto", path: "/contacto" },
-  // link to admin panel
-  { name: "Admin", path: "/admin" },
 ];
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  const isMainDomain = hostname === "vicenteviajes.com" || hostname === "www.vicenteviajes.com";
 
   return (
     <motion.nav
@@ -44,11 +44,23 @@ export default function Navbar() {
           {/* Desktop Menu */}
           <div className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => {
+              const targetPath = link.externalUrl && isMainDomain ? link.externalUrl : link.path;
               const isActive = location.pathname === link.path;
+              if (link.externalUrl && isMainDomain) {
+                return (
+                  <a
+                    key={link.path}
+                    href={targetPath}
+                    className="nav-link text-black/70"
+                  >
+                    {link.name}
+                  </a>
+                );
+              }
               return (
                 <Link
                   key={link.path}
-                  to={link.path}
+                  to={targetPath}
                   className={`nav-link ${
                     isActive ? "text-teal" : "text-black/70"
                   }`}
@@ -97,17 +109,27 @@ export default function Navbar() {
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Link
-                    to={link.path}
-                    onClick={() => setIsOpen(false)}
-                    className={`block px-4 py-3 rounded-xl font-medium transition-colors ${
-                      location.pathname === link.path
-                        ? "bg-teal text-white"
-                        : "text-black/70 hover:text-teal hover:bg-teal/5"
-                    }`}
-                  >
-                    {link.name}
-                  </Link>
+                  {link.externalUrl && isMainDomain ? (
+                    <a
+                      href={link.externalUrl}
+                      onClick={() => setIsOpen(false)}
+                      className="block px-4 py-3 rounded-xl font-medium transition-colors text-black/70 hover:text-teal hover:bg-teal/5"
+                    >
+                      {link.name}
+                    </a>
+                  ) : (
+                    <Link
+                      to={link.path}
+                      onClick={() => setIsOpen(false)}
+                      className={`block px-4 py-3 rounded-xl font-medium transition-colors ${
+                        location.pathname === link.path
+                          ? "bg-teal text-white"
+                          : "text-black/70 hover:text-teal hover:bg-teal/5"
+                      }`}
+                    >
+                      {link.name}
+                    </Link>
+                  )}
                 </motion.div>
               ))}
 

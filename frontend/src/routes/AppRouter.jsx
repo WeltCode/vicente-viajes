@@ -7,6 +7,8 @@ import Ofertas from "../pages/Ofertas";
 import BuscarVuelos from "../pages/BuscarVuelos";
 import Nosotros from "../pages/Nosotros";
 import Contacto from "../pages/Contacto";
+import Hoteles from "../pages/Hoteles";
+import Vuelos from "../pages/Vuelos";
 import { AuthProvider } from "../context/AuthContext";
 import AdminApp from "../admin/AdminApp";
 
@@ -17,8 +19,10 @@ export default function AppRouter() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/vuelos" element={<Vuelos />} />
           <Route path="/excursiones" element={<Excursiones />} />
           <Route path="/playas" element={<Playas />} />
+          <Route path="/hoteles" element={<Hoteles />} />
           <Route path="/ofertas" element={<Ofertas />} />
           {/* Token de busqueda de vuelos codificado en URL para reconstruir payload. */}
           <Route path="/buscar/:searchToken" element={<BuscarVuelos />} />
