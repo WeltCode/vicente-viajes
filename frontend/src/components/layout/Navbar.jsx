@@ -21,6 +21,7 @@ export default function Navbar() {
   const location = useLocation();
   const hostname = typeof window !== "undefined" ? window.location.hostname : "";
   const isMainDomain = hostname === "vicenteviajes.com" || hostname === "www.vicenteviajes.com";
+  const scrollToTop = () => window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 
   return (
     <motion.nav
@@ -33,7 +34,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20">
           
           {/* Logo */}
-          <Link to="/" className="flex items-center">
+          <Link to="/" onClick={scrollToTop} className="flex items-center">
             <img
               src={logo}
               alt="Vicente Viajes"

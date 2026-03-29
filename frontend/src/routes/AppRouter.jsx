@@ -18,12 +18,14 @@ import ModificacionCancelacion from "../pages/legal/ModificacionCancelacion";
 import FormularioIngresoEspana from "../pages/legal/FormularioIngresoEspana";
 import { AuthProvider } from "../context/AuthContext";
 import AdminApp from "../admin/AdminApp";
+import ScrollToTop from "./ScrollToTop";
 
 export default function AppRouter() {
   return (
     // AuthProvider inyecta token/login/logout para todo el arbol de rutas.
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/vuelos" element={<Vuelos />} />
