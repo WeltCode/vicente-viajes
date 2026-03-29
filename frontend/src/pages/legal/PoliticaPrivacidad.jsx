@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { Eye, Cookie, BarChart2, Shield, Mail, Settings } from "lucide-react";
 import LegalLayout, { LegalSection, LegalItem } from "../../components/layout/LegalLayout";
 
@@ -89,6 +90,16 @@ export default function PoliticaPrivacidad() {
           de configuración de cookies accesible en el pie de página, o configurando su
           navegador para rechazarlas (tenga en cuenta que esto puede afectar a la
           funcionalidad del sitio).
+        </p>
+        <p className="mt-2">
+          Consulte el detalle completo en nuestra{" "}
+          <Link
+            to="/politica-de-cookies"
+            className="text-teal underline hover:text-sage transition-colors"
+          >
+            Política de Cookies
+          </Link>
+          .
         </p>
       </LegalSection>
 

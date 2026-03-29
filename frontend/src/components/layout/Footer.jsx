@@ -2,11 +2,13 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import logo from "../../assets/images/vicentelogo.png";
+import { openCookieSettings } from "../../services/cookieConsent";
 
 const legalLinks = [
   { label: "Condiciones Generales",          path: "/condiciones-generales" },
   { label: "Protección de datos",             path: "/proteccion-de-datos" },
   { label: "Política de Privacidad",          path: "/politica-de-privacidad" },
+  { label: "Política de Cookies",             path: "/politica-de-cookies" },
   { label: "Equipaje permitido",              path: "/equipaje-permitido" },
   { label: "Modificacion / Cancelacion",      path: "/modificacion-cancelacion" },
   { label: "Formulario de ingreso a España",  path: "/formulario-ingreso-espana" },
@@ -169,6 +171,14 @@ export default function Footer() {
               )}
             </React.Fragment>
           ))}
+          <span className="text-white/20 select-none">|</span>
+          <button
+            type="button"
+            onClick={openCookieSettings}
+            className="hover:text-white/70 transition-colors whitespace-nowrap"
+          >
+            Configurar cookies
+          </button>
         </div>
 
       </div>

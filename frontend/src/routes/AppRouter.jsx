@@ -12,6 +12,7 @@ import Vuelos from "../pages/Vuelos";
 import CondicionesGenerales from "../pages/legal/CondicionesGenerales";
 import ProteccionDatos from "../pages/legal/ProteccionDatos";
 import PoliticaPrivacidad from "../pages/legal/PoliticaPrivacidad";
+import PoliticaCookies from "../pages/legal/PoliticaCookies";
 import EquipajePermitido from "../pages/legal/EquipajePermitido";
 import ModificacionCancelacion from "../pages/legal/ModificacionCancelacion";
 import FormularioIngresoEspana from "../pages/legal/FormularioIngresoEspana";
@@ -34,13 +35,14 @@ export default function AppRouter() {
           <Route path="/buscar/:searchToken" element={<BuscarVuelos />} />
           <Route path="/nosotros" element={<Nosotros />} />
           <Route path="/contacto" element={<Contacto />} />
-          <Route path="/admin/*" element={<AdminApp />} />
-                  <Route path="/condiciones-generales" element={<CondicionesGenerales />} />
-                  <Route path="/proteccion-de-datos" element={<ProteccionDatos />} />
-                  <Route path="/politica-de-privacidad" element={<PoliticaPrivacidad />} />
-                  <Route path="/equipaje-permitido" element={<EquipajePermitido />} />
-                  <Route path="/modificacion-cancelacion" element={<ModificacionCancelacion />} />
-                  <Route path="/formulario-ingreso-espana" element={<FormularioIngresoEspana />} />
+            <Route path="/admin/*" element={<AdminApp />} />
+            <Route path="/condiciones-generales" element={<CondicionesGenerales />} />
+            <Route path="/proteccion-de-datos" element={<ProteccionDatos />} />
+            <Route path="/politica-de-privacidad" element={<PoliticaPrivacidad />} />
+            <Route path="/politica-de-cookies" element={<PoliticaCookies />} />
+            <Route path="/equipaje-permitido" element={<EquipajePermitido />} />
+            <Route path="/modificacion-cancelacion" element={<ModificacionCancelacion />} />
+            <Route path="/formulario-ingreso-espana" element={<FormularioIngresoEspana />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
