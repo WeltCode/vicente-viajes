@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Clock3, Flame, MapPin, Percent } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
 import axios from "axios";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
@@ -8,6 +10,7 @@ import WhatsAppButton from "../components/WhatsAppButton";
 import PageHeader from "../components/sections/PageHeader";
 import PageSeo from "../components/seo/PageSeo";
 import { apiUrl } from "../services/api";
+import { buildWhatsAppUrl } from "../services/siteContact";
 
 const money = (value) => {
   const numeric = Number(value || 0);
@@ -137,13 +140,24 @@ export default function Ofertas() {
 
                   <p className="mt-2 text-base font-medium text-sage">{item.vigencia}</p>
 
-                  <a
-                    href="/contacto"
-                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal to-sage px-4 py-3 text-base font-semibold text-white transition-all hover:shadow-elevated"
-                  >
-                    ¡Reservar Ahora!
-                    <ArrowRight className="h-4 w-4" />
-                  </a>
+                  <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <Link
+                      to={`/contacto?origen=oferta&titulo=${encodeURIComponent(item.titulo)}`}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal to-sage px-4 py-3 text-sm font-semibold text-white transition-all hover:shadow-elevated"
+                    >
+                      Reservar
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                    <a
+                      href={buildWhatsAppUrl(`Hola Vicente Viajes, me interesa la oferta ${item.titulo} hacia ${item.destino}. ¿Podrían darme más detalles para reservar?`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#128C7E]"
+                    >
+                      WhatsApp
+                      <FaWhatsapp className="h-4 w-4" />
+                    </a>
+                  </div>
                 </div>
               </motion.article>
             ))}

@@ -1,4 +1,6 @@
-const rawApiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+const envApiUrl = String(import.meta.env.VITE_API_URL || "").trim();
+const hasPlaceholder = /tu-dominio\.com/i.test(envApiUrl);
+const rawApiUrl = envApiUrl && !hasPlaceholder ? envApiUrl : "/api";
 
 export const API_BASE_URL = rawApiUrl.replace(/\/+$/, "");
 

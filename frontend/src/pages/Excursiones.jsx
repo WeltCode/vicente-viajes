@@ -7,7 +7,8 @@ import Footer from "../components/layout/Footer";
 import WhatsAppButton from "../components/WhatsAppButton";
 import PageHeader from "../components/sections/PageHeader";
 import PageSeo from "../components/seo/PageSeo";
-import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane, Hotel, Utensils, Camera } from "lucide-react";
+import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane, Hotel, Camera } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
 import { apiUrl } from "../services/api";
 import { buildWhatsAppUrl } from "../services/siteContact";
 
@@ -780,18 +781,21 @@ const ExcursionModal = ({ excursion, onClose }) => (
 
         {/* CTA */}
         <div className="flex gap-4">
-          <button className="flex-1 bg-gradient-to-r from-teal to-sage text-white font-semibold px-8 py-4 rounded-xl shadow-elevated hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
+          <a
+            href={`/contacto?origen=excursion&titulo=${encodeURIComponent(excursion.title)}`}
+            className="flex-1 bg-gradient-to-r from-teal to-sage text-white font-semibold px-8 py-4 rounded-xl shadow-elevated hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+          >
             <Hotel className="w-5 h-5" />
             Reservar Ahora
-          </button>
+          </a>
           <a
-            href={buildWhatsAppUrl(`Hola, me interesa la excursión ${excursion.title}`)}
+            href={buildWhatsAppUrl(`Hola Vicente Viajes, me interesa la excursión ${excursion.title}. ¿Podrían enviarme disponibilidad y condiciones de reserva?`)}
             target="_blank"
             rel="noopener noreferrer"
             className="px-6 py-4 rounded-xl bg-[#25D366] text-white font-semibold flex items-center gap-2 hover:bg-[#128C7E] transition-colors"
           >
-            <Utensils className="w-5 h-5" />
-            Consultar
+            <FaWhatsapp className="w-5 h-5" />
+            WhatsApp
           </a>
         </div>
       </div>
