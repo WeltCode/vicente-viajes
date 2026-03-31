@@ -11,6 +11,10 @@ from .serializers import EstadoSerializer, EstadoConfigSerializer
 from .services import sync_expired_states
 
 
+def can_manage_content(user):
+    return bool(user and user.is_authenticated and (user.is_staff or user.is_superuser))
+
+
 @api_view(['GET', 'POST'])
 @authentication_classes([TokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
@@ -28,6 +32,9 @@ def estados_list(request):
             )
         serializer = EstadoSerializer(estados, many=True, context={'request': request})
         return Response(serializer.data)
+
+    if not can_manage_content(request.user):
+        return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
     serializer = EstadoSerializer(data=request.data)
     if serializer.is_valid():
@@ -52,6 +59,8 @@ def estados_detail(request, pk):
         return Response(serializer.data)
 
     if request.method == 'PUT':
+        if not can_manage_content(request.user):
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
         serializer = EstadoSerializer(
             estado,
             data=request.data,
@@ -64,6 +73,8 @@ def estados_detail(request, pk):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     if request.method == 'DELETE':
+        if not can_manage_content(request.user):
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
         estado.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -72,6 +83,9 @@ def estados_detail(request, pk):
 @authentication_classes([TokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def estados_reorder(request):
+    if not can_manage_content(request.user):
+        return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
     payload = request.data if isinstance(request.data, list) else []
     if not payload:
         return Response({'detail': 'Payload invalido'}, status=status.HTTP_400_BAD_REQUEST)
@@ -100,6 +114,9 @@ def estados_config(request):
     if request.method == 'GET':
         serializer = EstadoConfigSerializer(config)
         return Response(serializer.data)
+
+    if not can_manage_content(request.user):
+        return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
     serializer = EstadoConfigSerializer(config, data=request.data, partial=True)
     if serializer.is_valid():

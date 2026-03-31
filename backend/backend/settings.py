@@ -157,6 +157,7 @@ CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_raw.split(',')
 CORS_ALLOW_METHODS = [
     "GET",
     "POST",
+    "PATCH",
     "PUT",
     "DELETE",
     "OPTIONS",

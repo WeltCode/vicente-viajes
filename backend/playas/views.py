@@ -9,6 +9,10 @@ from .models import Playa
 from .serializers import PlayaSerializer
 
 
+def can_manage_content(user):
+    return bool(user and user.is_authenticated and (user.is_staff or user.is_superuser))
+
+
 @api_view(['GET', 'POST'])
 @authentication_classes([TokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
@@ -22,7 +26,9 @@ def playas_list(request):
         serializer = PlayaSerializer(playas, many=True)
         return Response(serializer.data)
 
-    # POST permitido solo para sesiones autenticadas.
+    if not can_manage_content(request.user):
+        return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
     serializer = PlayaSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
@@ -45,6 +51,8 @@ def playas_detail(request, pk):
         return Response(serializer.data)
 
     if request.method == 'PUT':
+        if not can_manage_content(request.user):
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
         serializer = PlayaSerializer(playa, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -52,5 +60,7 @@ def playas_detail(request, pk):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     if request.method == 'DELETE':
+        if not can_manage_content(request.user):
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
         playa.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

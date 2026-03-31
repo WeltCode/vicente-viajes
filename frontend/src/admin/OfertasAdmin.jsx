@@ -5,7 +5,7 @@ import { Tag, Search, Plus, Pencil, Trash2, Flame, GripVertical } from "lucide-r
 import OfertaForm from "./OfertaForm";
 
 const OfertasAdmin = () => {
-  const { token } = useAuth();
+  const { token, canManageContent } = useAuth();
   const [items, setItems] = useState([]);
   const [editing, setEditing] = useState(null);
   const [query, setQuery] = useState("");
@@ -76,6 +76,7 @@ const OfertasAdmin = () => {
   };
 
   const moveItem = (fromId, toId) => {
+    if (!canManageContent) return;
     if (query.trim()) return;
     if (!fromId || !toId || fromId === toId) return;
     const fromIndex = items.findIndex((item) => item.id === fromId);
@@ -115,13 +116,15 @@ const OfertasAdmin = () => {
               className="h-10 w-56 rounded-xl border border-[#c7d0cd] bg-[#e7ecea] pl-9 pr-3 text-sm text-[#213136] outline-none transition focus:border-[#1f7770]"
             />
           </label>
-          <button
-            onClick={() => setEditing({})}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#1f7770] px-4 text-sm font-semibold text-white transition hover:bg-[#1a6862]"
-          >
-            <Plus className="h-4 w-4" />
-            Anadir
-          </button>
+          {canManageContent && (
+            <button
+              onClick={() => setEditing({})}
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#1f7770] px-4 text-sm font-semibold text-white transition hover:bg-[#1a6862]"
+            >
+              <Plus className="h-4 w-4" />
+              Anadir
+            </button>
+          )}
         </div>
       </header>
 
@@ -148,7 +151,7 @@ const OfertasAdmin = () => {
             <table className="min-w-[980px] w-full table-auto">
               <thead>
                 <tr className="border-b border-[#d5ddda] bg-white text-sm text-[#203035]">
-                  <th className="px-3 py-3 text-left font-semibold">Orden</th>
+                  {canManageContent && <th className="px-3 py-3 text-left font-semibold">Orden</th>}
                   <th className="px-5 py-3 text-left font-semibold">Imagen</th>
                   <th className="px-5 py-3 text-left font-semibold">Titulo</th>
                   <th className="px-5 py-3 text-left font-semibold">Ciudad</th>
@@ -157,15 +160,15 @@ const OfertasAdmin = () => {
                   <th className="px-5 py-3 text-left font-semibold">Descuento</th>
                   <th className="px-5 py-3 text-left font-semibold">Hot Deal</th>
                   <th className="px-5 py-3 text-left font-semibold">Estado</th>
-                  <th className="px-5 py-3 text-right font-semibold">Acciones</th>
+                  {canManageContent && <th className="px-5 py-3 text-right font-semibold">Acciones</th>}
                 </tr>
               </thead>
               <tbody>
                 {filteredItems.map((item) => (
                   <tr
                     key={item.id}
-                    draggable={!query.trim()}
-                    onDragStart={() => setDraggingId(item.id)}
+                    draggable={canManageContent && !query.trim()}
+                    onDragStart={() => canManageContent && setDraggingId(item.id)}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={() => {
                       moveItem(draggingId, item.id);
@@ -174,9 +177,11 @@ const OfertasAdmin = () => {
                     onDragEnd={() => setDraggingId(null)}
                     className="border-b border-[#dce3e0] last:border-b-0 hover:bg-[#f6f8f7]"
                   >
-                    <td className="px-3 py-3 text-[#7c8d8b]">
-                      <GripVertical className="h-4 w-4 cursor-grab" />
-                    </td>
+                    {canManageContent && (
+                      <td className="px-3 py-3 text-[#7c8d8b]">
+                        <GripVertical className="h-4 w-4 cursor-grab" />
+                      </td>
+                    )}
                     <td className="px-5 py-3">
                       <img
                         src={item.image}
@@ -219,24 +224,26 @@ const OfertasAdmin = () => {
                         {item.is_active ? "Activa" : "Desactivada"}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-right">
-                      <div className="inline-flex items-center gap-2">
-                        <button
-                          onClick={() => setEditing(item)}
-                          className="rounded-lg border border-[#c7d0cd] p-1.5 text-[#1f7770] transition hover:bg-[#e0eeeb]"
-                          title="Editar"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="rounded-lg border border-[#f0c4c4] p-1.5 text-[#c75252] transition hover:bg-[#fae4e4]"
-                          title="Eliminar"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
+                    {canManageContent && (
+                      <td className="px-5 py-3 text-right">
+                        <div className="inline-flex items-center gap-2">
+                          <button
+                            onClick={() => setEditing(item)}
+                            className="rounded-lg border border-[#c7d0cd] p-1.5 text-[#1f7770] transition hover:bg-[#e0eeeb]"
+                            title="Editar"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="rounded-lg border border-[#f0c4c4] p-1.5 text-[#c75252] transition hover:bg-[#fae4e4]"
+                            title="Eliminar"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -245,7 +252,7 @@ const OfertasAdmin = () => {
         </div>
       )}
 
-      {editing !== null && (
+      {editing !== null && canManageContent && (
         <OfertaForm
           initialData={editing}
           onSaved={() => {

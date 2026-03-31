@@ -9,6 +9,10 @@ from .models import Oferta
 from .serializers import OfertaSerializer
 
 
+def can_manage_content(user):
+    return bool(user and user.is_authenticated and (user.is_staff or user.is_superuser))
+
+
 @api_view(['GET', 'POST'])
 @authentication_classes([TokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
@@ -21,6 +25,9 @@ def ofertas_list(request):
             ofertas = Oferta.objects.filter(is_active=True)  # pyright: ignore[reportAttributeAccessIssue]
         serializer = OfertaSerializer(ofertas, many=True)
         return Response(serializer.data)
+
+    if not can_manage_content(request.user):
+        return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
     serializer = OfertaSerializer(data=request.data)
     if serializer.is_valid():
@@ -44,6 +51,8 @@ def ofertas_detail(request, pk):
         return Response(serializer.data)
 
     if request.method == 'PUT':
+        if not can_manage_content(request.user):
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
         serializer = OfertaSerializer(oferta, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -51,6 +60,8 @@ def ofertas_detail(request, pk):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     if request.method == 'DELETE':
+        if not can_manage_content(request.user):
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
         oferta.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -59,6 +70,9 @@ def ofertas_detail(request, pk):
 @authentication_classes([TokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def ofertas_reorder(request):
+    if not can_manage_content(request.user):
+        return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
     # Espera lista: [{"id": <int>, "display_order": <int>}, ...].
     payload = request.data if isinstance(request.data, list) else []
     if not payload:

@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { Map, Waves, ImageIcon, Tag, CalendarDays, ArrowUpRight } from "lucide-react";
+import { Map, Waves, ImageIcon, Tag, Users, CalendarDays, ArrowUpRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const Dashboard = () => {
   const [counts, setCounts] = useState({ excursiones: 0, playas: 0, estados: 0, ofertas: 0 });
   const [recent, setRecent] = useState([]);
-  const { token, user } = useAuth();
+  const { token, displayName, isSuperUser, canManageContent } = useAuth();
+  const actionLabel = canManageContent ? "Gestionar" : "Ver contenido";
 
   useEffect(() => {
     async function load() {
@@ -79,7 +80,7 @@ const Dashboard = () => {
   return (
     <section className="space-y-4">
       <header>
-        <h1 className="font-display text-4xl font-semibold leading-tight text-[#182330]">Bienvenido, {user?.username || "admin"}!</h1>
+        <h1 className="font-display text-4xl font-semibold leading-tight text-[#182330]">Bienvenido, {displayName}!</h1>
         <p className="mt-1 text-base text-[#637271]">Gestiona el contenido de Vicente Viajes desde este panel.</p>
       </header>
 
@@ -127,27 +128,35 @@ const Dashboard = () => {
           <div className="mt-3 grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
             <Link to="/admin/excursiones" className="rounded-xl bg-[#c9d1ce] px-4 py-4 text-center transition hover:bg-[#bec8c4]">
               <Map className="mx-auto h-5 w-5 text-[#566967]" />
-              <p className="mt-2 text-base font-semibold text-[#213136]">Gestionar</p>
+              <p className="mt-2 text-base font-semibold text-[#213136]">{actionLabel}</p>
               <p className="text-xs text-[#5f6f6d]">Excursiones</p>
             </Link>
 
             <Link to="/admin/playas" className="rounded-xl bg-[#c9d1ce] px-4 py-4 text-center transition hover:bg-[#bec8c4]">
               <Waves className="mx-auto h-5 w-5 text-[#566967]" />
-              <p className="mt-2 text-base font-semibold text-[#213136]">Gestionar</p>
+              <p className="mt-2 text-base font-semibold text-[#213136]">{actionLabel}</p>
               <p className="text-xs text-[#5f6f6d]">Playas</p>
             </Link>
 
             <Link to="/admin/estados" className="rounded-xl bg-[#c9d1ce] px-4 py-4 text-center transition hover:bg-[#bec8c4]">
               <ImageIcon className="mx-auto h-5 w-5 text-[#566967]" />
-              <p className="mt-2 text-base font-semibold text-[#213136]">Gestionar</p>
+              <p className="mt-2 text-base font-semibold text-[#213136]">{actionLabel}</p>
               <p className="text-xs text-[#5f6f6d]">Estados</p>
             </Link>
 
             <Link to="/admin/ofertas" className="rounded-xl bg-[#c9d1ce] px-4 py-4 text-center transition hover:bg-[#bec8c4]">
               <Tag className="mx-auto h-5 w-5 text-[#566967]" />
-              <p className="mt-2 text-base font-semibold text-[#213136]">Gestionar</p>
+              <p className="mt-2 text-base font-semibold text-[#213136]">{actionLabel}</p>
               <p className="text-xs text-[#5f6f6d]">Ofertas</p>
             </Link>
+
+            {isSuperUser && (
+              <Link to="/admin/usuarios" className="rounded-xl bg-[#c9d1ce] px-4 py-4 text-center transition hover:bg-[#bec8c4]">
+                <Users className="mx-auto h-5 w-5 text-[#566967]" />
+                <p className="mt-2 text-base font-semibold text-[#213136]">Gestionar</p>
+                <p className="text-xs text-[#5f6f6d]">Usuarios</p>
+              </Link>
+            )}
           </div>
         </div>
 

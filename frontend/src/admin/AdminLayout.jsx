@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { LayoutGrid, Map, Waves, ImageIcon, Tag, LogOut, UserRound } from "lucide-react";
+import { LayoutGrid, Map, Waves, ImageIcon, Tag, Users, LogOut, Camera, UserRound } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import logoImage from "../assets/images/vicentelogo.png";
 
-const links = [
+const baseLinks = [
   { to: "", label: "Dashboard", icon: LayoutGrid },
   { to: "excursiones", label: "Excursiones", icon: Map },
   { to: "playas", label: "Playas", icon: Waves },
@@ -13,8 +13,30 @@ const links = [
 ];
 
 const AdminLayout = () => {
-  const { logout, user } = useAuth();
-  const userName = user?.username || "admin";
+  const { logout, user, isSuperUser, roleLabel, permissionTags, displayName, updateCurrentUser } = useAuth();
+  const userName = displayName || user?.username || "admin";
+  const fileInputRef = useRef(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const links = isSuperUser
+    ? [...baseLinks, { to: "usuarios", label: "Usuarios", icon: Users }]
+    : baseLinks;
+
+  const handleProfileImageChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("profile_image", file);
+      await updateCurrentUser(formData);
+    } catch (error) {
+      window.alert(error?.response?.data?.detail || "No se pudo actualizar la imagen de perfil.");
+    } finally {
+      setUploadingImage(false);
+      event.target.value = "";
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#dde2df] text-[#1b2a2f]">
@@ -60,19 +82,55 @@ const AdminLayout = () => {
           <div className="border-t border-[#d5dcda] px-2 py-3">
             <div className="rounded-xl bg-[#c9d1ce] p-2.5">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#8eb2ad] bg-[#d9dfdd] text-[#2b7a73]">
-                  <UserRound className="h-5 w-5" />
+                <div className="relative">
+                  <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-[#8eb2ad] bg-[#d9dfdd] text-[#2b7a73]">
+                    {user?.profile_image_url ? (
+                      <img src={user.profile_image_url} alt={userName} className="h-full w-full object-cover" />
+                    ) : (
+                      <UserRound className="h-6 w-6" />
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingImage}
+                    className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border border-white bg-[#1f7770] text-white shadow-sm transition hover:bg-[#1a6862] disabled:cursor-not-allowed disabled:opacity-60"
+                    title="Cambiar foto"
+                  >
+                    <Camera className="h-3.5 w-3.5" />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProfileImageChange}
+                    className="hidden"
+                  />
                 </div>
                 <div>
                   <p className="text-base font-semibold text-[#1f2d31]">{userName}</p>
-                  <p className="text-xs text-[#61706f]">Admin</p>
+                  <p className="text-xs text-[#61706f]">{roleLabel}</p>
+                  {uploadingImage && <p className="text-[10px] text-[#61706f]">Subiendo foto...</p>}
                 </div>
               </div>
 
-              <div className="mt-2 flex gap-1.5 text-[11px]">
-                <span className="rounded-full bg-[#b4ccc4] px-2 py-1 text-[#2d7e77]">Editar</span>
-                <span className="rounded-full bg-[#d7e9dc] px-2 py-1 text-[#5f9f75]">Crear</span>
-                <span className="rounded-full bg-[#f1d5d5] px-2 py-1 text-[#e46060]">Eliminar</span>
+              <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+                {permissionTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className={`rounded-full px-2 py-1 ${
+                      tag === "Eliminar"
+                        ? "bg-[#f1d5d5] text-[#e46060]"
+                        : tag === "Crear"
+                          ? "bg-[#d7e9dc] text-[#5f9f75]"
+                          : tag === "Solo Lectura"
+                            ? "bg-[#e0e7e5] text-[#516867]"
+                            : "bg-[#b4ccc4] text-[#2d7e77]"
+                    }`}
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
             </div>
 

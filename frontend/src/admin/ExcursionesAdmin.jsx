@@ -5,7 +5,7 @@ import { CalendarDays, Map, Search, Plus, Pencil, Trash2, Star } from "lucide-re
 import ExcursionForm from "./ExcursionForm";
 
 const ExcursionesAdmin = () => {
-  const { token } = useAuth();
+  const { token, canManageContent } = useAuth();
   const [items, setItems] = useState([]);
   const [editing, setEditing] = useState(null);
   const [query, setQuery] = useState("");
@@ -109,13 +109,15 @@ const ExcursionesAdmin = () => {
             />
           </label>
 
-          <button
-            onClick={() => setEditing({})}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#1f7770] px-4 text-sm font-semibold text-white transition hover:bg-[#1a6862]"
-          >
-            <Plus className="h-4 w-4" />
-            Anadir
-          </button>
+          {canManageContent && (
+            <button
+              onClick={() => setEditing({})}
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#1f7770] px-4 text-sm font-semibold text-white transition hover:bg-[#1a6862]"
+            >
+              <Plus className="h-4 w-4" />
+              Anadir
+            </button>
+          )}
         </div>
       </header>
 
@@ -150,7 +152,7 @@ const ExcursionesAdmin = () => {
                   <th className="px-5 py-3 text-left font-semibold">Rating</th>
                   <th className="px-5 py-3 text-left font-semibold">Estado</th>
                   <th className="px-5 py-3 text-left font-semibold">Destacada</th>
-                  <th className="px-5 py-3 text-right font-semibold">Acciones</th>
+                  {canManageContent && <th className="px-5 py-3 text-right font-semibold">Acciones</th>}
                 </tr>
               </thead>
               <tbody>
@@ -201,24 +203,26 @@ const ExcursionesAdmin = () => {
                         {item.is_featured ? "Si" : "No"}
                       </span>
                     </td>
-                    <td className="px-5 py-3">
-                      <div className="flex justify-end gap-3">
-                        <button
-                          className="text-[#2a8a83] transition hover:text-[#1f7770]"
-                          onClick={() => setEditing(item)}
-                          title="Editar"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          className="text-[#ea6a6a] transition hover:text-[#d55151]"
-                          onClick={() => handleDelete(item.id)}
-                          title="Eliminar"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
+                    {canManageContent && (
+                      <td className="px-5 py-3">
+                        <div className="flex justify-end gap-3">
+                          <button
+                            className="text-[#2a8a83] transition hover:text-[#1f7770]"
+                            onClick={() => setEditing(item)}
+                            title="Editar"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            className="text-[#ea6a6a] transition hover:text-[#d55151]"
+                            onClick={() => handleDelete(item.id)}
+                            title="Eliminar"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -227,7 +231,7 @@ const ExcursionesAdmin = () => {
         </div>
       )}
 
-      {editing !== null && (
+      {editing !== null && canManageContent && (
         <ExcursionForm
           initialData={editing}
           onSaved={() => {

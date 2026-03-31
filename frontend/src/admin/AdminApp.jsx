@@ -7,10 +7,11 @@ import ExcursionesAdmin from "./ExcursionesAdmin";
 import PlayasAdmin from "./PlayasAdmin";
 import OfertasAdmin from "./OfertasAdmin";
 import EstadosAdmin from "./EstadosAdmin";
+import UsuariosAdmin from "./UsuariosAdmin";
 import AdminLayout from "./AdminLayout";
 
 const AdminApp = () => {
-  const { token } = useAuth();
+  const { token, isSuperUser } = useAuth();
 
   return (
     <Routes>
@@ -21,6 +22,7 @@ const AdminApp = () => {
         <Route path="playas" element={<PlayasAdmin />} />
         <Route path="estados" element={<EstadosAdmin />} />
         <Route path="ofertas" element={<OfertasAdmin />} />
+        <Route path="usuarios" element={isSuperUser ? <UsuariosAdmin /> : <Navigate to="/admin" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/admin" replace />} />
     </Routes>
