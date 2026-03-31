@@ -408,27 +408,52 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <label className="inline-flex items-center gap-2 text-sm font-semibold text-[#3b4b4a]">
-                <input
-                  name="is_featured"
-                  type="checkbox"
-                  checked={data.is_featured}
-                  onChange={handleChange}
-                  className="h-4 w-4"
-                />
-                Destacado
-              </label>
-              <label className="inline-flex items-center gap-2 text-sm font-semibold text-[#3b4b4a]">
-                <input
-                  name="is_active"
-                  type="checkbox"
-                  checked={data.is_active}
-                  onChange={handleChange}
-                  className="h-4 w-4"
-                />
-                Activo
-              </label>
+            <div className="grid grid-cols-1 gap-3 pt-1 md:grid-cols-2">
+              <div className="flex items-center gap-3 rounded-xl bg-[#f0f4f2] px-4 py-3">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={data.is_featured}
+                  onClick={() =>
+                    setData((prev) => ({ ...prev, is_featured: !prev.is_featured }))
+                  }
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    data.is_featured ? "bg-[#1f7770]" : "bg-[#c4ceca]"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                      data.is_featured ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+                <span className="text-sm font-semibold text-[#1a2632]">
+                  {data.is_featured ? "Destacado — visible como principal" : "No destacado"}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3 rounded-xl bg-[#f0f4f2] px-4 py-3">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={data.is_active}
+                  onClick={() =>
+                    setData((prev) => ({ ...prev, is_active: !prev.is_active }))
+                  }
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    data.is_active ? "bg-[#1f7770]" : "bg-[#c4ceca]"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                      data.is_active ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+                <span className="text-sm font-semibold text-[#1a2632]">
+                  {data.is_active ? "Activa — visible en el sitio" : "Desactivada — no se muestra"}
+                </span>
+              </div>
             </div>
 
             <input

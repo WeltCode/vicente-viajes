@@ -236,28 +236,56 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <label className="flex items-center gap-2 rounded-xl bg-[#f0f4f2] px-4 py-3 text-sm font-semibold text-[#1a2632]">
-              <input
-                name="is_hot_deal"
-                type="checkbox"
-                checked={Boolean(data.is_hot_deal)}
-                onChange={handleChange}
-                className="h-4 w-4"
-              />
-              Mostrar badge Hot Deal
-            </label>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div className="flex items-center gap-3 rounded-xl bg-[#f0f4f2] px-4 py-3">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={Boolean(data.is_hot_deal)}
+                onClick={() =>
+                  setData((prev) => ({ ...prev, is_hot_deal: !Boolean(prev.is_hot_deal) }))
+                }
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  data.is_hot_deal ? "bg-[#1f7770]" : "bg-[#c4ceca]"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                    data.is_hot_deal ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+              <span className="text-sm font-semibold text-[#1a2632]">
+                {data.is_hot_deal
+                  ? "Hot Deal — badge visible"
+                  : "Hot Deal oculto"}
+              </span>
+            </div>
 
-            <label className="flex items-center gap-2 rounded-xl bg-[#f0f4f2] px-4 py-3 text-sm font-semibold text-[#1a2632]">
-              <input
-                name="is_active"
-                type="checkbox"
-                checked={Boolean(data.is_active)}
-                onChange={handleChange}
-                className="h-4 w-4"
-              />
-              Oferta activa
-            </label>
+            <div className="flex items-center gap-3 rounded-xl bg-[#f0f4f2] px-4 py-3">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={Boolean(data.is_active)}
+                onClick={() =>
+                  setData((prev) => ({ ...prev, is_active: !Boolean(prev.is_active) }))
+                }
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  data.is_active ? "bg-[#1f7770]" : "bg-[#c4ceca]"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                    data.is_active ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+              <span className="text-sm font-semibold text-[#1a2632]">
+                {data.is_active
+                  ? "Activa — visible en ofertas"
+                  : "Desactivada — no se muestra"}
+              </span>
+            </div>
           </div>
         </form>
 

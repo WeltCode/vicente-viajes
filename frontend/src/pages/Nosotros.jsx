@@ -1,6 +1,21 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Award, Users, Globe, Heart, Target, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
+import {
+  Award,
+  Users,
+  Globe,
+  Heart,
+  Target,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+  ShieldCheck,
+  Plane,
+  Sparkles,
+  ArrowRight,
+} from "lucide-react";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import PageHeader from "../components/sections/PageHeader";
@@ -11,21 +26,25 @@ const team = [
     name: "Vicente Garcia",
     role: "Fundador & CEO",
     image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80",
+    specialty: "Estrategia Comercial",
   },
   {
     name: "Maria Lopez",
     role: "Directora de Operaciones",
     image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80",
+    specialty: "Operacion de Grupos",
   },
   {
     name: "Carlos Ruiz",
     role: "Jefe de Ventas",
     image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+    specialty: "Paquetes a Medida",
   },
   {
     name: "Ana Martinez",
     role: "Especialista en Destinos",
     image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80",
+    specialty: "Experiencias Premium",
   },
 ];
 
@@ -36,8 +55,45 @@ const stats = [
   { icon: Heart, value: "98%", label: "Satisfaccion" },
 ];
 
+const differentiators = [
+  {
+    icon: ShieldCheck,
+    title: "Seguridad y respaldo",
+    desc: "Acompanamiento antes, durante y despues de cada viaje.",
+    tone: "from-cyan-500/30 to-cyan-300/10",
+  },
+  {
+    icon: Plane,
+    title: "Paquetes a medida",
+    desc: "Combinamos vuelos, hotel y experiencias segun tu presupuesto.",
+    tone: "from-teal/30 to-sage/10",
+  },
+  {
+    icon: Sparkles,
+    title: "Atencion cercana",
+    desc: "Trato humano y recomendaciones reales para cada destino.",
+    tone: "from-emerald-500/30 to-emerald-300/10",
+  },
+];
+
+const teamGridVariants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.12,
+    },
+  },
+};
+
+const teamCardVariants = {
+  hidden: { opacity: 0, y: 28 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+};
+
 export default function Nosotros() {
   const [currentTeamIndex, setCurrentTeamIndex] = useState(0);
+  const whatsappUrl =
+    "https://wa.me/34600750758?text=%C2%A1Hola%20Vicente%20Viajes!%20Me%20gustaria%20recibir%20asesoria%20para%20mi%20proximo%20viaje.";
 
   const handleTeamPrev = () => {
     setCurrentTeamIndex((prev) => (prev === 0 ? team.length - 1 : prev - 1));
@@ -54,55 +110,55 @@ export default function Nosotros() {
         <PageHeader
           badge="Nuestra Historia"
           title="Sobre Vicente Viajes"
-          subtitle="Mas de 25 anos haciendo realidad los suenos de viaje de miles de personas. Conoce la historia detras de nuestra pasion por los viajes."
+          subtitle="Mas de 25 anos creando experiencias de viaje memorables con un servicio humano, cercano y profesional."
         />
 
-      <section className="py-16 bg-teal">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="text-center"
-              >
-                <stat.icon className="w-10 h-10 text-white/80 mx-auto mb-3" />
-                <div className="text-3xl md:text-4xl font-bold text-white mb-1">{stat.value}</div>
-                <div className="text-sm text-white/75">{stat.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+        <section className="relative overflow-hidden bg-white py-16 md:py-20">
+          <div className="absolute -top-20 -left-20 h-64 w-64 rounded-full bg-teal/10 blur-3xl" />
+          <div className="absolute -bottom-20 -right-20 h-72 w-72 rounded-full bg-sage/10 blur-3xl" />
 
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="container relative z-10 mx-auto px-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+              {stats.map((stat, index) => (
+                <motion.article
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.45, delay: index * 0.08 }}
+                  className="rounded-2xl border border-[#d4e4df] bg-[#f7fbfa] p-5 text-center shadow-sm"
+                >
+                  <stat.icon className="mx-auto mb-3 h-8 w-8 text-teal md:h-10 md:w-10" />
+                  <p className="mb-1 text-2xl font-bold text-foreground md:text-4xl">{stat.value}</p>
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground md:text-sm">{stat.label}</p>
+                </motion.article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-background py-20">
+          <div className="container mx-auto grid grid-cols-1 items-center gap-12 px-4 lg:grid-cols-2">
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-6">
+              <span className="inline-flex items-center rounded-full bg-teal/10 px-4 py-2 text-sm font-semibold uppercase tracking-wider text-teal">
                 Nuestra Historia
+              </span>
+              <h2 className="mt-4 text-3xl font-display font-bold text-foreground md:text-5xl">
+                Una agencia que nacio para hacerte viajar mejor
               </h2>
-              <p className="text-muted-foreground mb-4 leading-relaxed">
-                Vicente Viajes nacio en 1999 con un sueno simple: hacer que viajar sea accesible
-                y memorable para todos. Comenzamos como una pequena agencia familiar y hoy somos
-                una de las agencias de viajes mas reconocidas del pais.
+              <p className="mt-5 leading-relaxed text-muted-foreground">
+                Vicente Viajes nacio en 1999 con un objetivo claro: que viajar sea mas simple,
+                mas seguro y mucho mas emocionante para cada cliente. De una pequena oficina
+                familiar, evolucionamos a un equipo experto en disenar viajes a medida.
               </p>
-              <p className="text-muted-foreground mb-4 leading-relaxed">
-                Nuestro fundador, Vicente Garcia, comenzo este viaje con la vision de crear
-                experiencias unicas que transformaran la vida de las personas. Hoy, esa vision
-                sigue viva en cada viaje que planificamos.
-              </p>
-              <p className="text-muted-foreground leading-relaxed">
-                Con mas de 25 anos de experiencia, hemos ayudado a mas de 15,000 viajeros a
-                descubrir el mundo, creando recuerdos que duran toda la vida.
+              <p className="mt-4 leading-relaxed text-muted-foreground">
+                Hoy combinamos experiencia, tecnologia y trato humano para que cada ruta,
+                excursion y escapada tenga calidad premium y cero estres para ti.
               </p>
             </motion.div>
 
@@ -111,80 +167,99 @@ export default function Nosotros() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="relative"
+              className="relative w-full max-w-[360px] justify-self-center lg:justify-self-end"
             >
               <img
-                src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80"
-                alt="Nuestro equipo"
-                className="rounded-2xl shadow-elevated"
+                src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1000&q=80"
+                alt="Equipo Vicente Viajes"
+                className="w-full rounded-3xl shadow-elevated"
               />
-              <div className="absolute -bottom-6 -right-6 bg-teal text-white p-6 rounded-2xl shadow-lg">
-                <div className="text-3xl font-bold">25+</div>
-                <div className="text-sm opacity-90">Anos de Experiencia</div>
-              </div>
             </motion.div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="py-20 bg-sand">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <span className="text-teal font-semibold text-sm uppercase tracking-[0.2em]">
-              Principios
-            </span>
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mt-2">
-              Mision y Vision
-            </h2>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <section className="bg-background py-20">
+          <div className="container mx-auto px-4">
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="bg-card p-8 rounded-2xl shadow-card"
+              className="text-center mb-12"
             >
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-6">
-                <Target className="w-7 h-7 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-foreground mb-4">Nuestra Mision</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Crear experiencias de viaje inolvidables que transformen la vida de nuestros
-                clientes, ofreciendo un servicio personalizado, seguro y de alta calidad a
-                precios accesibles.
-              </p>
+              <span className="text-teal font-semibold text-sm uppercase tracking-[0.2em]">
+                Principios
+              </span>
+              <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mt-2">
+                Mision, Vision y Diferencia
+              </h2>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="bg-card p-8 rounded-2xl shadow-card"
-            >
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-sunset to-coral flex items-center justify-center mb-6">
-                <Eye className="w-7 h-7 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-foreground mb-4">Nuestra Vision</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Ser la agencia de viajes lider en Latinoamerica, reconocida por nuestra
-                excelencia en servicio, innovacion tecnologica y compromiso con la
-                sostenibilidad turistica.
-              </p>
-            </motion.div>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <motion.article
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+                className="rounded-3xl bg-card p-8 shadow-card"
+              >
+                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-teal to-sage">
+                  <Target className="h-7 w-7 text-white" />
+                </div>
+                <h3 className="mb-3 text-2xl font-bold text-foreground">Nuestra Mision</h3>
+                <p className="leading-relaxed text-muted-foreground">
+                  Crear experiencias de viaje inolvidables con servicio personalizado, seguro y de alta calidad, para que cada cliente viaje con total confianza.
+                </p>
+              </motion.article>
+
+              <motion.article
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.08 }}
+                className="rounded-3xl bg-card p-8 shadow-card"
+              >
+                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-sunset to-coral">
+                  <Eye className="h-7 w-7 text-white" />
+                </div>
+                <h3 className="mb-3 text-2xl font-bold text-foreground">Nuestra Vision</h3>
+                <p className="leading-relaxed text-muted-foreground">
+                  Ser la agencia lider en el mercado hispano, reconocida por excelencia, innovacion y compromiso real con la experiencia del viajero.
+                </p>
+              </motion.article>
+
+              <motion.article
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.16 }}
+                className="rounded-3xl border border-[#d7e8e2] bg-[#f4fbf9] p-8 shadow-card"
+              >
+                <h3 className="mb-5 text-2xl font-bold text-foreground">Por que elegirnos</h3>
+                <div className="space-y-4">
+                  {differentiators.map((item) => (
+                    <div key={item.title} className="rounded-2xl border border-white bg-white p-4 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className={`mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${item.tone}`}>
+                          <item.icon className="h-5 w-5 text-forest" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground">{item.title}</p>
+                          <p className="text-sm text-muted-foreground">{item.desc}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.article>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4">
+        <section className="relative overflow-hidden py-20 bg-background">
+        <div className="absolute top-12 left-0 h-52 w-52 rounded-full bg-teal/10 blur-3xl" />
+        <div className="absolute bottom-8 right-8 h-64 w-64 rounded-full bg-sage/10 blur-3xl" />
+
+        <div className="container relative z-10 mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -197,34 +272,45 @@ export default function Nosotros() {
             <h2 className="text-3xl md:text-4xl font-display font-bold text-[#102a2b] mt-2">
               Conoce al Equipo
             </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
+              Profesionales apasionados por convertir cada viaje en una experiencia memorable.
+            </p>
           </motion.div>
 
           {/* Desktop Grid */}
-          <div className="hidden lg:grid grid-cols-4 gap-8">
+          <motion.div
+            className="hidden lg:grid grid-cols-4 gap-6"
+            variants={teamGridVariants}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             {team.map((member, index) => (
               <motion.div
                 key={member.name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="text-center group card-travel"
+                variants={teamCardVariants}
+                className="group relative overflow-hidden rounded-3xl border border-[#d6e5e0] bg-white shadow-card transition-all duration-500 hover:-translate-y-1.5 hover:shadow-elevated"
               >
-                <div className="relative overflow-hidden rounded-t-2xl">
+                <div className="relative overflow-hidden">
                   <img
                     src={member.image}
                     alt={member.name}
-                    className="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-teal/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0f2425]/80 via-[#0f2425]/20 to-transparent opacity-80" />
+                  <p className="absolute bottom-4 left-4 right-4 rounded-xl border border-white/20 bg-black/20 px-3 py-2 text-xs text-white backdrop-blur-sm">
+                    {member.specialty}
+                  </p>
                 </div>
-                <div className="p-5">
+
+                <div className="p-5 text-center">
                   <h3 className="text-lg font-bold text-foreground">{member.name}</h3>
-                  <p className="text-muted-foreground">{member.role}</p>
+                  <p className="text-sm text-teal font-medium">{member.role}</p>
+                  <div className="mx-auto mt-3 h-1 w-12 rounded-full bg-gradient-to-r from-teal to-sage" />
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           {/* Mobile Carousel */}
           <div className="lg:hidden">
@@ -232,7 +318,7 @@ export default function Nosotros() {
               {/* Left Button */}
               <button
                 onClick={handleTeamPrev}
-                className="absolute left-0 z-10 bg-teal text-white p-2 rounded-full hover:bg-teal/90 transition-colors"
+                className="absolute left-0 z-10 rounded-full border border-teal/20 bg-white/90 p-2 text-teal shadow-md transition hover:bg-teal hover:text-white"
                 aria-label="Anterior"
               >
                 <ChevronLeft size={24} />
@@ -250,18 +336,21 @@ export default function Nosotros() {
                       key={member.name}
                       className="w-full flex-shrink-0 px-2"
                     >
-                      <div className="text-center group card-travel">
-                        <div className="relative overflow-hidden rounded-t-2xl">
+                      <div className="group overflow-hidden rounded-3xl border border-[#d6e5e0] bg-white shadow-card">
+                        <div className="relative overflow-hidden">
                           <img
                             src={member.image}
                             alt={member.name}
-                            className="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-110"
+                            className="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-110"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-teal/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#0f2425]/80 via-[#0f2425]/20 to-transparent opacity-80" />
                         </div>
-                        <div className="p-5">
+
+                        <div className="p-5 text-center">
                           <h3 className="text-lg font-bold text-foreground">{member.name}</h3>
-                          <p className="text-muted-foreground">{member.role}</p>
+                          <p className="text-sm text-teal font-medium">{member.role}</p>
+                          <p className="mt-2 text-xs text-muted-foreground">{member.specialty}</p>
+                          <div className="mx-auto mt-3 h-1 w-12 rounded-full bg-gradient-to-r from-teal to-sage" />
                         </div>
                       </div>
                     </motion.div>
@@ -272,7 +361,7 @@ export default function Nosotros() {
               {/* Right Button */}
               <button
                 onClick={handleTeamNext}
-                className="absolute right-0 z-10 bg-teal text-white p-2 rounded-full hover:bg-teal/90 transition-colors"
+                className="absolute right-0 z-10 rounded-full border border-teal/20 bg-white/90 p-2 text-teal shadow-md transition hover:bg-teal hover:text-white"
                 aria-label="Siguiente"
               >
                 <ChevronRight size={24} />
@@ -296,7 +385,45 @@ export default function Nosotros() {
         </div>
       </section>
 
-      <WhatsAppButton />
+        <section className="py-20 bg-mist">
+          <div className="container mx-auto px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="rounded-3xl bg-gradient-to-r from-forest via-teal to-sage px-6 py-12 text-center shadow-elevated md:px-12"
+            >
+              <h2 className="text-3xl font-display font-bold text-white md:text-5xl">
+                Listo para planear tu proximo viaje?
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-white/80">
+                Cuentanos que destino tienes en mente y te ayudamos a crear una experiencia personalizada.
+              </p>
+
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  to="/contacto"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3 text-sm font-bold text-forest transition hover:scale-[1.03]"
+                >
+                  Solicitar asesoria
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-7 py-3 text-sm font-bold text-white transition hover:scale-[1.03]"
+                >
+                  <FaWhatsapp className="h-4 w-4" />
+                  Escribir por WhatsApp
+                </a>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        <WhatsAppButton />
       </main>
       <Footer />
     </div>

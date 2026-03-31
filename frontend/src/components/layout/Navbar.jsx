@@ -7,9 +7,10 @@ import { Menu, X } from "lucide-react";
 import logo from "../../assets/images/vicentelogo.png";
 
 const navLinks = [
-  { name: "Vuelos", path: "/vuelos", externalUrl: "https://aereo.vicenteviajes.com" },
+  
   { name: "Excursiones", path: "/excursiones" },
   { name: "Playas", path: "/playas" },
+  { name: "Vuelos", path: "/vuelos", externalUrl: "https://aereo.vicenteviajes.com" },
   { name: "Hoteles", path: "/hoteles" },
   { name: "Ofertas", path: "/ofertas" },
   { name: "Nosotros", path: "/nosotros" },

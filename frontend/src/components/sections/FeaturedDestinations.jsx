@@ -254,13 +254,13 @@ const FeaturedDestinations = () => {
           className="text-center mb-16"
         >
           <span className="inline-block px-4 py-2 rounded-full bg-teal/10 text-teal font-medium text-sm uppercase tracking-wider mb-4">
-            Explora el Mundo
+            📅 Próximas Salidas
           </span>
           <h2 className="text-4xl md:text-5xl font-bold text-forest mb-6 font-display">
-            Destinos Destacados
+            Excursiones Disponibles
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-            Carrusel de imagenes en formato vertical, gestionado desde el panel de admin
+            Descubre nuestras próximas salidas y reserva tu lugar antes de que se agoten las plazas.
           </p>
           <div className="mt-6 flex justify-center">
             <button
