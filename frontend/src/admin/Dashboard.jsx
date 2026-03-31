@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { Map, Waves, Building2, Tag, CalendarDays, ArrowUpRight } from "lucide-react";
+import { Map, Waves, ImageIcon, Tag, CalendarDays, ArrowUpRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const Dashboard = () => {
-  const [counts, setCounts] = useState({ excursiones: 0, playas: 0, hoteles: 2, ofertas: 0 });
+  const [counts, setCounts] = useState({ excursiones: 0, playas: 0, estados: 0, ofertas: 0 });
   const [recent, setRecent] = useState([]);
   const { token, user } = useAuth();
 
@@ -15,19 +15,22 @@ const Dashboard = () => {
         const headers = {
           "Authorization": `Token ${token}`,
         };
-        const [eResp, pResp, oResp] = await Promise.all([
+        const [eResp, pResp, oResp, sResp] = await Promise.all([
           axios.get("http://localhost:8000/api/excursiones/", { headers }),
           axios.get("http://localhost:8000/api/playas/", { headers }),
           axios.get("http://localhost:8000/api/ofertas/", { headers }),
+          axios.get("http://localhost:8000/api/estados/", { headers }),
         ]);
         const excursiones = eResp.data || [];
         const playas = pResp.data || [];
         const ofertas = oResp.data || [];
+        const estados = sResp.data || [];
 
         setCounts((prev) => ({
           ...prev,
           excursiones: excursiones.length,
           playas: playas.length,
+          estados: estados.length,
           ofertas: ofertas.length,
         }));
 
@@ -52,7 +55,14 @@ const Dashboard = () => {
           created_at: item.created_at || "",
         }));
 
-        const combined = [...excursionItems, ...playaItems, ...ofertaItems].sort(
+        const estadoItems = estados.map((item) => ({
+          id: `s-${item.id}`,
+          title: item.title || `Estado ${item.id}`,
+          type: "Estado",
+          created_at: item.created_at || "",
+        }));
+
+        const combined = [...excursionItems, ...playaItems, ...ofertaItems, ...estadoItems].sort(
           (a, b) => new Date(b.created_at) - new Date(a.created_at)
         );
 
@@ -92,10 +102,10 @@ const Dashboard = () => {
 
         <article className="rounded-xl border border-[#ccd4d2] bg-white px-4 py-4">
           <span className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-[#5dac7f] text-white">
-            <Building2 className="h-4 w-4" />
+            <ImageIcon className="h-4 w-4" />
           </span>
-          <p className="text-3xl font-semibold text-[#1b2733]">{counts.hoteles}</p>
-          <p className="mt-0.5 text-sm text-[#60706f]">Hoteles</p>
+          <p className="text-3xl font-semibold text-[#1b2733]">{counts.estados}</p>
+          <p className="mt-0.5 text-sm text-[#60706f]">Estados</p>
         </article>
 
         <article className="rounded-xl border border-[#ccd4d2] bg-white px-4 py-4">
@@ -127,10 +137,10 @@ const Dashboard = () => {
               <p className="text-xs text-[#5f6f6d]">Playas</p>
             </Link>
 
-            <Link to="/admin/hoteles" className="rounded-xl bg-[#c9d1ce] px-4 py-4 text-center transition hover:bg-[#bec8c4]">
-              <Building2 className="mx-auto h-5 w-5 text-[#566967]" />
+            <Link to="/admin/estados" className="rounded-xl bg-[#c9d1ce] px-4 py-4 text-center transition hover:bg-[#bec8c4]">
+              <ImageIcon className="mx-auto h-5 w-5 text-[#566967]" />
               <p className="mt-2 text-base font-semibold text-[#213136]">Gestionar</p>
-              <p className="text-xs text-[#5f6f6d]">Hoteles</p>
+              <p className="text-xs text-[#5f6f6d]">Estados</p>
             </Link>
 
             <Link to="/admin/ofertas" className="rounded-xl bg-[#c9d1ce] px-4 py-4 text-center transition hover:bg-[#bec8c4]">

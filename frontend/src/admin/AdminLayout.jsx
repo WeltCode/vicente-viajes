@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { LayoutGrid, Map, Waves, Building2, Tag, LogOut, UserRound } from "lucide-react";
+import { LayoutGrid, Map, Waves, ImageIcon, Tag, LogOut, UserRound } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import logoImage from "../assets/images/vicentelogo.png";
 
@@ -8,7 +8,7 @@ const links = [
   { to: "", label: "Dashboard", icon: LayoutGrid },
   { to: "excursiones", label: "Excursiones", icon: Map },
   { to: "playas", label: "Playas", icon: Waves },
-  { to: "hoteles", label: "Hoteles", icon: Building2 },
+  { to: "estados", label: "Estados", icon: ImageIcon },
   { to: "ofertas", label: "Ofertas", icon: Tag },
 ];
 
