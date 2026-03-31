@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Pause, Play, X } from "lucide-react";
+import { apiUrl } from "../../services/api";
 import WaveDivider from "./WaveDivider";
 
 const fallbackStates = [
@@ -70,7 +71,7 @@ const FeaturedDestinations = () => {
 
     async function loadStates() {
       try {
-        const resp = await axios.get("http://localhost:8000/api/estados/");
+        const resp = await axios.get(apiUrl("estados/"));
         const data = Array.isArray(resp.data) ? resp.data : [];
         if (isMounted) {
           const today = new Date();

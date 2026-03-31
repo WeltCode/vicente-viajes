@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { CalendarDays, Eye, Image, Search, Plus, Pencil, Trash2, X } from "lucide-react";
 import EstadoForm from "./EstadoForm";
+import { apiUrl } from "../services/api";
 
 const EstadosAdmin = () => {
   const { token, canManageContent } = useAuth();
@@ -18,7 +19,7 @@ const EstadosAdmin = () => {
     setLoading(true);
     setError(null);
     try {
-      const resp = await axios.get("http://localhost:8000/api/estados/", {
+      const resp = await axios.get(apiUrl("estados/"), {
         headers: { Authorization: `Token ${token}` },
       });
       setItems(resp.data || []);
@@ -49,7 +50,7 @@ const EstadosAdmin = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("¿Eliminar este estado?")) return;
     try {
-      await axios.delete(`http://localhost:8000/api/estados/${id}/`, {
+      await axios.delete(apiUrl(`estados/${id}/`), {
         headers: { Authorization: `Token ${token}` },
       });
       fetchList();

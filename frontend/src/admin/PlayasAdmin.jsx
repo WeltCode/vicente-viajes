@@ -3,6 +3,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { Waves, Search, Plus, Pencil, Trash2, Star } from "lucide-react";
 import PlayaForm from "./PlayaForm";
+import { apiUrl } from "../services/api";
 
 const PlayasAdmin = () => {
   const { token, canManageContent } = useAuth();
@@ -16,7 +17,7 @@ const PlayasAdmin = () => {
     setLoading(true);
     setError(null);
     try {
-      const resp = await axios.get("http://localhost:8000/api/playas/", {
+      const resp = await axios.get(apiUrl("playas/"), {
         headers: { Authorization: `Token ${token}` },
       });
       setItems(resp.data);
@@ -34,7 +35,7 @@ const PlayasAdmin = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("¿Eliminar este elemento?")) return;
     try {
-      await axios.delete(`http://localhost:8000/api/playas/${id}/`, {
+      await axios.delete(apiUrl(`playas/${id}/`), {
         headers: { Authorization: `Token ${token}` },
       });
       fetchList();

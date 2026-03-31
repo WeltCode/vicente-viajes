@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { X } from "lucide-react";
+import { apiUrl } from "../services/api";
 
 const labelCls =
   "block text-xs font-semibold uppercase tracking-wide text-[#344443] mb-1";
@@ -67,12 +68,12 @@ const PlayaForm = ({ initialData, onSaved, onCancel }) => {
 
       if (finalData.id) {
         await axios.put(
-          `http://localhost:8000/api/playas/${finalData.id}/`,
+          apiUrl(`playas/${finalData.id}/`),
           finalData,
           { headers }
         );
       } else {
-        await axios.post("http://localhost:8000/api/playas/", finalData, {
+        await axios.post(apiUrl("playas/"), finalData, {
           headers,
         });
       }

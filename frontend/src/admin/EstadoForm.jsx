@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { CalendarDays, ImagePlus, UploadCloud, X } from "lucide-react";
+import { apiUrl } from "../services/api";
 
 const labelCls =
   "block text-xs font-semibold uppercase tracking-wide text-[#344443] mb-1";
@@ -76,9 +77,9 @@ const EstadoForm = ({ initialData, onSaved, onCancel }) => {
       };
 
       if (data.id) {
-        await axios.put(`http://localhost:8000/api/estados/${data.id}/`, formData, { headers });
+        await axios.put(apiUrl(`estados/${data.id}/`), formData, { headers });
       } else {
-        await axios.post("http://localhost:8000/api/estados/", formData, { headers });
+        await axios.post(apiUrl("estados/"), formData, { headers });
       }
       onSaved();
     } catch (err) {

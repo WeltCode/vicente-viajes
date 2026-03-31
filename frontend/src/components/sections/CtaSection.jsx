@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MoveRight, Phone } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
+import { buildWhatsAppUrl, siteContact } from "../../services/siteContact";
 
 export default function CtaSection() {
   return (
@@ -58,7 +59,7 @@ export default function CtaSection() {
             </Link>
 
             <a
-              href="https://wa.me/34612477810"
+              href={buildWhatsAppUrl("Hola Vicente Viajes, quiero ayuda para planificar mi proximo viaje.")}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2.5 rounded-full bg-[#25D366] px-8 py-4 text-base font-bold text-white shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300"
@@ -71,21 +72,21 @@ export default function CtaSection() {
           {/* Contact info strip */}
           <div className="inline-flex items-center gap-6 flex-wrap justify-center text-white/60 text-sm">
             <a
-              href="tel:+34612477810"
+              href={siteContact.phoneHref}
               className="inline-flex items-center gap-1.5 hover:text-white transition-colors"
             >
               <Phone className="h-4 w-4" />
-              +34 612 47 78 10
+              {siteContact.phoneDisplay}
             </a>
             <span className="hidden sm:block w-px h-4 bg-white/25" />
             <a
-              href="mailto:reservas@vicenteviajes.com"
+              href={siteContact.emailHref}
               className="hover:text-white transition-colors"
             >
-              reservas@vicenteviajes.com
+              {siteContact.email}
             </a>
             <span className="hidden sm:block w-px h-4 bg-white/25" />
-            <span>Av. Marqués de Corbera 46, Madrid</span>
+            <span>{siteContact.addressShort}</span>
           </div>
         </motion.div>
       </div>

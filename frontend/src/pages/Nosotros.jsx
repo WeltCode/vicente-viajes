@@ -20,6 +20,8 @@ import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import PageHeader from "../components/sections/PageHeader";
 import WhatsAppButton from "../components/WhatsAppButton";
+import PageSeo from "../components/seo/PageSeo";
+import { buildWhatsAppUrl } from "../services/siteContact";
 
 const team = [
   {
@@ -92,8 +94,9 @@ const teamCardVariants = {
 
 export default function Nosotros() {
   const [currentTeamIndex, setCurrentTeamIndex] = useState(0);
-  const whatsappUrl =
-    "https://wa.me/34600750758?text=%C2%A1Hola%20Vicente%20Viajes!%20Me%20gustaria%20recibir%20asesoria%20para%20mi%20proximo%20viaje.";
+  const whatsappUrl = buildWhatsAppUrl(
+    "Hola Vicente Viajes, me gustaria recibir asesoria para mi proximo viaje."
+  );
 
   const handleTeamPrev = () => {
     setCurrentTeamIndex((prev) => (prev === 0 ? team.length - 1 : prev - 1));
@@ -105,6 +108,11 @@ export default function Nosotros() {
 
   return (
     <div className="min-h-screen bg-mist">
+      <PageSeo
+        title="Sobre nosotros"
+        description="Conoce la historia, valores y equipo de Vicente Viajes, una agencia de Madrid especializada en experiencias de viaje personalizadas."
+        path="/nosotros"
+      />
       <Navbar />
       <main className="pt-20">
         <PageHeader

@@ -6,7 +6,10 @@ import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import WhatsAppButton from "../components/WhatsAppButton";
 import PageHeader from "../components/sections/PageHeader";
+import PageSeo from "../components/seo/PageSeo";
 import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane, Hotel, Utensils, Camera } from "lucide-react";
+import { apiUrl } from "../services/api";
+import { buildWhatsAppUrl } from "../services/siteContact";
 
 /* const excursions = [
   {
@@ -390,7 +393,7 @@ const Excursiones = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:8000/api/excursiones/")
+      .get(apiUrl("excursiones/"))
       .then((resp) => {
         const data = resp.data.map(normalizeExcursion).filter(e => e.is_active);
         setExcursions(data);
@@ -429,6 +432,11 @@ const Excursiones = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageSeo
+        title="Excursiones guiadas"
+        description="Descubre excursiones organizadas con salidas programadas, itinerarios detallados y asesoría personalizada para reservar tu próxima aventura."
+        path="/excursiones"
+      />
       <Navbar />
       
       {/* Hero Section with PageHeader */}
@@ -777,7 +785,7 @@ const ExcursionModal = ({ excursion, onClose }) => (
             Reservar Ahora
           </button>
           <a
-            href={`https://wa.me/34600750758?text=Hola, me interesa la excursión ${excursion.title}`}
+            href={buildWhatsAppUrl(`Hola, me interesa la excursión ${excursion.title}`)}
             target="_blank"
             rel="noopener noreferrer"
             className="px-6 py-4 rounded-xl bg-[#25D366] text-white font-semibold flex items-center gap-2 hover:bg-[#128C7E] transition-colors"

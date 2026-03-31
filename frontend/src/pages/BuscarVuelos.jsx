@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ExternalLink, LoaderCircle } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import WhatsAppButton from "../components/WhatsAppButton";
 import PageHeader from "../components/sections/PageHeader";
+import PageSeo from "../components/seo/PageSeo";
 import {
   decodeFlightSearchPayload,
   submitFlightBridge,
@@ -19,6 +20,7 @@ const fmtDate = (d) =>
 
 export default function BuscarVuelos() {
   const { searchToken } = useParams();
+  const location = useLocation();
   const [status, setStatus] = useState("loading");
 
   const payload = useMemo(
@@ -65,6 +67,12 @@ export default function BuscarVuelos() {
 
   return (
     <div className="min-h-screen bg-sand">
+      <PageSeo
+        title={payload ? `Resultados de vuelos ${payload.startPt} a ${payload.endPt}` : "Resultados de vuelos"}
+        description="Resultados de búsqueda de vuelos generados desde el motor de Vicente Viajes."
+        path={location.pathname}
+        noIndex
+      />
       <Navbar />
 
       <PageHeader

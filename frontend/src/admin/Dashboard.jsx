@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import { Map, Waves, ImageIcon, Tag, Users, CalendarDays, ArrowUpRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { apiUrl } from "../services/api";
 
 const Dashboard = () => {
   const [counts, setCounts] = useState({ excursiones: 0, playas: 0, estados: 0, ofertas: 0 });
@@ -17,10 +18,10 @@ const Dashboard = () => {
           "Authorization": `Token ${token}`,
         };
         const [eResp, pResp, oResp, sResp] = await Promise.all([
-          axios.get("http://localhost:8000/api/excursiones/", { headers }),
-          axios.get("http://localhost:8000/api/playas/", { headers }),
-          axios.get("http://localhost:8000/api/ofertas/", { headers }),
-          axios.get("http://localhost:8000/api/estados/", { headers }),
+          axios.get(apiUrl("excursiones/"), { headers }),
+          axios.get(apiUrl("playas/"), { headers }),
+          axios.get(apiUrl("ofertas/"), { headers }),
+          axios.get(apiUrl("estados/"), { headers }),
         ]);
         const excursiones = eResp.data || [];
         const playas = pResp.data || [];

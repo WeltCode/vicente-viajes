@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { X } from "lucide-react";
+import { apiUrl } from "../services/api";
 
 const labelCls =
   "block text-xs font-semibold uppercase tracking-wide text-[#344443] mb-1";
@@ -71,12 +72,12 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
 
       if (finalData.id) {
         await axios.put(
-          `http://localhost:8000/api/ofertas/${finalData.id}/`,
+          apiUrl(`ofertas/${finalData.id}/`),
           finalData,
           { headers }
         );
       } else {
-        await axios.post("http://localhost:8000/api/ofertas/", finalData, { headers });
+        await axios.post(apiUrl("ofertas/"), finalData, { headers });
       }
       onSaved();
     } catch (err) {

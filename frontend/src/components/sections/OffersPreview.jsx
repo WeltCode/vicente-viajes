@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { ArrowRight, Clock3, Flame, MapPin } from "lucide-react";
+import { apiUrl } from "../../services/api";
 
 const money = (value) => {
   const numeric = Number(value || 0);
@@ -16,7 +17,7 @@ export default function OffersPreview() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:8000/api/ofertas/")
+      .get(apiUrl("ofertas/"))
       .then((res) => {
         const active = (res.data || []).filter((o) => o.is_active);
         setOffers(active.slice(0, 3));

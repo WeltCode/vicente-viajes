@@ -5,10 +5,16 @@ import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import WhatsAppButton from "../components/WhatsAppButton";
 import PageHeader from "../components/sections/PageHeader";
+import PageSeo from "../components/seo/PageSeo";
 
 export default function Hoteles() {
   return (
     <div className="min-h-screen bg-mist">
+      <PageSeo
+        title="Hoteles"
+        description="Próximamente podrás buscar hoteles desde Vicente Viajes. Mientras tanto, mantén el contacto con nuestro equipo para recibir asesoría personalizada."
+        path="/hoteles"
+      />
       <Navbar />
 
       <PageHeader

@@ -6,6 +6,8 @@ import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import WhatsAppButton from "../components/WhatsAppButton";
 import PageHeader from "../components/sections/PageHeader";
+import PageSeo from "../components/seo/PageSeo";
+import { apiUrl } from "../services/api";
 
 const money = (value) => {
   const numeric = Number(value || 0);
@@ -41,7 +43,7 @@ export default function Ofertas() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:8000/api/ofertas/")
+      .get(apiUrl("ofertas/"))
       .then((res) =>
         setOfertas((res.data || []).filter((item) => item.is_active).map(normalizeOffer))
       )
@@ -51,6 +53,11 @@ export default function Ofertas() {
 
   return (
     <div className="min-h-screen bg-mist">
+      <PageSeo
+        title="Ofertas de viaje"
+        description="Consulta ofertas exclusivas de viaje con descuentos especiales, paquetes destacados y plazas limitadas para tus próximas vacaciones."
+        path="/ofertas"
+      />
       <Navbar />
 
       <PageHeader

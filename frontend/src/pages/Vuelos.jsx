@@ -5,10 +5,16 @@ import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import WhatsAppButton from "../components/WhatsAppButton";
 import PageHeader from "../components/sections/PageHeader";
+import PageSeo from "../components/seo/PageSeo";
 
 export default function Vuelos() {
   return (
     <div className="min-h-screen bg-mist">
+      <PageSeo
+        title="Vuelos"
+        description="Consulta opciones para buscar vuelos con Vicente Viajes y recibe apoyo personalizado para organizar tu próximo trayecto al mejor precio."
+        path="/vuelos"
+      />
       <Navbar />
 
       <PageHeader

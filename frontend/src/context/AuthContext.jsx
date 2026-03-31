@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
+import { apiUrl } from "../services/api";
 
 const AuthContext = createContext();
 
@@ -50,7 +51,7 @@ export const AuthProvider = ({ children }) => {
   const refreshUser = async () => {
     if (!token) return null;
     try {
-      const resp = await axios.get("http://localhost:8000/api/me/");
+      const resp = await axios.get(apiUrl("me/"));
       setUser(resp.data || null);
       return resp.data || null;
     } catch {
@@ -71,7 +72,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
       // Login contra endpoint custom de Django que devuelve Token DRF.
-      const resp = await axios.post("http://localhost:8000/api/login/", {
+      const resp = await axios.post(apiUrl("login/"), {
         username,
         password,
       }, {
@@ -96,7 +97,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateCurrentUser = async (payload, config = {}) => {
-    const resp = await axios.patch("http://localhost:8000/api/me/", payload, config);
+    const resp = await axios.patch(apiUrl("me/"), payload, config);
     setUser(resp.data || null);
     return resp.data || null;
   };

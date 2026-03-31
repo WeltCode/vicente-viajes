@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { UserPlus, Pencil, Trash2, KeyRound, ImagePlus, UploadCloud, X } from "lucide-react";
+import { apiUrl } from "../services/api";
 
-const API_BASE = "http://localhost:8000/api/users/";
+const API_BASE = apiUrl("users/");
 
 const ROLE_OPTIONS = [
   { value: "viewer", label: "Solo lectura" },

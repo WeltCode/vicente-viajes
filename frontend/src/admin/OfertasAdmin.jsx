@@ -3,6 +3,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { Tag, Search, Plus, Pencil, Trash2, Flame, GripVertical } from "lucide-react";
 import OfertaForm from "./OfertaForm";
+import { apiUrl } from "../services/api";
 
 const OfertasAdmin = () => {
   const { token, canManageContent } = useAuth();
@@ -17,7 +18,7 @@ const OfertasAdmin = () => {
     setLoading(true);
     setError(null);
     try {
-      const resp = await axios.get("http://localhost:8000/api/ofertas/", {
+      const resp = await axios.get(apiUrl("ofertas/"), {
         headers: { Authorization: `Token ${token}` },
       });
       const data = resp.data || [];
@@ -37,7 +38,7 @@ const OfertasAdmin = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("¿Eliminar esta oferta?")) return;
     try {
-      await axios.delete(`http://localhost:8000/api/ofertas/${id}/`, {
+      await axios.delete(apiUrl(`ofertas/${id}/`), {
         headers: { Authorization: `Token ${token}` },
       });
       fetchList();
@@ -67,7 +68,7 @@ const OfertasAdmin = () => {
         id: item.id,
         display_order: index + 1,
       }));
-      await axios.post("http://localhost:8000/api/ofertas/reorder/", payload, {
+      await axios.post(apiUrl("ofertas/reorder/"), payload, {
         headers: { Authorization: `Token ${token}` },
       });
     } catch (err) {

@@ -7,6 +7,8 @@ import Footer from "../components/layout/Footer";
 import { MapPin, Star, ArrowRight } from "lucide-react";
 import WhatsAppButton from "../components/WhatsAppButton";
 import PageHeader from "../components/sections/PageHeader";
+import PageSeo from "../components/seo/PageSeo";
+import { apiUrl } from "../services/api";
 
 const normalizeGroupSize = (value) => {
   const str = String(value || "").trim();
@@ -46,7 +48,7 @@ const Playas = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:8000/api/playas/")
+      .get(apiUrl("playas/"))
       .then((res) => {
         const data = (res.data || []).map(normalizeBeach).filter((b) => b.is_active);
         setBeaches(data);
@@ -57,6 +59,11 @@ const Playas = () => {
 
   return (
     <div className="min-h-screen bg-mist">
+      <PageSeo
+        title="Playas paradisíacas"
+        description="Explora escapadas a playas paradisíacas con precios desde origen, destinos destacados y asesoría de Vicente Viajes para reservar sin complicaciones."
+        path="/playas"
+      />
       <Navbar />
 
       {/* Hero Section with PageHeader */}

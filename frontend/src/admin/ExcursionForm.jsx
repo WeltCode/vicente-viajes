@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { Trash2, X } from "lucide-react";
+import { apiUrl } from "../services/api";
 
 const MESES = [
   "Enero",
@@ -141,9 +142,9 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
       };
 
       if (finalData.id) {
-        await axios.put(`http://localhost:8000/api/excursiones/${finalData.id}/`, finalData, { headers });
+        await axios.put(apiUrl(`excursiones/${finalData.id}/`), finalData, { headers });
       } else {
-        await axios.post("http://localhost:8000/api/excursiones/", finalData, { headers });
+        await axios.post(apiUrl("excursiones/"), finalData, { headers });
       }
       onSaved();
     } catch (err) {

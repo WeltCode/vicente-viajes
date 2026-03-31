@@ -6,22 +6,25 @@ import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import PageHeader from "../components/sections/PageHeader";
 import WhatsAppButton from "../components/WhatsAppButton";
+import PageSeo from "../components/seo/PageSeo";
+import { apiUrl } from "../services/api";
+import { siteContact } from "../services/siteContact";
 
 const contactInfo = [
   {
     icon: MapPin,
     title: "Dirección",
-    details: ["Avenida del Marqués de Corbera 46, Local 1", "28017 Madrid, España"],
+    details: [siteContact.addressLine1, siteContact.addressLine2],
   },
   {
     icon: Phone,
     title: "Teléfono",
-    details: ["+1 234 567 890", "+1 234 567 891"],
+    details: [siteContact.phoneDisplay],
   },
   {
     icon: Mail,
     title: "Email",
-    details: ["info@weltbrave.com", "ventas@weltbrave.com"],
+    details: [siteContact.email],
   },
   {
     icon: Clock,
@@ -50,8 +53,6 @@ const faqItems = [
 ];
 
 export default function Contacto() {
-  const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-
   const [formData, setFormData] = useState({
     nombre: "",
     email: "",
@@ -70,7 +71,7 @@ export default function Contacto() {
     setCargando(true);
     
     try {
-      const response = await fetch(`${apiBaseUrl}/contacto/enviar/`, {
+      const response = await fetch(apiUrl("contacto/enviar/"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -100,6 +101,11 @@ export default function Contacto() {
 
   return (
     <div className="min-h-screen bg-mist">
+      <PageSeo
+        title="Contacto"
+        description="Contacta con Vicente Viajes en Madrid por teléfono, email o formulario para planificar vuelos, excursiones, hoteles y viajes a medida."
+        path="/contacto"
+      />
       <Navbar />
       <main className="pt-20">
         <PageHeader
@@ -210,7 +216,7 @@ export default function Contacto() {
                           value={formData.telefono}
                           onChange={handleChange}
                           className="w-full px-4 py-2 rounded-lg border border-white/10 bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-teal focus:border-transparent transition"
-                          placeholder="+1 234 567 890"
+                          placeholder={siteContact.phoneDisplay}
                         />
                       </div>
                       <div>

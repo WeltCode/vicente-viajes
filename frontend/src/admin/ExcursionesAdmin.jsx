@@ -3,6 +3,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { CalendarDays, Map, Search, Plus, Pencil, Trash2, Star } from "lucide-react";
 import ExcursionForm from "./ExcursionForm";
+import { apiUrl } from "../services/api";
 
 const ExcursionesAdmin = () => {
   const { token, canManageContent } = useAuth();
@@ -16,7 +17,7 @@ const ExcursionesAdmin = () => {
     setLoading(true);
     setError(null);
     try {
-      const resp = await axios.get("http://localhost:8000/api/excursiones/", {
+      const resp = await axios.get(apiUrl("excursiones/"), {
         headers: {
           "Authorization": `Token ${token}`,
         },
@@ -38,7 +39,7 @@ const ExcursionesAdmin = () => {
   const handleDelete = async (id) => {
     if (window.confirm("¿Eliminar este elemento?")) {
       try {
-        await axios.delete(`http://localhost:8000/api/excursiones/${id}/`, {
+        await axios.delete(apiUrl(`excursiones/${id}/`), {
           headers: {
             "Authorization": `Token ${token}`,
           },

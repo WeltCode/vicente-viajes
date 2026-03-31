@@ -1,17 +1,12 @@
 // WhatsAppButton.jsx
 import React from 'react';
 import { FaWhatsapp } from 'react-icons/fa';
+import { buildWhatsAppUrl, siteContact } from '../services/siteContact';
 
 const WhatsAppButton = () => {
-  const phoneNumber = "+34600750758";
-  const recipientName = "Vicente Viajes";
-  
-  // Mensaje codificado para URL
-  const message = encodeURIComponent(
-    `¡Hola ${recipientName}! 👋 Estoy interesado/a en contratar un viaje con ustedes. ¿Podrías proporcionarme más información sobre tus servicios, precios y disponibilidad? ¡Gracias!`
+  const whatsappUrl = buildWhatsAppUrl(
+    `¡Hola ${siteContact.companyName}! Estoy interesado/a en contratar un viaje con ustedes. ¿Podrías proporcionarme más información sobre sus servicios, precios y disponibilidad? Gracias.`
   );
-
-  const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
 
   return (
     <a

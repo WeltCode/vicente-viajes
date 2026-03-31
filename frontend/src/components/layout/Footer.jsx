@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import logo from "../../assets/images/vicentelogo.png";
 import { openCookieSettings } from "../../services/cookieConsent";
+import { buildWhatsAppUrl, siteContact } from "../../services/siteContact";
 
 const legalLinks = [
   { label: "Condiciones Generales",          path: "/condiciones-generales" },
@@ -27,7 +28,7 @@ const socialLinks = [
   },
   {
     label: "WhatsApp",
-    href: "#",
+    href: buildWhatsAppUrl("Hola Vicente Viajes, me gustaria recibir informacion sobre sus servicios."),
     bg: "#25D366",
     icon: (
       <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white" aria-hidden="true">
@@ -63,11 +64,11 @@ export default function Footer() {
           {/* Izquierda – datos de contacto */}
           <div className="text-center md:text-left space-y-1.5">
             <p className="text-sm font-medium text-white/90 leading-relaxed uppercase tracking-wide">
-              Avenida del Marqués de Corbera 46, Local 1,<br />
+              {siteContact.addressLine1},<br />
               28017 Madrid
             </p>
             <p className="text-sm text-white/60">
-              +34 612 47 78 10 / reservas@vicenteviajes.com
+              {siteContact.phoneDisplay} / {siteContact.email}
             </p>
           </div>
 
