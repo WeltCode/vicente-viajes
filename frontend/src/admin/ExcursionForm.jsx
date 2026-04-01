@@ -130,6 +130,8 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
 
       if (name === "month") {
         const syncedDeparture = syncDateWithMonth(value, prev.departure_date);
+        const syncedReturn = syncDateWithMonth(value, prev.return_date);
+
         if (syncedDeparture) {
           const previousDuration = Number(
             calculateDurationFromDates(prev.departure_date, prev.return_date) || prev.duration || 0
@@ -139,7 +141,11 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
 
           if (prev.return_date) {
             nextData.return_date = addDaysToDate(syncedDeparture, previousDuration);
+          } else if (syncedReturn) {
+            nextData.return_date = syncedReturn;
           }
+        } else if (syncedReturn) {
+          nextData.return_date = syncedReturn;
         }
       }
 
@@ -410,6 +416,7 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
                   onChange={handleChange}
                   className="h-10 w-full rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
                 />
+                <p className="mt-1 text-xs text-[#60706f]">También se sincroniza con el mes seleccionado.</p>
               </div>
             </div>
 
