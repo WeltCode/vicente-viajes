@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.conf import settings
 from django.core import mail
 from django.test import TestCase, override_settings
@@ -46,3 +48,20 @@ class ContactoEmailTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(mensaje_contacto._default_manager.count(), 0)
         self.assertEqual(len(mail.outbox), 0)
+
+    @patch("contacto.views.EmailMessage.send", side_effect=TimeoutError("timed out"))
+    def test_email_timeout_still_returns_created_when_message_is_saved(self, _mock_send):
+        payload = {
+            "nombre": "Ana López",
+            "email": "ana@example.com",
+            "telefono": "600123456",
+            "asunto": "Consulta",
+            "mensaje": "Necesito más detalles sobre una excursión.",
+        }
+
+        response = self.client.post("/api/contacto/enviar/", data=payload, content_type="application/json")
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(mensaje_contacto._default_manager.count(), 1)
+        self.assertFalse(response.json()["email_sent"])
+        self.assertIn("warning", response.json())

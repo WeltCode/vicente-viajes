@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -6,6 +8,8 @@ from django.core.mail import EmailMessage
 from django.conf import settings
 from smtplib import SMTPException
 from .serializers import MensajeContactoSerializer
+
+logger = logging.getLogger(__name__)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -43,14 +47,19 @@ Mensaje:
             email.send(fail_silently=False)
             
             return Response(
-                {'message': 'Mensaje enviado correctamente'},
+                {'message': 'Mensaje enviado correctamente', 'email_sent': True},
                 status=status.HTTP_201_CREATED
             )
-        except (SMTPException, OSError, ValueError) as e:
-            # El registro queda guardado aunque falle SMTP.
+        except (SMTPException, OSError, ValueError, TimeoutError) as e:
+            # El registro queda guardado aunque falle SMTP; se registra en logs para revisión.
+            logger.warning("No se pudo enviar la notificación de contacto por email: %s", e)
             return Response(
-                {'error': f'Error al enviar el email: {str(e)}'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {
+                    'message': 'Mensaje recibido correctamente',
+                    'warning': 'No se pudo notificar por correo en este momento, pero tu mensaje ha quedado registrado.',
+                    'email_sent': False,
+                },
+                status=status.HTTP_201_CREATED
             )
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
