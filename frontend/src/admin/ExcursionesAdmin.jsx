@@ -96,6 +96,16 @@ const ExcursionesAdmin = () => {
     });
   };
 
+  const isExpiredDate = (value) => {
+    if (!value) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const departureDate = new Date(`${value}T00:00:00`);
+
+    return !Number.isNaN(departureDate.getTime()) && departureDate <= today;
+  };
+
   const getDateAlert = (value, isActive) => {
     if (!value) return null;
 
@@ -177,7 +187,8 @@ const ExcursionesAdmin = () => {
         <>
           <div className="space-y-3 lg:hidden">
             {filteredItems.map((item) => {
-              const dateAlert = getDateAlert(item.departure_date, item.is_active);
+              const effectiveIsActive = item.is_active && !isExpiredDate(item.departure_date);
+              const dateAlert = getDateAlert(item.departure_date, effectiveIsActive);
               return (
               <article key={`mobile-${item.id}`} className="rounded-2xl border border-[#ccd4d2] bg-white p-3.5 shadow-sm">
                 <div className="flex items-start gap-3">
@@ -190,10 +201,10 @@ const ExcursionesAdmin = () => {
                     <div className="flex flex-wrap gap-1.5">
                       <span
                         className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                          item.is_active ? "bg-[#d7ece2] text-[#2f7f66]" : "bg-[#f2dcdc] text-[#b55353]"
+                          effectiveIsActive ? "bg-[#d7ece2] text-[#2f7f66]" : "bg-[#f2dcdc] text-[#b55353]"
                         }`}
                       >
-                        {item.is_active ? "Activa" : "Desactivada"}
+                        {effectiveIsActive ? "Activa" : "Desactivada"}
                       </span>
                       <span
                         className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
@@ -262,7 +273,9 @@ const ExcursionesAdmin = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredItems.map((item) => (
+                {filteredItems.map((item) => {
+                  const effectiveIsActive = item.is_active && !isExpiredDate(item.departure_date);
+                  return (
                   <tr key={item.id} className="border-b border-[#dce3e0] last:border-b-0 hover:bg-[#f6f8f7]">
                     <td className="px-5 py-3">
                       <img
@@ -282,9 +295,9 @@ const ExcursionesAdmin = () => {
                     <td className="px-5 py-3 text-sm text-[#2f4a49]">
                       <div className="flex flex-col gap-1">
                         <span>{formatDepartureDate(item.departure_date)}</span>
-                        {getDateAlert(item.departure_date, item.is_active) && (
-                          <span className={`inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${getDateAlert(item.departure_date, item.is_active).className}`}>
-                            {getDateAlert(item.departure_date, item.is_active).label}
+                        {getDateAlert(item.departure_date, effectiveIsActive) && (
+                          <span className={`inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${getDateAlert(item.departure_date, effectiveIsActive).className}`}>
+                            {getDateAlert(item.departure_date, effectiveIsActive).label}
                           </span>
                         )}
                       </div>
@@ -300,12 +313,12 @@ const ExcursionesAdmin = () => {
                     <td className="px-5 py-3">
                       <span
                         className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                          item.is_active
+                          effectiveIsActive
                             ? "bg-[#d7ece2] text-[#2f7f66]"
                             : "bg-[#f2dcdc] text-[#b55353]"
                         }`}
                       >
-                        {item.is_active ? "Activa" : "Desactivada"}
+                        {effectiveIsActive ? "Activa" : "Desactivada"}
                       </span>
                     </td>
                     <td className="px-5 py-3">
@@ -340,7 +353,7 @@ const ExcursionesAdmin = () => {
                       </td>
                     )}
                   </tr>
-                ))}
+                );})}
               </tbody>
             </table>
           </div>
