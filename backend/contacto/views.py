@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.conf import settings
 from smtplib import SMTPException
 from .serializers import MensajeContactoSerializer
@@ -31,15 +31,16 @@ Asunto: {serializer.validated_data['asunto']}
 
 Mensaje:
 {serializer.validated_data['mensaje']}
-            """
-            
-            send_mail(
-                asunto,
-                mensaje_email,
-                settings.DEFAULT_FROM_EMAIL,
-                [settings.CONTACT_RECIPIENT_EMAIL],
-                fail_silently=False,
+            """.strip()
+
+            email = EmailMessage(
+                subject=asunto,
+                body=mensaje_email,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[settings.CONTACT_RECIPIENT_EMAIL],
+                reply_to=[serializer.validated_data['email']],
             )
+            email.send(fail_silently=False)
             
             return Response(
                 {'message': 'Mensaje enviado correctamente'},
