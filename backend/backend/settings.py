@@ -185,22 +185,25 @@ REST_FRAMEWORK = {
     ],
 }
 
-# SMTP para contacto: en local puede caer al backend de consola.
-# Para producción, configura estas variables de entorno en tu hosting.
+# Email para el formulario de contacto.
+# En producción usa SMTP real; en desarrollo, si faltan credenciales, se mantiene la salida por consola.
 EMAIL_HOST = os.getenv('EMAIL_HOST', '')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
 EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() == 'true'
-EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '20'))
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@vicenteviajes.com')
-CONTACT_RECIPIENT_EMAIL = os.getenv('CONTACT_RECIPIENT_EMAIL', 'info@weltbrave.com')
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '5'))
+DEFAULT_FROM_EMAIL = os.getenv(
+    'DEFAULT_FROM_EMAIL',
+    EMAIL_HOST_USER or 'info@vicenteviajes.com',
+)
+CONTACT_RECIPIENT_EMAIL = os.getenv('CONTACT_RECIPIENT_EMAIL', 'info@vicenteviajes.com')
 
 email_password_is_placeholder = EMAIL_HOST_PASSWORD.startswith('CAMBIA_')
 
 if EMAIL_HOST and EMAIL_HOST_USER and EMAIL_HOST_PASSWORD and not email_password_is_placeholder:
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
 else:
     # Fallback para desarrollo local si faltan credenciales SMTP
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
