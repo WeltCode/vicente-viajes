@@ -66,12 +66,111 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
   );
   const [error, setError] = useState(null);
 
+  const formatIsoDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const calculateDurationFromDates = (departureDate, returnDate) => {
+    if (!departureDate || !returnDate) return "";
+
+    const start = new Date(`${departureDate}T00:00:00`);
+    const end = new Date(`${returnDate}T00:00:00`);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+      return "";
+    }
+
+    const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    return String(Math.max(1, diffDays));
+  };
+
+  const syncDateWithMonth = (monthLabel, currentDateValue) => {
+    const monthIndex = MESES.findIndex((mes) => mes === monthLabel);
+    if (monthIndex === -1) return currentDateValue || "";
+
+    const baseDate = currentDateValue
+      ? new Date(`${currentDateValue}T00:00:00`)
+      : new Date();
+
+    if (Number.isNaN(baseDate.getTime())) {
+      return "";
+    }
+
+    const today = new Date();
+    const inferredYear = currentDateValue
+      ? baseDate.getFullYear()
+      : monthIndex < today.getMonth()
+        ? today.getFullYear() + 1
+        : today.getFullYear();
+
+    const day = currentDateValue ? baseDate.getDate() : 1;
+    const safeDay = Math.min(day, new Date(inferredYear, monthIndex + 1, 0).getDate());
+
+    return formatIsoDate(new Date(inferredYear, monthIndex, safeDay));
+  };
+
+  const addDaysToDate = (isoDate, daysToAdd) => {
+    if (!isoDate) return "";
+    const date = new Date(`${isoDate}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return "";
+    date.setDate(date.getDate() + Math.max(0, Number(daysToAdd) || 0));
+    return formatIsoDate(date);
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    setData((prev) => {
+      const nextData = {
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      };
+
+      if (name === "month") {
+        const syncedDeparture = syncDateWithMonth(value, prev.departure_date);
+        if (syncedDeparture) {
+          const previousDuration = Number(
+            calculateDurationFromDates(prev.departure_date, prev.return_date) || prev.duration || 0
+          );
+
+          nextData.departure_date = syncedDeparture;
+
+          if (prev.return_date) {
+            nextData.return_date = addDaysToDate(syncedDeparture, previousDuration);
+          }
+        }
+      }
+
+      if (name === "departure_date" && value) {
+        const selectedDate = new Date(`${value}T00:00:00`);
+        if (!Number.isNaN(selectedDate.getTime())) {
+          nextData.month = MESES[selectedDate.getMonth()] || nextData.month;
+        }
+        if (nextData.return_date && new Date(`${nextData.return_date}T00:00:00`) < selectedDate) {
+          nextData.return_date = value;
+        }
+      }
+
+      if ((name === "return_date" || name === "departure_date") && nextData.return_date && nextData.departure_date) {
+        const departure = new Date(`${nextData.departure_date}T00:00:00`);
+        const returning = new Date(`${nextData.return_date}T00:00:00`);
+        if (!Number.isNaN(departure.getTime()) && !Number.isNaN(returning.getTime()) && returning < departure) {
+          nextData.return_date = nextData.departure_date;
+        }
+      }
+
+      if (name === "departure_date" || name === "return_date" || name === "month") {
+        nextData.duration = calculateDurationFromDates(nextData.departure_date, nextData.return_date);
+      }
+
+      return nextData;
+    });
+
+    if (error) {
+      setError(null);
+    }
   };
 
   const addDay = () => {
@@ -107,6 +206,13 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
     e.preventDefault();
     setError(null);
 
+    const autoDuration = calculateDurationFromDates(data.departure_date, data.return_date);
+
+    if (data.departure_date && data.return_date && !autoDuration) {
+      setError("La fecha de regreso debe ser igual o posterior a la fecha de salida.");
+      return;
+    }
+
     try {
       const finalData = {
         ...data,
@@ -132,7 +238,7 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
         departure_date: data.departure_date || null,
         return_date: data.return_date || null,
         rating: data.rating ? Math.min(5, Math.max(0, parseFloat(data.rating))) : 0,
-        duration: String(data.duration || "").replace(/\D/g, ""),
+        duration: String(autoDuration || data.duration || "").replace(/\D/g, ""),
         price: parseFloat(data.price),
       };
 
@@ -225,6 +331,7 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
                     </option>
                   ))}
                 </select>
+                <p className="mt-1 text-xs text-[#60706f]">Al elegir un mes, la fecha de salida se prepara en ese mismo mes.</p>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-semibold text-[#344443]">Duración</label>
@@ -235,9 +342,11 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
                   step="1"
                   value={data.duration}
                   onChange={handleChange}
-                  placeholder="5"
-                  className="h-10 w-full rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
+                  readOnly
+                  placeholder="Se calcula solo"
+                  className="h-10 w-full cursor-not-allowed rounded-lg border border-[#c9d2cf] bg-[#edf1ef] px-3 text-sm text-[#364847] outline-none"
                 />
+                <p className="mt-1 text-xs text-[#60706f]">Este campo queda bloqueado y se calcula automáticamente al elegir salida y regreso.</p>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-semibold text-[#344443]">Tamaño grupo</label>

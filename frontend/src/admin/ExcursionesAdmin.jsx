@@ -61,7 +61,8 @@ const ExcursionesAdmin = () => {
     return (
       item.title?.toLowerCase().includes(q) ||
       item.location?.toLowerCase().includes(q) ||
-      item.month?.toLowerCase().includes(q)
+      item.month?.toLowerCase().includes(q) ||
+      String(item.departure_date || "").toLowerCase().includes(q)
     );
   });
 
@@ -84,6 +85,40 @@ const ExcursionesAdmin = () => {
   const formatDuration = (value) => {
     const numeric = String(value || "").replace(/\D/g, "");
     return numeric ? `${numeric} dias` : "-";
+  };
+
+  const formatDepartureDate = (value) => {
+    if (!value) return "Sin fecha";
+    return new Date(`${value}T00:00:00`).toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const getDateAlert = (value, isActive) => {
+    if (!value) return null;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const departureDate = new Date(`${value}T00:00:00`);
+    const diffMs = departureDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 0) {
+      return { label: "Vencido", className: "bg-[#f2dcdc] text-[#b55353]" };
+    }
+    if (!isActive) {
+      return { label: "Desactivada", className: "bg-[#ecefef] text-[#637371]" };
+    }
+    if (diffDays <= 5) {
+      return {
+        label: diffDays === 1 ? "Sale mañana" : `Expira en ${diffDays} dias`,
+        className: "bg-[#f5ead2] text-[#a06e1c]",
+      };
+    }
+
+    return null;
   };
 
   return (
@@ -141,7 +176,9 @@ const ExcursionesAdmin = () => {
       ) : (
         <>
           <div className="space-y-3 lg:hidden">
-            {filteredItems.map((item) => (
+            {filteredItems.map((item) => {
+              const dateAlert = getDateAlert(item.departure_date, item.is_active);
+              return (
               <article key={`mobile-${item.id}`} className="rounded-2xl border border-[#ccd4d2] bg-white p-3.5 shadow-sm">
                 <div className="flex items-start gap-3">
                   <img
@@ -165,6 +202,11 @@ const ExcursionesAdmin = () => {
                       >
                         {item.is_featured ? "Destacada" : "Normal"}
                       </span>
+                      {dateAlert && (
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${dateAlert.className}`}>
+                          {dateAlert.label}
+                        </span>
+                      )}
                     </div>
                     <h3 className="mt-2 text-base font-semibold text-[#1f2d31]">{item.title}</h3>
                     <p className="text-sm text-[#2f4a49]">{item.location || "Sin destino"}</p>
@@ -172,7 +214,8 @@ const ExcursionesAdmin = () => {
                 </div>
 
                 <div className="mt-3 grid gap-2 text-sm text-[#2f4a49] sm:grid-cols-2">
-                  <p className="inline-flex items-center gap-1.5"><CalendarDays className="h-4 w-4 text-[#1f7770]" />{item.month || "-"}</p>
+                  <p className="inline-flex items-center gap-1.5"><CalendarDays className="h-4 w-4 text-[#1f7770]" />Mes: {item.month || "-"}</p>
+                  <p><span className="font-semibold text-[#1f2d31]">Salida:</span> {formatDepartureDate(item.departure_date)}</p>
                   <p><span className="font-semibold text-[#1f2d31]">Duración:</span> {formatDuration(item.duration)}</p>
                   <p><span className="font-semibold text-[#1f2d31]">Precio:</span> {formatPrice(item.price)}</p>
                   <p className="inline-flex items-center gap-1"><Star className="h-4 w-4 fill-[#c6943d] text-[#c6943d]" />{formatRating(item.rating)}</p>
@@ -197,7 +240,7 @@ const ExcursionesAdmin = () => {
                   </div>
                 )}
               </article>
-            ))}
+            );})}
           </div>
 
           <div className="hidden overflow-hidden rounded-2xl border border-[#ccd4d2] bg-white lg:block">
@@ -209,6 +252,7 @@ const ExcursionesAdmin = () => {
                   <th className="px-5 py-3 text-left font-semibold">Titulo</th>
                   <th className="px-5 py-3 text-left font-semibold">Destino</th>
                   <th className="px-5 py-3 text-left font-semibold">Mes</th>
+                  <th className="px-5 py-3 text-left font-semibold">Fecha de salida</th>
                   <th className="px-5 py-3 text-left font-semibold">Duracion</th>
                   <th className="px-5 py-3 text-left font-semibold">Precio</th>
                   <th className="px-5 py-3 text-left font-semibold">Rating</th>
@@ -234,6 +278,16 @@ const ExcursionesAdmin = () => {
                         <CalendarDays className="h-4 w-4" />
                         {item.month || "-"}
                       </span>
+                    </td>
+                    <td className="px-5 py-3 text-sm text-[#2f4a49]">
+                      <div className="flex flex-col gap-1">
+                        <span>{formatDepartureDate(item.departure_date)}</span>
+                        {getDateAlert(item.departure_date, item.is_active) && (
+                          <span className={`inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${getDateAlert(item.departure_date, item.is_active).className}`}>
+                            {getDateAlert(item.departure_date, item.is_active).label}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-5 py-3 text-base text-[#1f2d31]">{formatDuration(item.duration)}</td>
                     <td className="px-5 py-3 text-base text-[#1f2d31]">{formatPrice(item.price)}</td>

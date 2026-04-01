@@ -393,10 +393,20 @@ const Excursiones = () => {
   };
 
   useEffect(() => {
+    const isExpiredDate = (value) => {
+      if (!value) return false;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const departureDate = new Date(`${value}T00:00:00`);
+      return !Number.isNaN(departureDate.getTime()) && departureDate <= today;
+    };
+
     axios
       .get(apiUrl("excursiones/"))
       .then((resp) => {
-        const data = resp.data.map(normalizeExcursion).filter(e => e.is_active);
+        const data = resp.data
+          .map(normalizeExcursion)
+          .filter((e) => e.is_active && !isExpiredDate(e.departure_date));
         setExcursions(data);
       })
       .catch((err) => console.error("Error cargando excursiones:", err));
