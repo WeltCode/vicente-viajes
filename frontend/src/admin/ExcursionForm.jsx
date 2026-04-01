@@ -161,10 +161,10 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-4 backdrop-blur-[2px]">
       <form
         onSubmit={handleSubmit}
-        className="flex h-[88vh] w-full max-w-[570px] flex-col overflow-hidden rounded-2xl border border-[#d7dfdc] bg-[#f5f7f6] shadow-[0_24px_52px_rgba(0,0,0,0.22)]"
+        className="flex max-h-[92vh] w-full max-w-[570px] flex-col overflow-hidden rounded-2xl border border-[#d7dfdc] bg-[#f5f7f6] shadow-[0_24px_52px_rgba(0,0,0,0.22)]"
       >
-        <div className="flex items-center justify-between border-b border-[#d7dfdc] px-5 py-3">
-          <h3 className="font-display text-3xl font-semibold text-[#222f3a]">
+        <div className="flex items-center justify-between border-b border-[#d7dfdc] px-4 py-3 sm:px-5">
+          <h3 className="font-display text-2xl font-semibold text-[#222f3a] sm:text-3xl">
             {data.id ? "Editar Excursión" : "Nueva Excursión"}
           </h3>
           <button
@@ -176,7 +176,7 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-5">
           {error && (
             <div className="mb-4 rounded-xl border border-[#f0bdbd] bg-[#fae4e4] px-4 py-3 text-sm text-[#9e3f3f]">
               {error}
@@ -478,17 +478,17 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-[#d7dfdc] bg-[#f2f5f4] px-5 py-3">
+        <div className="flex flex-col-reverse gap-2 border-t border-[#d7dfdc] bg-[#f2f5f4] px-4 py-3 sm:flex-row sm:justify-end sm:px-5">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-xl border border-[#c8d1ce] bg-[#ebefed] px-4 py-2 text-sm font-semibold text-[#334746] transition hover:bg-[#e0e7e4]"
+            className="w-full rounded-xl border border-[#c8d1ce] bg-[#ebefed] px-4 py-2 text-sm font-semibold text-[#334746] transition hover:bg-[#e0e7e4] sm:w-auto"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            className="rounded-xl bg-[#1f7770] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#196862]"
+            className="w-full rounded-xl bg-[#1f7770] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#196862] sm:w-auto"
           >
             {data.id ? "Actualizar" : "Crear"}
           </button>

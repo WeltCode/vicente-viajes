@@ -40,8 +40,8 @@ const AdminLayout = () => {
 
   return (
     <div className="min-h-screen bg-[#dde2df] text-[#1b2a2f]">
-      <div className="flex min-h-screen">
-        <aside className="hidden lg:flex h-screen w-[214px] shrink-0 flex-col border-r border-[#d5dcda] bg-[#f2f4f3]">
+      <div className="flex min-h-screen flex-col lg:flex-row">
+        <aside className="hidden h-screen w-[214px] shrink-0 flex-col border-r border-[#d5dcda] bg-[#f2f4f3] lg:flex">
           <div className="px-4 pt-4 pb-3">
             <div className="flex w-full flex-col items-center gap-1.5 text-center">
               <img
@@ -144,11 +144,11 @@ const AdminLayout = () => {
           </div>
         </aside>
 
-        <main className="flex-1">
+        <main className="min-w-0 flex-1">
           <div className="border-b border-[#d5dcda] bg-[#f2f4f3] lg:hidden">
-            <div className="flex items-center justify-between px-4 py-4">
-              <div className="flex items-center gap-3">
-                <div>
+            <div className="space-y-3 px-4 py-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
                   <img
                     src={logoImage}
                     alt="Vicente Viajes"
@@ -156,41 +156,88 @@ const AdminLayout = () => {
                   />
                   <p className="text-xs text-[#6d7c7b]">Admin Panel</p>
                 </div>
+                <button
+                  onClick={logout}
+                  className="shrink-0 rounded-lg bg-[#f4e3e3] px-3 py-2 text-sm font-semibold text-[#ef4e4e]"
+                >
+                  Salir
+                </button>
               </div>
-              <button
-                onClick={logout}
-                className="text-sm font-semibold text-[#ef4e4e]"
-              >
-                Salir
-              </button>
-            </div>
 
-            <nav className="overflow-x-auto px-4 pb-4">
-              <ul className="flex min-w-max gap-2">
-                {links.map((link) => {
-                  const Icon = link.icon;
-                  return (
-                    <li key={`mobile-${link.to}`}>
-                      <NavLink
-                        to={link.to}
-                        end={link.to === ""}
-                        className={({ isActive }) =>
-                          `flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium ${
-                            isActive ? "bg-[#1f7770] text-white" : "bg-white text-[#39514f]"
-                          }`
-                        }
-                      >
-                        <Icon className="h-4 w-4" />
-                        {link.label}
-                      </NavLink>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
+              <div className="rounded-2xl border border-[#d5dcda] bg-white px-3 py-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-[#8eb2ad] bg-[#d9dfdd] text-[#2b7a73]">
+                      {user?.profile_image_url ? (
+                        <img src={user.profile_image_url} alt={userName} className="h-full w-full object-cover" />
+                      ) : (
+                        <UserRound className="h-5 w-5" />
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingImage}
+                      className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border border-white bg-[#1f7770] text-white shadow-sm transition hover:bg-[#1a6862] disabled:cursor-not-allowed disabled:opacity-60"
+                      title="Cambiar foto"
+                    >
+                      <Camera className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-[#1f2d31]">{userName}</p>
+                    <p className="text-xs text-[#61706f]">{roleLabel}</p>
+                    {uploadingImage && <p className="text-[10px] text-[#61706f]">Subiendo foto...</p>}
+                  </div>
+                </div>
+
+                <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+                  {permissionTags.map((tag) => (
+                    <span
+                      key={`mobile-${tag}`}
+                      className={`rounded-full px-2 py-1 ${
+                        tag === "Eliminar"
+                          ? "bg-[#f1d5d5] text-[#e46060]"
+                          : tag === "Crear"
+                            ? "bg-[#d7e9dc] text-[#5f9f75]"
+                            : tag === "Solo Lectura"
+                              ? "bg-[#e0e7e5] text-[#516867]"
+                              : "bg-[#b4ccc4] text-[#2d7e77]"
+                      }`}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <nav className="overflow-x-auto pb-1">
+                <ul className="flex min-w-max gap-2">
+                  {links.map((link) => {
+                    const Icon = link.icon;
+                    return (
+                      <li key={`mobile-${link.to}`}>
+                        <NavLink
+                          to={link.to}
+                          end={link.to === ""}
+                          className={({ isActive }) =>
+                            `flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium ${
+                              isActive ? "bg-[#1f7770] text-white" : "bg-white text-[#39514f]"
+                            }`
+                          }
+                        >
+                          <Icon className="h-4 w-4" />
+                          {link.label}
+                        </NavLink>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </nav>
+            </div>
           </div>
 
-          <div className="min-h-screen p-3 lg:p-5">
+          <div className="min-h-screen p-3 sm:p-4 lg:p-5">
             <Outlet />
           </div>
         </main>

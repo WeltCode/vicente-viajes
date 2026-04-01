@@ -81,8 +81,8 @@ const Dashboard = () => {
   return (
     <section className="space-y-4">
       <header>
-        <h1 className="font-display text-4xl font-semibold leading-tight text-[#182330]">Bienvenido, {displayName}!</h1>
-        <p className="mt-1 text-base text-[#637271]">Gestiona el contenido de Vicente Viajes desde este panel.</p>
+        <h1 className="font-display text-3xl font-semibold leading-tight text-[#182330] sm:text-4xl">Bienvenido, {displayName}!</h1>
+        <p className="mt-1 text-sm text-[#637271] sm:text-base">Gestiona el contenido de Vicente Viajes desde este panel.</p>
       </header>
 
       <div className="grid gap-3 lg:grid-cols-4 sm:grid-cols-2">
