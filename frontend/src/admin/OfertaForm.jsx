@@ -94,9 +94,9 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="flex w-full max-w-[620px] flex-col rounded-2xl bg-white shadow-2xl h-[88vh]">
-        <div className="flex items-center justify-between border-b border-[#e2e8e6] px-6 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 sm:p-4">
+      <div className="flex max-h-[92vh] w-full max-w-[620px] flex-col rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[#e2e8e6] px-4 py-4 sm:px-6">
           <h2 className="text-lg font-bold text-[#1a2632]">
             {isEdit ? "Editar Oferta" : "Nueva Oferta"}
           </h2>
@@ -112,7 +112,7 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
         <form
           id="oferta-form"
           onSubmit={handleSubmit}
-          className="flex-1 overflow-y-auto px-6 py-5 space-y-4"
+          className="flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5"
         >
           {error && (
             <div className="rounded-xl border border-[#f0bdbd] bg-[#fae4e4] px-4 py-3 text-sm text-[#9e3f3f]">
@@ -120,7 +120,7 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className={labelCls}>Titulo *</label>
               <input
@@ -145,7 +145,7 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className={labelCls}>Destino *</label>
               <input
@@ -170,7 +170,7 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className={labelCls}>Precio actual (€) *</label>
               <input
@@ -201,7 +201,7 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className={labelCls}>Descuento (auto)</label>
               <input
@@ -290,11 +290,11 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
           </div>
         </form>
 
-        <div className="flex items-center justify-end gap-3 border-t border-[#e2e8e6] px-6 py-4">
+        <div className="flex flex-col-reverse gap-3 border-t border-[#e2e8e6] px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-xl border border-[#cdd6d3] px-5 py-2 text-sm font-semibold text-[#344443] transition hover:bg-[#f0f3f2]"
+            className="w-full rounded-xl border border-[#cdd6d3] px-5 py-2 text-sm font-semibold text-[#344443] transition hover:bg-[#f0f3f2] sm:w-auto"
           >
             Cancelar
           </button>
@@ -302,7 +302,7 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
             type="submit"
             form="oferta-form"
             disabled={saving}
-            className="rounded-xl bg-[#1f7770] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[#1a6862] disabled:opacity-60"
+            className="w-full rounded-xl bg-[#1f7770] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[#1a6862] disabled:opacity-60 sm:w-auto"
           >
             {saving ? "Guardando..." : isEdit ? "Actualizar" : "Crear"}
           </button>

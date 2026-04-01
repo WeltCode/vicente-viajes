@@ -61,7 +61,8 @@ const ExcursionesAdmin = () => {
     return (
       item.title?.toLowerCase().includes(q) ||
       item.location?.toLowerCase().includes(q) ||
-      item.month?.toLowerCase().includes(q)
+      item.month?.toLowerCase().includes(q) ||
+      String(item.departure_date || "").toLowerCase().includes(q)
     );
   });
 
@@ -86,9 +87,53 @@ const ExcursionesAdmin = () => {
     return numeric ? `${numeric} dias` : "-";
   };
 
+  const formatDepartureDate = (value) => {
+    if (!value) return "Sin fecha";
+    return new Date(`${value}T00:00:00`).toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const isExpiredDate = (value) => {
+    if (!value) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const departureDate = new Date(`${value}T00:00:00`);
+
+    return !Number.isNaN(departureDate.getTime()) && departureDate <= today;
+  };
+
+  const getDateAlert = (value, isActive) => {
+    if (!value) return null;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const departureDate = new Date(`${value}T00:00:00`);
+    const diffMs = departureDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 0) {
+      return { label: "Vencido", className: "bg-[#f2dcdc] text-[#b55353]" };
+    }
+    if (!isActive) {
+      return { label: "Desactivada", className: "bg-[#ecefef] text-[#637371]" };
+    }
+    if (diffDays <= 5) {
+      return {
+        label: diffDays === 1 ? "Sale mañana" : `Expira en ${diffDays} dias`,
+        className: "bg-[#f5ead2] text-[#a06e1c]",
+      };
+    }
+
+    return null;
+  };
+
   return (
     <section className="space-y-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+      <header className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#c4d6d2] text-[#1f7770]">
             <Map className="h-4 w-4" />
@@ -99,21 +144,21 @@ const ExcursionesAdmin = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="relative block">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto">
+          <label className="relative block w-full sm:w-auto">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6f7f7e]" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar..."
-              className="h-10 w-56 rounded-xl border border-[#c7d0cd] bg-[#e7ecea] pl-9 pr-3 text-sm text-[#213136] outline-none transition focus:border-[#1f7770]"
+              className="h-10 w-full sm:w-56 rounded-xl border border-[#c7d0cd] bg-[#e7ecea] pl-9 pr-3 text-sm text-[#213136] outline-none transition focus:border-[#1f7770]"
             />
           </label>
 
           {canManageContent && (
             <button
               onClick={() => setEditing({})}
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#1f7770] px-4 text-sm font-semibold text-white transition hover:bg-[#1a6862]"
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#1f7770] px-4 text-sm font-semibold text-white transition hover:bg-[#1a6862] sm:w-auto"
             >
               <Plus className="h-4 w-4" />
               Anadir
@@ -139,15 +184,86 @@ const ExcursionesAdmin = () => {
       ) : filteredItems.length === 0 ? (
         <div className="rounded-xl border border-[#ccd4d2] bg-white p-5 text-sm text-[#5f6f6d]">No hay excursiones registradas</div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-[#ccd4d2] bg-white">
-          <div className="overflow-x-auto">
-            <table className="min-w-[980px] w-full table-auto">
+        <>
+          <div className="space-y-3 lg:hidden">
+            {filteredItems.map((item) => {
+              const effectiveIsActive = item.is_active && !isExpiredDate(item.departure_date);
+              const dateAlert = getDateAlert(item.departure_date, effectiveIsActive);
+              return (
+              <article key={`mobile-${item.id}`} className="rounded-2xl border border-[#ccd4d2] bg-white p-3.5 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <img
+                    src={item.image || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=320&q=80"}
+                    alt={item.title}
+                    className="h-20 w-20 shrink-0 rounded-xl object-cover"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap gap-1.5">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          effectiveIsActive ? "bg-[#d7ece2] text-[#2f7f66]" : "bg-[#f2dcdc] text-[#b55353]"
+                        }`}
+                      >
+                        {effectiveIsActive ? "Activa" : "Desactivada"}
+                      </span>
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          item.is_featured ? "bg-[#f1e8cf] text-[#9a7b30]" : "bg-[#e6ecea] text-[#637371]"
+                        }`}
+                      >
+                        {item.is_featured ? "Destacada" : "Normal"}
+                      </span>
+                      {dateAlert && (
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${dateAlert.className}`}>
+                          {dateAlert.label}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="mt-2 text-base font-semibold text-[#1f2d31]">{item.title}</h3>
+                    <p className="text-sm text-[#2f4a49]">{item.location || "Sin destino"}</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid gap-2 text-sm text-[#2f4a49] sm:grid-cols-2">
+                  <p className="inline-flex items-center gap-1.5"><CalendarDays className="h-4 w-4 text-[#1f7770]" />Mes: {item.month || "-"}</p>
+                  <p><span className="font-semibold text-[#1f2d31]">Salida:</span> {formatDepartureDate(item.departure_date)}</p>
+                  <p><span className="font-semibold text-[#1f2d31]">Duración:</span> {formatDuration(item.duration)}</p>
+                  <p><span className="font-semibold text-[#1f2d31]">Precio:</span> {formatPrice(item.price)}</p>
+                  <p className="inline-flex items-center gap-1"><Star className="h-4 w-4 fill-[#c6943d] text-[#c6943d]" />{formatRating(item.rating)}</p>
+                </div>
+
+                {canManageContent && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#c7d0cd] px-3 py-2 text-sm font-semibold text-[#1f7770] transition hover:bg-[#e0eeeb]"
+                      onClick={() => setEditing(item)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Editar
+                    </button>
+                    <button
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#f0c4c4] px-3 py-2 text-sm font-semibold text-[#c75252] transition hover:bg-[#fae4e4]"
+                      onClick={() => handleDelete(item.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Eliminar
+                    </button>
+                  </div>
+                )}
+              </article>
+            );})}
+          </div>
+
+          <div className="hidden overflow-hidden rounded-2xl border border-[#ccd4d2] bg-white lg:block">
+            <div className="overflow-x-auto">
+              <table className="min-w-[980px] w-full table-auto">
               <thead>
                 <tr className="border-b border-[#d5ddda] bg-white text-sm text-[#203035]">
                   <th className="px-5 py-3 text-left font-semibold">Imagen</th>
                   <th className="px-5 py-3 text-left font-semibold">Titulo</th>
                   <th className="px-5 py-3 text-left font-semibold">Destino</th>
                   <th className="px-5 py-3 text-left font-semibold">Mes</th>
+                  <th className="px-5 py-3 text-left font-semibold">Fecha de salida</th>
                   <th className="px-5 py-3 text-left font-semibold">Duracion</th>
                   <th className="px-5 py-3 text-left font-semibold">Precio</th>
                   <th className="px-5 py-3 text-left font-semibold">Rating</th>
@@ -157,7 +273,9 @@ const ExcursionesAdmin = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredItems.map((item) => (
+                {filteredItems.map((item) => {
+                  const effectiveIsActive = item.is_active && !isExpiredDate(item.departure_date);
+                  return (
                   <tr key={item.id} className="border-b border-[#dce3e0] last:border-b-0 hover:bg-[#f6f8f7]">
                     <td className="px-5 py-3">
                       <img
@@ -174,6 +292,16 @@ const ExcursionesAdmin = () => {
                         {item.month || "-"}
                       </span>
                     </td>
+                    <td className="px-5 py-3 text-sm text-[#2f4a49]">
+                      <div className="flex flex-col gap-1">
+                        <span>{formatDepartureDate(item.departure_date)}</span>
+                        {getDateAlert(item.departure_date, effectiveIsActive) && (
+                          <span className={`inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${getDateAlert(item.departure_date, effectiveIsActive).className}`}>
+                            {getDateAlert(item.departure_date, effectiveIsActive).label}
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-5 py-3 text-base text-[#1f2d31]">{formatDuration(item.duration)}</td>
                     <td className="px-5 py-3 text-base text-[#1f2d31]">{formatPrice(item.price)}</td>
                     <td className="px-5 py-3 text-base text-[#1f2d31]">
@@ -185,12 +313,12 @@ const ExcursionesAdmin = () => {
                     <td className="px-5 py-3">
                       <span
                         className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                          item.is_active
+                          effectiveIsActive
                             ? "bg-[#d7ece2] text-[#2f7f66]"
                             : "bg-[#f2dcdc] text-[#b55353]"
                         }`}
                       >
-                        {item.is_active ? "Activa" : "Desactivada"}
+                        {effectiveIsActive ? "Activa" : "Desactivada"}
                       </span>
                     </td>
                     <td className="px-5 py-3">
@@ -225,11 +353,12 @@ const ExcursionesAdmin = () => {
                       </td>
                     )}
                   </tr>
-                ))}
+                );})}
               </tbody>
             </table>
           </div>
         </div>
+        </>
       )}
 
       {editing !== null && canManageContent && (

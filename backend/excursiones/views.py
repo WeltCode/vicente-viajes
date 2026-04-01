@@ -7,6 +7,7 @@ from rest_framework.authentication import TokenAuthentication, BasicAuthenticati
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.utils import timezone
 from rest_framework.authtoken.models import Token
 
 from .models import Excursion, UserProfile
@@ -70,6 +71,15 @@ def parse_bool(value, default=False):
     if isinstance(value, bool):
         return value
     return str(value).strip().lower() in ['true', '1', 'yes', 'on']
+
+
+def sync_expired_excursions():
+    """Desactiva automáticamente excursiones cuya fecha de salida ya llegó."""
+    Excursion.objects.filter(  # pyright: ignore[reportAttributeAccessIssue]
+        departure_date__isnull=False,
+        departure_date__lte=timezone.localdate(),
+        is_active=True,
+    ).update(is_active=False)
 
 
 @api_view(['POST'])
@@ -260,6 +270,8 @@ def users_reset_password(request, pk):
 @authentication_classes([TokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def excursiones_list(request):
+    sync_expired_excursions()
+
     if request.method == 'GET':
         # Publico: solo activas. Admin autenticado: listado completo.
         if request.user and request.user.is_authenticated:
@@ -284,6 +296,8 @@ def excursiones_list(request):
 @permission_classes([IsAuthenticatedOrReadOnly])
 def excursiones_detail(request, pk):
     # Endpoint detalle: lectura puntual, edicion y borrado por id.
+    sync_expired_excursions()
+
     try:
         excursion = Excursion.objects.get(pk=pk)  # pyright: ignore[reportAttributeAccessIssue]
     except Excursion.DoesNotExist:  # pyright: ignore[reportAttributeAccessIssue]

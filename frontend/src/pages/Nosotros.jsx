@@ -107,14 +107,14 @@ export default function Nosotros() {
   };
 
   return (
-    <div className="min-h-screen bg-mist">
+    <div className="min-h-screen overflow-x-hidden bg-mist">
       <PageSeo
         title="Sobre nosotros"
         description="Conoce la historia, valores y equipo de Vicente Viajes, una agencia de Madrid especializada en experiencias de viaje personalizadas."
         path="/nosotros"
       />
       <Navbar />
-      <main className="pt-20">
+      <main className="overflow-x-hidden pt-20">
         <PageHeader
           badge="Nuestra Historia"
           title="Sobre Vicente Viajes"
@@ -321,8 +321,8 @@ export default function Nosotros() {
           </motion.div>
 
           {/* Mobile Carousel */}
-          <div className="lg:hidden">
-            <div className="relative flex items-center justify-center gap-4">
+          <div className="overflow-hidden lg:hidden">
+            <div className="relative flex items-center justify-center gap-4 px-10 sm:px-12">
               {/* Left Button */}
               <button
                 onClick={handleTeamPrev}

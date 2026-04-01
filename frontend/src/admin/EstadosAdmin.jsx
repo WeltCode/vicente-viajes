@@ -106,7 +106,7 @@ const EstadosAdmin = () => {
 
   return (
     <section className="space-y-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+      <header className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#c4d6d2] text-[#1f7770]">
             <Image className="h-4 w-4" />
@@ -119,20 +119,20 @@ const EstadosAdmin = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="relative block">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto">
+          <label className="relative block w-full sm:w-auto">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6f7f7e]" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar..."
-              className="h-10 w-56 rounded-xl border border-[#c7d0cd] bg-[#e7ecea] pl-9 pr-3 text-sm text-[#213136] outline-none transition focus:border-[#1f7770]"
+              className="h-10 w-full sm:w-56 rounded-xl border border-[#c7d0cd] bg-[#e7ecea] pl-9 pr-3 text-sm text-[#213136] outline-none transition focus:border-[#1f7770]"
             />
           </label>
           {canManageContent && (
             <button
               onClick={() => setEditing({})}
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#1f7770] px-4 text-sm font-semibold text-white transition hover:bg-[#1a6862]"
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#1f7770] px-4 text-sm font-semibold text-white transition hover:bg-[#1a6862] sm:w-auto"
             >
               <Plus className="h-4 w-4" />
               Anadir
@@ -159,9 +159,70 @@ const EstadosAdmin = () => {
           No hay estados registrados
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-[#ccd4d2] bg-white">
-          <div className="overflow-x-auto">
-            <table className="min-w-[860px] w-full table-auto">
+        <>
+          <div className="space-y-3 lg:hidden">
+            {filteredItems.map((item) => {
+              const alert = getDateAlert(item.excursion_date, item.is_active);
+              return (
+                <article key={`mobile-${item.id}`} className="rounded-2xl border border-[#ccd4d2] bg-white p-3.5 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <button type="button" onClick={() => setPreviewing(item)} className="shrink-0">
+                      <img
+                        src={item.image_url || item.image}
+                        alt={item.title || `Estado ${item.id}`}
+                        className="h-24 w-16 rounded-xl object-cover"
+                      />
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${item.is_active ? "bg-[#d7ece2] text-[#2f7f66]" : "bg-[#f2dcdc] text-[#b55353]"}`}>
+                          {item.is_active ? "Activa" : "Desactivada"}
+                        </span>
+                        {alert && (
+                          <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${alert.className}`}>
+                            {alert.label}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="mt-2 text-base font-semibold text-[#1f2d31]">{item.title || `Estado ${item.id}`}</h3>
+                      <p className="mt-1 text-sm text-[#2f4a49]">{item.subtitle || "Sin subtítulo"}</p>
+                      <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-[#2f4a49]"><CalendarDays className="h-4 w-4 text-[#1f7770]" />{formatDate(item.excursion_date)}</p>
+                    </div>
+                  </div>
+
+                  {canManageContent && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setPreviewing(item)}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#c7d0cd] px-3 py-2 text-sm font-semibold text-[#506766] transition hover:bg-[#e8efed]"
+                      >
+                        <Eye className="h-4 w-4" />
+                        Ver
+                      </button>
+                      <button
+                        onClick={() => setEditing(item)}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#c7d0cd] px-3 py-2 text-sm font-semibold text-[#1f7770] transition hover:bg-[#e0eeeb]"
+                      >
+                        <Pencil className="h-4 w-4" />
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#f0c4c4] px-3 py-2 text-sm font-semibold text-[#c75252] transition hover:bg-[#fae4e4]"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+
+          <div className="hidden overflow-hidden rounded-2xl border border-[#ccd4d2] bg-white lg:block">
+            <div className="overflow-x-auto">
+              <table className="min-w-[860px] w-full table-auto">
               <thead>
                 <tr className="border-b border-[#d5ddda] bg-white text-sm text-[#203035]">
                   <th className="px-5 py-3 text-left font-semibold">Vista</th>
@@ -249,6 +310,7 @@ const EstadosAdmin = () => {
             </table>
           </div>
         </div>
+        </>
       )}
 
       {editing !== null && canManageContent && (

@@ -66,12 +66,117 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
   );
   const [error, setError] = useState(null);
 
+  const formatIsoDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const calculateDurationFromDates = (departureDate, returnDate) => {
+    if (!departureDate || !returnDate) return "";
+
+    const start = new Date(`${departureDate}T00:00:00`);
+    const end = new Date(`${returnDate}T00:00:00`);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+      return "";
+    }
+
+    const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    return String(Math.max(1, diffDays));
+  };
+
+  const syncDateWithMonth = (monthLabel, currentDateValue) => {
+    const monthIndex = MESES.findIndex((mes) => mes === monthLabel);
+    if (monthIndex === -1) return currentDateValue || "";
+
+    const baseDate = currentDateValue
+      ? new Date(`${currentDateValue}T00:00:00`)
+      : new Date();
+
+    if (Number.isNaN(baseDate.getTime())) {
+      return "";
+    }
+
+    const today = new Date();
+    const inferredYear = currentDateValue
+      ? baseDate.getFullYear()
+      : monthIndex < today.getMonth()
+        ? today.getFullYear() + 1
+        : today.getFullYear();
+
+    const day = currentDateValue ? baseDate.getDate() : 1;
+    const safeDay = Math.min(day, new Date(inferredYear, monthIndex + 1, 0).getDate());
+
+    return formatIsoDate(new Date(inferredYear, monthIndex, safeDay));
+  };
+
+  const addDaysToDate = (isoDate, daysToAdd) => {
+    if (!isoDate) return "";
+    const date = new Date(`${isoDate}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return "";
+    date.setDate(date.getDate() + Math.max(0, Number(daysToAdd) || 0));
+    return formatIsoDate(date);
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    setData((prev) => {
+      const nextData = {
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      };
+
+      if (name === "month") {
+        const syncedDeparture = syncDateWithMonth(value, prev.departure_date);
+        const syncedReturn = syncDateWithMonth(value, prev.return_date);
+
+        if (syncedDeparture) {
+          const previousDuration = Number(
+            calculateDurationFromDates(prev.departure_date, prev.return_date) || prev.duration || 0
+          );
+
+          nextData.departure_date = syncedDeparture;
+
+          if (prev.return_date) {
+            nextData.return_date = addDaysToDate(syncedDeparture, previousDuration);
+          } else if (syncedReturn) {
+            nextData.return_date = syncedReturn;
+          }
+        } else if (syncedReturn) {
+          nextData.return_date = syncedReturn;
+        }
+      }
+
+      if (name === "departure_date" && value) {
+        const selectedDate = new Date(`${value}T00:00:00`);
+        if (!Number.isNaN(selectedDate.getTime())) {
+          nextData.month = MESES[selectedDate.getMonth()] || nextData.month;
+        }
+        if (nextData.return_date && new Date(`${nextData.return_date}T00:00:00`) < selectedDate) {
+          nextData.return_date = value;
+        }
+      }
+
+      if ((name === "return_date" || name === "departure_date") && nextData.return_date && nextData.departure_date) {
+        const departure = new Date(`${nextData.departure_date}T00:00:00`);
+        const returning = new Date(`${nextData.return_date}T00:00:00`);
+        if (!Number.isNaN(departure.getTime()) && !Number.isNaN(returning.getTime()) && returning < departure) {
+          nextData.return_date = nextData.departure_date;
+        }
+      }
+
+      if (name === "departure_date" || name === "return_date" || name === "month") {
+        nextData.duration = calculateDurationFromDates(nextData.departure_date, nextData.return_date);
+      }
+
+      return nextData;
+    });
+
+    if (error) {
+      setError(null);
+    }
   };
 
   const addDay = () => {
@@ -107,6 +212,13 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
     e.preventDefault();
     setError(null);
 
+    const autoDuration = calculateDurationFromDates(data.departure_date, data.return_date);
+
+    if (data.departure_date && data.return_date && !autoDuration) {
+      setError("La fecha de regreso debe ser igual o posterior a la fecha de salida.");
+      return;
+    }
+
     try {
       const finalData = {
         ...data,
@@ -132,7 +244,7 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
         departure_date: data.departure_date || null,
         return_date: data.return_date || null,
         rating: data.rating ? Math.min(5, Math.max(0, parseFloat(data.rating))) : 0,
-        duration: String(data.duration || "").replace(/\D/g, ""),
+        duration: String(autoDuration || data.duration || "").replace(/\D/g, ""),
         price: parseFloat(data.price),
       };
 
@@ -161,10 +273,10 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-4 backdrop-blur-[2px]">
       <form
         onSubmit={handleSubmit}
-        className="flex h-[88vh] w-full max-w-[570px] flex-col overflow-hidden rounded-2xl border border-[#d7dfdc] bg-[#f5f7f6] shadow-[0_24px_52px_rgba(0,0,0,0.22)]"
+        className="flex max-h-[92vh] w-full max-w-[570px] flex-col overflow-hidden rounded-2xl border border-[#d7dfdc] bg-[#f5f7f6] shadow-[0_24px_52px_rgba(0,0,0,0.22)]"
       >
-        <div className="flex items-center justify-between border-b border-[#d7dfdc] px-5 py-3">
-          <h3 className="font-display text-3xl font-semibold text-[#222f3a]">
+        <div className="flex items-center justify-between border-b border-[#d7dfdc] px-4 py-3 sm:px-5">
+          <h3 className="font-display text-2xl font-semibold text-[#222f3a] sm:text-3xl">
             {data.id ? "Editar Excursión" : "Nueva Excursión"}
           </h3>
           <button
@@ -176,7 +288,7 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-5">
           {error && (
             <div className="mb-4 rounded-xl border border-[#f0bdbd] bg-[#fae4e4] px-4 py-3 text-sm text-[#9e3f3f]">
               {error}
@@ -225,6 +337,7 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
                     </option>
                   ))}
                 </select>
+                <p className="mt-1 text-xs text-[#60706f]">Al elegir un mes, la fecha de salida se prepara en ese mismo mes.</p>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-semibold text-[#344443]">Duración</label>
@@ -235,9 +348,11 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
                   step="1"
                   value={data.duration}
                   onChange={handleChange}
-                  placeholder="5"
-                  className="h-10 w-full rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
+                  readOnly
+                  placeholder="Se calcula solo"
+                  className="h-10 w-full cursor-not-allowed rounded-lg border border-[#c9d2cf] bg-[#edf1ef] px-3 text-sm text-[#364847] outline-none"
                 />
+                <p className="mt-1 text-xs text-[#60706f]">Este campo queda bloqueado y se calcula automáticamente al elegir salida y regreso.</p>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-semibold text-[#344443]">Tamaño grupo</label>
@@ -301,6 +416,7 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
                   onChange={handleChange}
                   className="h-10 w-full rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
                 />
+                <p className="mt-1 text-xs text-[#60706f]">También se sincroniza con el mes seleccionado.</p>
               </div>
             </div>
 
@@ -478,17 +594,17 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-[#d7dfdc] bg-[#f2f5f4] px-5 py-3">
+        <div className="flex flex-col-reverse gap-2 border-t border-[#d7dfdc] bg-[#f2f5f4] px-4 py-3 sm:flex-row sm:justify-end sm:px-5">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-xl border border-[#c8d1ce] bg-[#ebefed] px-4 py-2 text-sm font-semibold text-[#334746] transition hover:bg-[#e0e7e4]"
+            className="w-full rounded-xl border border-[#c8d1ce] bg-[#ebefed] px-4 py-2 text-sm font-semibold text-[#334746] transition hover:bg-[#e0e7e4] sm:w-auto"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            className="rounded-xl bg-[#1f7770] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#196862]"
+            className="w-full rounded-xl bg-[#1f7770] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#196862] sm:w-auto"
           >
             {data.id ? "Actualizar" : "Crear"}
           </button>

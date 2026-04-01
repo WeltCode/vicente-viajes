@@ -73,7 +73,7 @@ const PlayasAdmin = () => {
 
   return (
     <section className="space-y-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+      <header className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#c4d6d2] text-[#1f7770]">
             <Waves className="h-4 w-4" />
@@ -86,20 +86,20 @@ const PlayasAdmin = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="relative block">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto">
+          <label className="relative block w-full sm:w-auto">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6f7f7e]" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar..."
-              className="h-10 w-56 rounded-xl border border-[#c7d0cd] bg-[#e7ecea] pl-9 pr-3 text-sm text-[#213136] outline-none transition focus:border-[#1f7770]"
+              className="h-10 w-full sm:w-56 rounded-xl border border-[#c7d0cd] bg-[#e7ecea] pl-9 pr-3 text-sm text-[#213136] outline-none transition focus:border-[#1f7770]"
             />
           </label>
           {canManageContent && (
             <button
               onClick={() => setEditing({})}
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#1f7770] px-4 text-sm font-semibold text-white transition hover:bg-[#1a6862]"
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#1f7770] px-4 text-sm font-semibold text-white transition hover:bg-[#1a6862] sm:w-auto"
             >
               <Plus className="h-4 w-4" />
               Añadir
@@ -126,9 +126,71 @@ const PlayasAdmin = () => {
           No hay playas registradas
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-[#ccd4d2] bg-white">
-          <div className="overflow-x-auto">
-            <table className="min-w-[820px] w-full table-auto">
+        <>
+          <div className="space-y-3 lg:hidden">
+            {filteredItems.map((item) => {
+              const features = parseFeatures(item.characteristics);
+              return (
+                <article key={`mobile-${item.id}`} className="rounded-2xl border border-[#ccd4d2] bg-white p-3.5 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={item.image || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=320&q=80"}
+                      alt={item.title}
+                      className="h-20 w-20 shrink-0 rounded-xl object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${item.is_active ? "bg-[#d7ece2] text-[#2f7f66]" : "bg-[#f2dcdc] text-[#b55353]"}`}>
+                        {item.is_active ? "Activa" : "Desactivada"}
+                      </span>
+                      <h3 className="mt-2 text-base font-semibold text-[#1f2d31]">{item.title}</h3>
+                      <p className="text-sm text-[#2f4a49]">{item.location}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid gap-2 text-sm text-[#2f4a49] sm:grid-cols-2">
+                    <p><span className="font-semibold text-[#1f2d31]">Precio:</span> {formatPrice(item.price)}</p>
+                    <p className="inline-flex items-center gap-1"><Star className="h-4 w-4 fill-[#c6943d] text-[#c6943d]" />{formatRating(item.rating)}</p>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {features.slice(0, 3).map((f) => (
+                      <span key={`${item.id}-${f}`} className="rounded-full bg-[#e0eeeb] px-2 py-0.5 text-xs font-medium text-[#1f7770]">
+                        {f}
+                      </span>
+                    ))}
+                    {features.length > 3 && (
+                      <span className="rounded-full bg-[#e8eceb] px-2 py-0.5 text-xs font-medium text-[#637371]">
+                        +{features.length - 3}
+                      </span>
+                    )}
+                  </div>
+
+                  {canManageContent && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setEditing(item)}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#c7d0cd] px-3 py-2 text-sm font-semibold text-[#1f7770] transition hover:bg-[#e0eeeb]"
+                      >
+                        <Pencil className="h-4 w-4" />
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#f0c4c4] px-3 py-2 text-sm font-semibold text-[#c75252] transition hover:bg-[#fae4e4]"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+
+          <div className="hidden overflow-hidden rounded-2xl border border-[#ccd4d2] bg-white lg:block">
+            <div className="overflow-x-auto">
+              <table className="min-w-[820px] w-full table-auto">
               <thead>
                 <tr className="border-b border-[#d5ddda] bg-white text-sm text-[#203035]">
                   <th className="px-5 py-3 text-left font-semibold">Imagen</th>
@@ -229,6 +291,7 @@ const PlayasAdmin = () => {
             </table>
           </div>
         </div>
+        </>
       )}
 
       {editing !== null && canManageContent && (

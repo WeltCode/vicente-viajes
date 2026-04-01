@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.utils.text import slugify
 from django.contrib.auth.models import User
 
@@ -51,6 +52,8 @@ class Excursion(models.Model):
         # Slug de respaldo para URLs amigables si no llega desde admin.
         if not self.slug:
             self.slug = slugify(self.title)
+        if self.departure_date and self.departure_date <= timezone.localdate():
+            self.is_active = False
         super().save(*args, **kwargs)
 
 

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.utils import timezone
 from .models import Excursion
 from decimal import Decimal
 
@@ -52,6 +53,8 @@ class ExcursionSerializer(serializers.ModelSerializer):
             val = ret.get(key)
             if isinstance(val, str):
                 ret[key] = [line for line in val.splitlines() if line.strip()]
+        if instance.departure_date and instance.departure_date <= timezone.localdate():
+            ret['is_active'] = False
         # Garantiza estructura estable para el frontend.
         if ret.get('itinerary') is None:
             ret['itinerary'] = []
