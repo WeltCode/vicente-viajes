@@ -1,5 +1,5 @@
 [build]
-  command = "cd frontend && npm install && npm run build"
+  command = "cd frontend && npm install && node scripts/generate-netlify-redirects.mjs && npm run build"
   publish = "frontend/dist"
 
 [[headers]]

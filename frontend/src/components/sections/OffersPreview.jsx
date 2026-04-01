@@ -5,6 +5,45 @@ import axios from "axios";
 import { ArrowRight, Clock3, Flame, MapPin } from "lucide-react";
 import { apiUrl } from "../../services/api";
 
+const fallbackOffers = [
+  {
+    id: "fallback-1",
+    title: "Escapada a Punta Cana",
+    city: "Punta Cana",
+    nights: 7,
+    destination: "Republica Dominicana",
+    price: 1299,
+    original_price: 1599,
+    discount: "20%",
+    is_hot_deal: true,
+    image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900&h=700&fit=crop",
+  },
+  {
+    id: "fallback-2",
+    title: "Semana en Riviera Maya",
+    city: "Cancun",
+    nights: 6,
+    destination: "Mexico",
+    price: 1149,
+    original_price: 1399,
+    discount: "18%",
+    is_hot_deal: false,
+    image: "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=900&h=700&fit=crop",
+  },
+  {
+    id: "fallback-3",
+    title: "Oferta urbana en Dubai",
+    city: "Dubai",
+    nights: 5,
+    destination: "Emiratos Arabes",
+    price: 999,
+    original_price: 1249,
+    discount: "20%",
+    is_hot_deal: true,
+    image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=900&h=700&fit=crop",
+  },
+];
+
 const money = (value) => {
   const numeric = Number(value || 0);
   if (!numeric) return null;
@@ -26,7 +65,7 @@ export default function OffersPreview() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (!loading && !offers.length) return null;
+  const previewOffers = offers.length ? offers : fallbackOffers;
 
   return (
     <section className="py-20 bg-mist">
@@ -75,7 +114,7 @@ export default function OffersPreview() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {offers.map((offer, i) => (
+            {previewOffers.map((offer, i) => (
               <motion.div
                 key={offer.id}
                 initial={{ opacity: 0, y: 26 }}

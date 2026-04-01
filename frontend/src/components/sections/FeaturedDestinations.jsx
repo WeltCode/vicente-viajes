@@ -8,25 +8,29 @@ import WaveDivider from "./WaveDivider";
 const fallbackStates = [
   {
     id: 1,
-    title: "Estado 1",
+    title: "Punta Cana",
+    subtitle: "Escapada al Caribe con plazas limitadas",
     image:
       "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=700&h=1200&fit=crop",
   },
   {
     id: 2,
-    title: "Estado 2",
+    title: "Riviera Maya",
+    subtitle: "Playas cristalinas y hoteles todo incluido",
     image:
       "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=700&h=1200&fit=crop",
   },
   {
     id: 3,
-    title: "Estado 3",
+    title: "Santorini",
+    subtitle: "Circuito mediterraneo con salidas programadas",
     image:
       "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=700&h=1200&fit=crop",
   },
   {
     id: 4,
-    title: "Estado 4",
+    title: "Dubai",
+    subtitle: "Oferta especial para tu proxima aventura",
     image:
       "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=700&h=1200&fit=crop",
   },
@@ -76,16 +80,17 @@ const FeaturedDestinations = () => {
         if (isMounted) {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          setItems(
+          const filteredItems =
             data.filter((item) => {
               if (!(item.image_url || item.image) || !item.is_active || !item.excursion_date) {
                 return false;
               }
               const excursionDate = new Date(`${item.excursion_date}T00:00:00`);
               return excursionDate > today;
-            })
-          );
-          setHasLoadError(false);
+            });
+
+          setItems(filteredItems);
+          setHasLoadError(filteredItems.length === 0);
         }
       } catch {
         if (isMounted) {
