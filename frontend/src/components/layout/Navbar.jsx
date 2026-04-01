@@ -4,7 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 
-import logo from "../../assets/images/vicentelogo.png";
+import logo from "../../assets/images/logo2vicentebg.png";
 
 const navLinks = [
   
