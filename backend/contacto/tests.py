@@ -1,3 +1,4 @@
+from typing import Any
 from unittest.mock import patch
 
 from django.conf import settings
@@ -6,6 +7,20 @@ from django.test import TestCase, override_settings
 
 from .models import mensaje_contacto
 
+MensajeContactoModel: Any = mensaje_contacto
+
+
+class ImmediateThread:
+    def __init__(self, target=None, args=None, kwargs=None, daemon=None):
+        self.target = target
+        self.args = args or ()
+        self.kwargs = kwargs or {}
+        self.daemon = daemon
+
+    def start(self):
+        if self.target:
+            self.target(*self.args, **self.kwargs)
+
 
 @override_settings(
     EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
@@ -13,6 +28,7 @@ from .models import mensaje_contacto
     CONTACT_RECIPIENT_EMAIL="info@vicenteviajes.com",
 )
 class ContactoEmailTests(TestCase):
+    @patch("contacto.views.Thread", ImmediateThread)
     def test_contact_message_is_saved_and_sent_to_configured_mailbox(self):
         payload = {
             "nombre": "Juan Pérez",
@@ -25,7 +41,8 @@ class ContactoEmailTests(TestCase):
         response = self.client.post("/api/contacto/enviar/", data=payload, content_type="application/json")
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(mensaje_contacto._default_manager.count(), 1)
+        self.assertEqual(MensajeContactoModel.objects.count(), 1)
+        self.assertTrue(response.json()["email_queued"])
         self.assertEqual(len(mail.outbox), 1)
 
         sent_email = mail.outbox[0]
@@ -46,9 +63,10 @@ class ContactoEmailTests(TestCase):
         response = self.client.post("/api/contacto/enviar/", data=payload, content_type="application/json")
 
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(mensaje_contacto._default_manager.count(), 0)
+        self.assertEqual(MensajeContactoModel.objects.count(), 0)  # pyright: ignore[reportAttributeAccessIssue]
         self.assertEqual(len(mail.outbox), 0)
 
+    @patch("contacto.views.Thread", ImmediateThread)
     @patch("contacto.views.EmailMessage.send", side_effect=TimeoutError("timed out"))
     def test_email_timeout_still_returns_created_when_message_is_saved(self, _mock_send):
         payload = {
@@ -62,6 +80,6 @@ class ContactoEmailTests(TestCase):
         response = self.client.post("/api/contacto/enviar/", data=payload, content_type="application/json")
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(mensaje_contacto._default_manager.count(), 1)
-        self.assertFalse(response.json()["email_sent"])
-        self.assertIn("warning", response.json())
+        self.assertEqual(MensajeContactoModel.objects.count(), 1)
+        self.assertTrue(response.json()["email_queued"])
+        self.assertEqual(len(mail.outbox), 0)
