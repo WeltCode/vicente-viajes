@@ -100,14 +100,14 @@ export default function Contacto() {
   };
 
   return (
-    <div className="min-h-screen bg-mist">
+    <div className="min-h-screen overflow-x-hidden bg-mist">
       <PageSeo
         title="Contacto"
         description="Contacta con Vicente Viajes en Madrid por teléfono, email o formulario para planificar vuelos, excursiones, hoteles y viajes a medida."
         path="/contacto"
       />
       <Navbar />
-      <main className="pt-20">
+      <main className="overflow-x-hidden pt-20">
         <PageHeader
           badge="Ponte en Contacto"
           title="Contáctanos"
@@ -115,9 +115,9 @@ export default function Contacto() {
         />
 
         {/* Contact Section */}
-        <section className="py-20 bg-background">
+        <section className="overflow-hidden bg-background py-20">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
               {/* Contact Info */}
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
@@ -137,13 +137,13 @@ export default function Contacto() {
                       transition={{ delay: index * 0.1 }}
                       className="flex gap-4"
                     >
-                      <div className="w-12 h-12 rounded-xl bg-teal/10 flex items-center justify-center flex-shrink-0">
-                        <info.icon className="w-6 h-6 text-teal" />
+                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-teal/10">
+                        <info.icon className="h-6 w-6 text-teal" />
                       </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground mb-1">{info.title}</h3>
+                      <div className="min-w-0">
+                        <h3 className="mb-1 font-semibold text-foreground">{info.title}</h3>
                         {info.details.map((detail, i) => (
-                          <p key={i} className="text-muted-foreground text-sm">{detail}</p>
+                          <p key={i} className="break-words text-sm text-muted-foreground">{detail}</p>
                         ))}
                       </div>
                     </motion.div>
@@ -271,7 +271,7 @@ export default function Contacto() {
         </section>
 
         {/* FAQ Section */}
-        <section className="py-20 bg-sand">
+        <section className="overflow-hidden bg-sand py-20">
           <div className="container mx-auto px-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
