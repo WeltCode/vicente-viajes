@@ -1,6 +1,8 @@
 from django.db import models
 
 class mensaje_contacto(models.Model):
+    objects = models.Manager()
+
     # Registro persistente de mensajes enviados desde el formulario publico.
     nombre = models.CharField(max_length=255)
     email = models.EmailField()

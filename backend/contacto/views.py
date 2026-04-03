@@ -1,15 +1,48 @@
 import logging
+from base64 import b64encode
+from pathlib import Path
+from smtplib import SMTPException
 
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from django.core.mail import EmailMessage
-from django.conf import settings
-from smtplib import SMTPException
+
 from .serializers import MensajeContactoSerializer
 
 logger = logging.getLogger(__name__)
+
+BRAND_NAME = 'Vicente Viajes'
+BRAND_DOMAIN = 'VicenteViajes.com'
+LOGO_PATH = Path(settings.BASE_DIR).parent / 'frontend' / 'src' / 'assets' / 'images' / 'vicentelogo.png'
+
+
+def _get_logo_src():
+    if not LOGO_PATH.exists():
+        return ''
+
+    logo_bytes = LOGO_PATH.read_bytes()
+    encoded_logo = b64encode(logo_bytes).decode('ascii')
+    return f'data:image/png;base64,{encoded_logo}'
+
+
+def _build_contact_email_context(data):
+    asunto = data['asunto']
+    telefono = data.get('telefono') or 'No proporcionado'
+    return {
+        'brand_name': BRAND_NAME,
+        'brand_domain': BRAND_DOMAIN,
+        'headline': 'Nuevo mensaje web',
+        'subject_label': asunto,
+        'nombre': data['nombre'],
+        'email': data['email'],
+        'telefono': telefono,
+        'mensaje': data['mensaje'],
+        'logo_src': _get_logo_src(),
+    }
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -20,30 +53,23 @@ def enviar_mensaje_contacto(request):
     if serializer.is_valid():
         # Primero se persiste el mensaje para no perder trazabilidad.
         serializer.save()
+        payload = serializer.validated_data
         
         # Luego se intenta enviar notificacion al correo configurado.
         try:
-            asunto = f"Nuevo mensaje de contacto: {serializer.validated_data['asunto']}"
-            
-            mensaje_email = f"""
-Nuevo mensaje de contacto recibido:
+            asunto = f"{BRAND_DOMAIN} | Nuevo mensaje web | {payload['asunto']}"
+            context = _build_contact_email_context(payload)
+            mensaje_email = render_to_string('contacto/contact_notification.txt', context).strip()
+            mensaje_email_html = render_to_string('contacto/contact_notification.html', context)
 
-Nombre: {serializer.validated_data['nombre']}
-Email: {serializer.validated_data['email']}
-Teléfono: {serializer.validated_data['telefono'] or 'No proporcionado'}
-Asunto: {serializer.validated_data['asunto']}
-
-Mensaje:
-{serializer.validated_data['mensaje']}
-            """.strip()
-
-            email = EmailMessage(
+            email = EmailMultiAlternatives(
                 subject=asunto,
                 body=mensaje_email,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=[settings.CONTACT_RECIPIENT_EMAIL],
-                reply_to=[serializer.validated_data['email']],
+                reply_to=[payload['email']],
             )
+            email.attach_alternative(mensaje_email_html, 'text/html')
             email.send(fail_silently=False)
             
             return Response(
