@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaWhatsapp } from "react-icons/fa";
@@ -120,6 +120,7 @@ export default function Nosotros() {
   const [teamPaused, setTeamPaused] = useState(false);
   const teamDragX = useRef(0);
   const [teamDragging, setTeamDragging] = useState(false);
+  const teamTrackRef = useRef(null);
 
   useEffect(() => {
     const onResize = () => setTeamVisible(getTeamVisibleCards());
@@ -156,6 +157,17 @@ export default function Nosotros() {
 
   const teamShift = teamFrames.length ? 100 / teamFrames.length : 0;
 
+  // For "prev", position track with prev card hidden, then animate it in
+  useLayoutEffect(() => {
+    if (!teamAnimating || teamDir !== "prev" || !teamTrackRef.current) return;
+    const el = teamTrackRef.current;
+    el.style.transition = "none";
+    el.style.transform = `translateX(-${teamShift}%)`;
+    void el.offsetHeight; // force reflow
+    el.style.transition = "transform 650ms ease";
+    el.style.transform = "translateX(0)";
+  }, [teamAnimating, teamDir, teamShift]);
+
   const handleTeamTransitionEnd = () => {
     if (!teamAnimating) return;
     if (teamDir === "prev") {
@@ -182,14 +194,6 @@ export default function Nosotros() {
     if (d >= 40) teamPrev();
     setTeamDragging(false);
     setTeamPaused(false);
-  };
-
-  const handleTeamPrev = () => {
-    setCurrentTeamIndex((prev) => (prev === 0 ? team.length - 1 : prev - 1));
-  };
-
-  const handleTeamNext = () => {
-    setCurrentTeamIndex((prev) => (prev === team.length - 1 ? 0 : prev + 1));
   };
 
   return (
@@ -393,6 +397,7 @@ export default function Nosotros() {
             </button>
 
             <div
+              ref={teamTrackRef}
               className="flex cursor-grab active:cursor-grabbing select-none"
               onMouseDown={onTeamMouseDown}
               onMouseUp={onTeamMouseUp}
@@ -401,14 +406,14 @@ export default function Nosotros() {
               onTouchEnd={onTeamTouchEnd}
               style={{
                 width: `${(teamFrames.length / teamVisible) * 100}%`,
-                transform: teamAnimating
-                  ? teamDir === "prev"
-                    ? `translateX(${teamShift}%)`
-                    : `translateX(-${teamShift}%)`
-                  : teamDir === "prev"
-                    ? `translateX(${teamShift}%)`
-                    : "translateX(0)",
-                transition: teamAnimating ? "transform 650ms ease" : "none",
+                ...(teamDir === "prev"
+                  ? {}
+                  : {
+                      transform: teamAnimating
+                        ? `translateX(-${teamShift}%)`
+                        : "translateX(0)",
+                      transition: teamAnimating ? "transform 650ms ease" : "none",
+                    }),
               }}
               onTransitionEnd={handleTeamTransitionEnd}
             >
