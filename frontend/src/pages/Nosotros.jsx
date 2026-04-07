@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaWhatsapp } from "react-icons/fa";
@@ -102,7 +103,8 @@ const getTeamCyclicSlice = (list, start, count) => {
   if (!list.length) return [];
   const result = [];
   for (let i = 0; i < count; i++) {
-    result.push({ item: list[(start + i) % list.length], key: `${start}-${i}` });
+    const srcIdx = (start + i) % list.length;
+    result.push({ item: list[srcIdx], srcIdx });
   }
   return result;
 };
@@ -146,36 +148,34 @@ export default function Nosotros() {
     return () => clearInterval(timer);
   }, [team.length, teamPaused, teamDragging, teamAnimating, teamNext]);
 
+  // Buffer approach: always render visibleCards + 2 (one extra on each side)
+  const teamFrameCount = teamVisible + 2;
   const teamFrames = useMemo(() => {
-    if (team.length <= 1) return getTeamCyclicSlice(team, teamStart, 1);
-    if (teamDir === "prev") {
-      const prev = (teamStart - 1 + team.length) % team.length;
-      return getTeamCyclicSlice(team, prev, teamVisible + 1);
-    }
-    return getTeamCyclicSlice(team, teamStart, teamVisible + 1);
-  }, [teamStart, teamDir, teamVisible]);
+    const start = ((teamStart - 1) % team.length + team.length) % team.length;
+    return getTeamCyclicSlice(team, start, teamFrameCount);
+  }, [teamStart, teamVisible]);
 
-  const teamShift = teamFrames.length ? 100 / teamFrames.length : 0;
-
-  // For "prev", position track with prev card hidden, then animate it in
-  useLayoutEffect(() => {
-    if (!teamAnimating || teamDir !== "prev" || !teamTrackRef.current) return;
-    const el = teamTrackRef.current;
-    el.style.transition = "none";
-    el.style.transform = `translateX(-${teamShift}%)`;
-    void el.offsetHeight; // force reflow
-    el.style.transition = "transform 650ms ease";
-    el.style.transform = "translateX(0)";
-  }, [teamAnimating, teamDir, teamShift]);
+  // Rest position hides the left buffer card
+  const teamRestPct = -(1 / teamFrameCount) * 100;
+  const teamStepPct = (1 / teamFrameCount) * 100;
 
   const handleTeamTransitionEnd = () => {
     if (!teamAnimating) return;
-    if (teamDir === "prev") {
-      setTeamStart((p) => (p - 1 + team.length) % team.length);
-    } else {
-      setTeamStart((p) => (p + 1) % team.length);
+    const el = teamTrackRef.current;
+    if (el) {
+      el.style.transition = "none";
+      el.style.transform = `translateX(${teamRestPct}%)`;
     }
-    setTeamAnimating(false);
+    // flushSync ensures React re-renders synchronously so the DOM snap
+    // and content update are painted in the same browser frame (no flicker)
+    flushSync(() => {
+      setTeamStart((p) =>
+        teamDir === "prev"
+          ? (p - 1 + team.length) % team.length
+          : (p + 1) % team.length
+      );
+      setTeamAnimating(false);
+    });
   };
 
   const onTeamMouseDown = (e) => { teamDragX.current = e.clientX; setTeamDragging(true); setTeamPaused(true); };
@@ -398,32 +398,28 @@ export default function Nosotros() {
 
             <div
               ref={teamTrackRef}
-              className="flex cursor-grab active:cursor-grabbing select-none"
+              className="flex cursor-grab active:cursor-grabbing select-none will-change-transform"
               onMouseDown={onTeamMouseDown}
               onMouseUp={onTeamMouseUp}
               onMouseLeave={(e) => { if (teamDragging) onTeamMouseUp(e); }}
               onTouchStart={onTeamTouchStart}
               onTouchEnd={onTeamTouchEnd}
               style={{
-                width: `${(teamFrames.length / teamVisible) * 100}%`,
-                ...(teamDir === "prev"
-                  ? {}
-                  : {
-                      transform: teamAnimating
-                        ? `translateX(-${teamShift}%)`
-                        : "translateX(0)",
-                      transition: teamAnimating ? "transform 650ms ease" : "none",
-                    }),
+                width: `${(teamFrameCount / teamVisible) * 100}%`,
+                transform: teamAnimating
+                  ? `translateX(${teamDir === "next" ? teamRestPct - teamStepPct : teamRestPct + teamStepPct}%)`
+                  : `translateX(${teamRestPct}%)`,
+                transition: teamAnimating ? "transform 650ms ease" : "none",
               }}
               onTransitionEnd={handleTeamTransitionEnd}
             >
-              {teamFrames.map(({ item: member, key }) => (
+              {teamFrames.map(({ item: member }, index) => (
                 <div
-                  key={key}
+                  key={index}
                   className="px-2"
-                  style={{ width: `${100 / teamFrames.length}%` }}
+                  style={{ width: `${100 / teamFrameCount}%` }}
                 >
-                  <div className="group relative overflow-hidden rounded-3xl border border-[#d6e5e0] bg-white shadow-card transition-all duration-500 hover:-translate-y-1.5 hover:shadow-elevated">
+                  <div className="group relative overflow-hidden rounded-3xl border border-[#d6e5e0] bg-white shadow-card transition-[box-shadow] duration-500 hover:-translate-y-1.5 hover:shadow-elevated">
                     <div className="relative overflow-hidden">
                       <img
                         src={member.image}
