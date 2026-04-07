@@ -1,5 +1,6 @@
 import logging
 from smtplib import SMTPException
+from threading import Thread
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
@@ -47,36 +48,31 @@ def enviar_mensaje_contacto(request):
         serializer.save()
         payload = serializer.validated_data
 
-        try:
-            asunto = f"{BRAND_DOMAIN} | Nuevo mensaje web | {payload['asunto']}"
-            context = _build_contact_email_context(payload)
-            mensaje_email = render_to_string('contacto/contact_notification.txt', context).strip()
-            mensaje_email_html = render_to_string('contacto/contact_notification.html', context)
+        # Renderiza el cuerpo del email en el hilo principal (necesita acceso a templates).
+        asunto = f"{BRAND_DOMAIN} | Nuevo mensaje web | {payload['asunto']}"
+        context = _build_contact_email_context(payload)
+        mensaje_email = render_to_string('contacto/contact_notification.txt', context).strip()
+        mensaje_email_html = render_to_string('contacto/contact_notification.html', context)
 
-            email = EmailMultiAlternatives(
-                subject=asunto,
-                body=mensaje_email,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[settings.CONTACT_RECIPIENT_EMAIL],
-                reply_to=[payload['email']],
-            )
-            email.attach_alternative(mensaje_email_html, 'text/html')
-            email.send(fail_silently=False)
-            
-            return Response(
-                {'message': 'Mensaje enviado correctamente', 'email_sent': True},
-                status=status.HTTP_201_CREATED
-            )
-        except (SMTPException, OSError, ValueError, TimeoutError) as e:
-            # El registro queda guardado aunque falle SMTP; se registra en logs para revisión.
-            logger.warning("No se pudo enviar la notificación de contacto por email: %s", e)
-            return Response(
-                {
-                    'message': 'Mensaje recibido correctamente',
-                    'warning': 'No se pudo notificar por correo en este momento, pero tu mensaje ha quedado registrado.',
-                    'email_sent': False,
-                },
-                status=status.HTTP_201_CREATED
-            )
+        def _send():
+            try:
+                email = EmailMultiAlternatives(
+                    subject=asunto,
+                    body=mensaje_email,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[settings.CONTACT_RECIPIENT_EMAIL],
+                    reply_to=[payload['email']],
+                )
+                email.attach_alternative(mensaje_email_html, 'text/html')
+                email.send(fail_silently=False)
+            except (SMTPException, OSError, ValueError, TimeoutError) as e:
+                logger.warning("No se pudo enviar la notificación de contacto por email: %s", e)
+
+        Thread(target=_send, daemon=True).start()
+
+        return Response(
+            {'message': 'Mensaje recibido correctamente', 'email_queued': True},
+            status=status.HTTP_201_CREATED
+        )
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

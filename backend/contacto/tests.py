@@ -15,7 +15,8 @@ from .models import mensaje_contacto
     CONTACT_RECIPIENT_EMAIL="info@vicenteviajes.com",
 )
 class ContactoEmailTests(TestCase):
-    def test_contact_message_is_saved_and_sent_to_configured_mailbox(self):
+    @patch("contacto.views.Thread")
+    def test_contact_message_is_saved_and_email_queued(self, mock_thread):
         payload = {
             "nombre": "Juan Pérez",
             "email": "juan@example.com",
@@ -28,8 +29,28 @@ class ContactoEmailTests(TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(mensaje_contacto.objects.count(), 1)
-        self.assertEqual(len(mail.outbox), 1)
+        self.assertTrue(response.json()["email_queued"])
+        mock_thread.assert_called_once()
+        mock_thread.return_value.start.assert_called_once()
 
+    @patch("contacto.views.Thread")
+    def test_email_thread_sends_correctly_when_called(self, mock_thread):
+        """Ejecuta manualmente la función del hilo para verificar que el email se construye bien."""
+        payload = {
+            "nombre": "Juan Pérez",
+            "email": "juan@example.com",
+            "telefono": "600123123",
+            "asunto": "Reserva",
+            "mensaje": "Quiero información sobre un viaje a Cancún.",
+        }
+
+        self.client.post("/api/contacto/enviar/", data=payload, content_type="application/json")
+
+        # Extraer y ejecutar la función _send que se pasó al Thread.
+        send_fn = mock_thread.call_args.kwargs["target"]
+        send_fn()
+
+        self.assertEqual(len(mail.outbox), 1)
         sent_email = mail.outbox[0]
         self.assertEqual(sent_email.to, [settings.CONTACT_RECIPIENT_EMAIL])
         self.assertEqual(sent_email.from_email, settings.DEFAULT_FROM_EMAIL)
@@ -54,24 +75,8 @@ class ContactoEmailTests(TestCase):
         self.assertEqual(mensaje_contacto.objects.count(), 0)
         self.assertEqual(len(mail.outbox), 0)
 
-    @patch("contacto.views.EmailMultiAlternatives.send", side_effect=TimeoutError("timed out"))
-    def test_email_timeout_still_returns_created_when_message_is_saved(self, _mock_send):
-        payload = {
-            "nombre": "Ana López",
-            "email": "ana@example.com",
-            "telefono": "600123456",
-            "asunto": "Consulta",
-            "mensaje": "Necesito más detalles sobre una excursión.",
-        }
-
-        response = self.client.post("/api/contacto/enviar/", data=payload, content_type="application/json")
-
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(mensaje_contacto.objects.count(), 1)
-        self.assertFalse(response.json()["email_sent"])
-        self.assertIn("warning", response.json())
-
-    def test_contact_email_html_highlights_selected_subject(self):
+    @patch("contacto.views.Thread")
+    def test_contact_email_html_highlights_selected_subject(self, mock_thread):
         payload = {
             "nombre": "Lucía Martín",
             "email": "lucia@example.com",
@@ -83,6 +88,11 @@ class ContactoEmailTests(TestCase):
         response = self.client.post("/api/contacto/enviar/", data=payload, content_type="application/json")
 
         self.assertEqual(response.status_code, 201)
+
+        # Ejecutar el hilo manualmente para verificar el HTML.
+        send_fn = mock_thread.call_args.kwargs["target"]
+        send_fn()
+
         sent_email = mail.outbox[0]
         html_body, mimetype = sent_email.alternatives[0]
         self.assertEqual(mimetype, "text/html")
