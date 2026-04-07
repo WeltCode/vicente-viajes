@@ -396,25 +396,25 @@ const FeaturedDestinations = () => {
               onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl"
             >
+              {states.length > 1 && (
+                <>
+                  <button
+                    onClick={handleModalPrev}
+                    className="absolute left-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+                    aria-label="Imagen anterior"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={handleModalNext}
+                    className="absolute right-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+                    aria-label="Imagen siguiente"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </>
+              )}
               <div className="relative">
-                {states.length > 1 && (
-                  <>
-                    <button
-                      onClick={handleModalPrev}
-                      className="absolute left-4 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-colors hover:bg-white/30"
-                      aria-label="Imagen anterior"
-                    >
-                      <ChevronLeft className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={handleModalNext}
-                      className="absolute right-16 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-colors hover:bg-white/30"
-                      aria-label="Imagen siguiente"
-                    >
-                      <ChevronRight className="h-5 w-5" />
-                    </button>
-                  </>
-                )}
                 <img
                   src={selectedState.image_url || selectedState.image}
                   alt={selectedState.title || "Estado"}
@@ -422,7 +422,7 @@ const FeaturedDestinations = () => {
                 />
                 <button
                   onClick={() => setSelectedState(null)}
-                  className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-colors hover:bg-white/30"
+                  className="absolute top-4 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
                   aria-label="Cerrar imagen"
                 >
                   <X className="h-5 w-5" />

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaWhatsapp } from "react-icons/fa";
@@ -25,28 +25,39 @@ import { buildWhatsAppUrl } from "../services/siteContact";
 
 const team = [
   {
-    name: "Vicente Garcia",
-    role: "Fundador & CEO",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80",
+    name: "Vicente Barahona",
+    role: "Fundador & Agente de Viajes",
+    image: "https://res.cloudinary.com/da6ggvegj/image/upload/v1775563454/vicente_k59gpk.png",
     specialty: "Estrategia Comercial",
+    phone: "34600000001",
   },
   {
-    name: "Maria Lopez",
-    role: "Directora de Operaciones",
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80",
+    name: "Maria Jimenez",
+    role: "Agente de Viajes",
+    image: "https://res.cloudinary.com/da6ggvegj/image/upload/v1775565120/maria_fycneg.png",
     specialty: "Operacion de Grupos",
+    phone: "34600000002",
   },
   {
-    name: "Carlos Ruiz",
-    role: "Jefe de Ventas",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+    name: "Jonathan Barahona",
+    role: "Agente de Viajes",
+    image: "https://res.cloudinary.com/da6ggvegj/image/upload/v1775564229/jonathan_cstkbz.png",
     specialty: "Paquetes a Medida",
+    phone: "34600000003",
   },
   {
-    name: "Ana Martinez",
-    role: "Especialista en Destinos",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80",
+    name: "Luz Molina",
+    role: "Agente de Viajes",
+    image: "https://res.cloudinary.com/da6ggvegj/image/upload/v1775564354/luz_vbzohg.png",
     specialty: "Experiencias Premium",
+    phone: "34600000004",
+  },
+  {
+    name: "Raymundo Barahona",
+    role: "Agente de Viajes",
+    image: "https://res.cloudinary.com/da6ggvegj/image/upload/v1775564980/ray_kaow9k.png",
+    specialty: "Experiencias Premium",
+    phone: "34600000005",
   },
 ];
 
@@ -78,25 +89,100 @@ const differentiators = [
   },
 ];
 
-const teamGridVariants = {
-  hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.12,
-    },
-  },
+const TEAM_AUTOPLAY_MS = 3200;
+
+const getTeamVisibleCards = () => {
+  if (typeof window === "undefined") return 4;
+  if (window.innerWidth < 640) return 1;
+  if (window.innerWidth < 1024) return 2;
+  return 4;
 };
 
-const teamCardVariants = {
-  hidden: { opacity: 0, y: 28 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+const getTeamCyclicSlice = (list, start, count) => {
+  if (!list.length) return [];
+  const result = [];
+  for (let i = 0; i < count; i++) {
+    result.push({ item: list[(start + i) % list.length], key: `${start}-${i}` });
+  }
+  return result;
 };
 
 export default function Nosotros() {
-  const [currentTeamIndex, setCurrentTeamIndex] = useState(0);
   const whatsappUrl = buildWhatsAppUrl(
     "Hola Vicente Viajes, me gustaria recibir asesoria para mi proximo viaje."
   );
+
+  /* ---- Team carousel state ---- */
+  const [teamVisible, setTeamVisible] = useState(getTeamVisibleCards);
+  const [teamStart, setTeamStart] = useState(0);
+  const [teamDir, setTeamDir] = useState("next");
+  const [teamAnimating, setTeamAnimating] = useState(false);
+  const [teamPaused, setTeamPaused] = useState(false);
+  const teamDragX = useRef(0);
+  const [teamDragging, setTeamDragging] = useState(false);
+
+  useEffect(() => {
+    const onResize = () => setTeamVisible(getTeamVisibleCards());
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const teamNext = useCallback(() => {
+    if (teamAnimating || team.length <= 1) return;
+    setTeamDir("next");
+    setTeamAnimating(true);
+  }, [teamAnimating]);
+
+  const teamPrev = useCallback(() => {
+    if (teamAnimating || team.length <= 1) return;
+    setTeamDir("prev");
+    setTeamAnimating(true);
+  }, [teamAnimating]);
+
+  useEffect(() => {
+    if (team.length <= 1 || teamPaused || teamDragging) return;
+    const timer = setInterval(teamNext, TEAM_AUTOPLAY_MS);
+    return () => clearInterval(timer);
+  }, [team.length, teamPaused, teamDragging, teamAnimating, teamNext]);
+
+  const teamFrames = useMemo(() => {
+    if (team.length <= 1) return getTeamCyclicSlice(team, teamStart, 1);
+    if (teamDir === "prev") {
+      const prev = (teamStart - 1 + team.length) % team.length;
+      return getTeamCyclicSlice(team, prev, teamVisible + 1);
+    }
+    return getTeamCyclicSlice(team, teamStart, teamVisible + 1);
+  }, [teamStart, teamDir, teamVisible]);
+
+  const teamShift = teamFrames.length ? 100 / teamFrames.length : 0;
+
+  const handleTeamTransitionEnd = () => {
+    if (!teamAnimating) return;
+    if (teamDir === "prev") {
+      setTeamStart((p) => (p - 1 + team.length) % team.length);
+    } else {
+      setTeamStart((p) => (p + 1) % team.length);
+    }
+    setTeamAnimating(false);
+  };
+
+  const onTeamMouseDown = (e) => { teamDragX.current = e.clientX; setTeamDragging(true); setTeamPaused(true); };
+  const onTeamMouseUp = (e) => {
+    if (!teamDragging) return;
+    const d = e.clientX - teamDragX.current;
+    if (d <= -40) teamNext();
+    if (d >= 40) teamPrev();
+    setTeamDragging(false);
+    setTeamPaused(false);
+  };
+  const onTeamTouchStart = (e) => { teamDragX.current = e.touches[0].clientX; setTeamDragging(true); setTeamPaused(true); };
+  const onTeamTouchEnd = (e) => {
+    const d = e.changedTouches[0].clientX - teamDragX.current;
+    if (d <= -40) teamNext();
+    if (d >= 40) teamPrev();
+    setTeamDragging(false);
+    setTeamPaused(false);
+  };
 
   const handleTeamPrev = () => {
     setCurrentTeamIndex((prev) => (prev === 0 ? team.length - 1 : prev - 1));
@@ -285,110 +371,99 @@ export default function Nosotros() {
             </p>
           </motion.div>
 
-          {/* Desktop Grid */}
-          <motion.div
-            className="hidden lg:grid grid-cols-4 gap-6"
-            variants={teamGridVariants}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.2 }}
+          {/* Carousel */}
+          <div
+            className="relative overflow-hidden rounded-3xl border border-[#d6dfdc] bg-white/80 p-3 md:p-5 shadow-card"
+            onMouseEnter={() => setTeamPaused(true)}
+            onMouseLeave={() => { setTeamPaused(false); setTeamDragging(false); }}
           >
-            {team.map((member, index) => (
-              <motion.div
-                key={member.name}
-                variants={teamCardVariants}
-                className="group relative overflow-hidden rounded-3xl border border-[#d6e5e0] bg-white shadow-card transition-all duration-500 hover:-translate-y-1.5 hover:shadow-elevated"
-              >
-                <div className="relative overflow-hidden">
-                  <img
-                    src={member.image}
-                    alt={member.name}
-                    className="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0f2425]/80 via-[#0f2425]/20 to-transparent opacity-80" />
-                  <p className="absolute bottom-4 left-4 right-4 rounded-xl border border-white/20 bg-black/20 px-3 py-2 text-xs text-white backdrop-blur-sm">
-                    {member.specialty}
-                  </p>
-                </div>
+            <button
+              onClick={teamPrev}
+              className="absolute left-3 top-1/2 z-20 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-teal shadow-md transition hover:bg-white"
+              aria-label="Anterior"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              onClick={teamNext}
+              className="absolute right-3 top-1/2 z-20 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-teal shadow-md transition hover:bg-white"
+              aria-label="Siguiente"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
 
-                <div className="p-5 text-center">
-                  <h3 className="text-lg font-bold text-foreground">{member.name}</h3>
-                  <p className="text-sm text-teal font-medium">{member.role}</p>
-                  <div className="mx-auto mt-3 h-1 w-12 rounded-full bg-gradient-to-r from-teal to-sage" />
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-
-          {/* Mobile Carousel */}
-          <div className="overflow-hidden lg:hidden">
-            <div className="relative flex items-center justify-center gap-4 px-10 sm:px-12">
-              {/* Left Button */}
-              <button
-                onClick={handleTeamPrev}
-                className="absolute left-0 z-10 rounded-full border border-teal/20 bg-white/90 p-2 text-teal shadow-md transition hover:bg-teal hover:text-white"
-                aria-label="Anterior"
-              >
-                <ChevronLeft size={24} />
-              </button>
-
-              {/* Carousel */}
-              <div className="w-full overflow-hidden">
-                <motion.div
-                  animate={{ x: -currentTeamIndex * 100 + "%" }}
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  className="flex"
+            <div
+              className="flex cursor-grab active:cursor-grabbing select-none"
+              onMouseDown={onTeamMouseDown}
+              onMouseUp={onTeamMouseUp}
+              onMouseLeave={(e) => { if (teamDragging) onTeamMouseUp(e); }}
+              onTouchStart={onTeamTouchStart}
+              onTouchEnd={onTeamTouchEnd}
+              style={{
+                width: `${(teamFrames.length / teamVisible) * 100}%`,
+                transform: teamAnimating
+                  ? teamDir === "prev"
+                    ? `translateX(${teamShift}%)`
+                    : `translateX(-${teamShift}%)`
+                  : teamDir === "prev"
+                    ? `translateX(${teamShift}%)`
+                    : "translateX(0)",
+                transition: teamAnimating ? "transform 650ms ease" : "none",
+              }}
+              onTransitionEnd={handleTeamTransitionEnd}
+            >
+              {teamFrames.map(({ item: member, key }) => (
+                <div
+                  key={key}
+                  className="px-2"
+                  style={{ width: `${100 / teamFrames.length}%` }}
                 >
-                  {team.map((member) => (
-                    <motion.div
-                      key={member.name}
-                      className="w-full flex-shrink-0 px-2"
-                    >
-                      <div className="group overflow-hidden rounded-3xl border border-[#d6e5e0] bg-white shadow-card">
-                        <div className="relative overflow-hidden">
-                          <img
-                            src={member.image}
-                            alt={member.name}
-                            className="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-110"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-[#0f2425]/80 via-[#0f2425]/20 to-transparent opacity-80" />
-                        </div>
-
-                        <div className="p-5 text-center">
-                          <h3 className="text-lg font-bold text-foreground">{member.name}</h3>
-                          <p className="text-sm text-teal font-medium">{member.role}</p>
-                          <p className="mt-2 text-xs text-muted-foreground">{member.specialty}</p>
-                          <div className="mx-auto mt-3 h-1 w-12 rounded-full bg-gradient-to-r from-teal to-sage" />
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </div>
-
-              {/* Right Button */}
-              <button
-                onClick={handleTeamNext}
-                className="absolute right-0 z-10 rounded-full border border-teal/20 bg-white/90 p-2 text-teal shadow-md transition hover:bg-teal hover:text-white"
-                aria-label="Siguiente"
-              >
-                <ChevronRight size={24} />
-              </button>
-            </div>
-
-            {/* Dots Indicator */}
-            <div className="flex justify-center gap-2 mt-6">
-              {team.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentTeamIndex(index)}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    index === currentTeamIndex ? "bg-teal" : "bg-teal/30"
-                  }`}
-                  aria-label={`Ir a miembro ${index + 1}`}
-                />
+                  <div className="group relative overflow-hidden rounded-3xl border border-[#d6e5e0] bg-white shadow-card transition-all duration-500 hover:-translate-y-1.5 hover:shadow-elevated">
+                    <div className="relative overflow-hidden">
+                      <img
+                        src={member.image}
+                        alt={member.name}
+                        className="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-110"
+                        draggable={false}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0f2425]/80 via-[#0f2425]/20 to-transparent opacity-80" />
+                      <p className="absolute bottom-4 left-4 right-4 rounded-xl border border-white/20 bg-black/20 px-3 py-2 text-xs text-white backdrop-blur-sm">
+                        {member.specialty}
+                      </p>
+                    </div>
+                    <div className="p-5 text-center">
+                      <h3 className="text-lg font-bold text-foreground">{member.name}</h3>
+                      <p className="text-sm text-teal font-medium">{member.role}</p>
+                      <div className="mx-auto mt-3 h-1 w-12 rounded-full bg-gradient-to-r from-teal to-sage" />
+                      <a
+                        href={`https://wa.me/${member.phone}?text=${encodeURIComponent(`Hola ${member.name.split(" ")[0]}, me gustaria recibir asesoria para mi proximo viaje.`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mx-auto mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#25D366] px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:scale-105 hover:shadow-md"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <FaWhatsapp className="h-3.5 w-3.5" />
+                        Contáctame
+                      </a>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
+          </div>
+
+          {/* Dots */}
+          <div className="flex justify-center gap-2 mt-6">
+            {team.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setTeamStart(i)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  i === teamStart % team.length ? "w-6 bg-teal" : "w-2 bg-teal/30"
+                }`}
+                aria-label={`Ir a miembro ${i + 1}`}
+              />
+            ))}
           </div>
         </div>
       </section>
