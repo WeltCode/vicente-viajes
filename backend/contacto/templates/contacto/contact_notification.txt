@@ -1,0 +1,15 @@
+Vicente Viajes
+Recibido desde {{ brand_domain }}
+
+{{ headline }}
+Asunto seleccionado: {{ subject_label }}
+
+Datos del contacto
+- Nombre: {{ nombre }}
+- Email: {{ email }}
+- Telefono: {{ telefono }}
+
+Mensaje
+{{ mensaje }}
+
+Este aviso se ha generado automaticamente desde el formulario web de {{ brand_domain }}.

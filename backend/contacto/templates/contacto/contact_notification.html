@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ brand_name }} - {{ headline }}</title>
+  </head>
+  <body style="margin:0;padding:0;background-color:#eef1ee;font-family:Arial,Helvetica,sans-serif;color:#1f2421;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#eef1ee;margin:0;padding:24px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;max-width:680px;background-color:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 12px 40px rgba(31,36,33,0.10);">
+            <tr>
+              <td style="background:linear-gradient(135deg,#216869 0%,#49a078 100%);padding:32px 36px 24px 36px;text-align:center;">
+                {% if logo_src %}
+                <img src="{{ logo_src }}" alt="{{ brand_name }}" style="display:block;margin:0 auto 18px auto;max-width:210px;height:auto;">
+                {% endif %}
+                <div style="display:inline-block;padding:8px 14px;border-radius:999px;background-color:rgba(255,255,255,0.18);color:#ffffff;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;">
+                  Recibido desde {{ brand_domain }}
+                </div>
+                <h1 style="margin:18px 0 8px 0;font-size:30px;line-height:1.15;color:#ffffff;font-weight:800;">
+                  {{ headline }}
+                </h1>
+                <p style="margin:0;color:rgba(255,255,255,0.92);font-size:15px;line-height:1.6;">
+                  El formulario web ha registrado una nueva consulta y ya esta lista para seguimiento.
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:30px 36px 12px 36px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f6f8f6;border:1px solid #dce1de;border-radius:18px;">
+                  <tr>
+                    <td style="padding:20px 22px;">
+                      <p style="margin:0 0 8px 0;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#216869;">
+                        Asunto seleccionado
+                      </p>
+                      <p style="margin:0;font-size:24px;line-height:1.3;font-weight:800;color:#1f2421;">
+                        {{ subject_label }}
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:12px 36px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td style="padding-right:8px;padding-bottom:12px;vertical-align:top;">
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#ffffff;border:1px solid #dce1de;border-radius:18px;">
+                        <tr>
+                          <td style="padding:20px 22px;">
+                            <p style="margin:0 0 14px 0;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#216869;">Contacto</p>
+                            <p style="margin:0 0 10px 0;font-size:15px;line-height:1.6;"><strong style="color:#1f2421;">Nombre:</strong> {{ nombre }}</p>
+                            <p style="margin:0 0 10px 0;font-size:15px;line-height:1.6;"><strong style="color:#1f2421;">Email:</strong> <a href="mailto:{{ email }}" style="color:#216869;text-decoration:none;">{{ email }}</a></p>
+                            <p style="margin:0;font-size:15px;line-height:1.6;"><strong style="color:#1f2421;">Telefono:</strong> {{ telefono }}</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding-bottom:12px;vertical-align:top;">
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#ffffff;border:1px solid #dce1de;border-radius:18px;">
+                        <tr>
+                          <td style="padding:20px 22px;">
+                            <p style="margin:0 0 14px 0;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#216869;">Mensaje</p>
+                            <div style="font-size:15px;line-height:1.8;color:#31413f;white-space:pre-line;">{{ mensaje }}</div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:8px 36px 34px 36px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#1f2421;border-radius:18px;">
+                  <tr>
+                    <td style="padding:18px 22px;text-align:center;">
+                      <p style="margin:0 0 6px 0;font-size:14px;font-weight:700;color:#ffffff;">{{ brand_name }}</p>
+                      <p style="margin:0;font-size:13px;line-height:1.6;color:rgba(255,255,255,0.76);">
+                        Notificacion automatica del formulario de contacto de {{ brand_domain }}.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
