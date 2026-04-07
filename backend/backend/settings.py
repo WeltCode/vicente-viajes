@@ -12,9 +12,63 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from urllib.parse import parse_qs, unquote, urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def _env_to_bool(raw_input, default=False):
+    raw_value = str(raw_input if raw_input is not None else default).strip().lower()
+    return raw_value in {'1', 'true', 'yes', 'on'}
+
+
+def _build_sqlite_database_config():
+    return {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+
+
+def _build_database_config_from_url(database_url_value):
+    parsed = urlparse(database_url_value)
+    scheme = parsed.scheme.lower()
+
+    if scheme in {'sqlite', 'sqlite3'}:
+        raw_path = unquote(parsed.path or '')
+        if database_url_value.endswith(':memory:'):
+            sqlite_name = ':memory:'
+        else:
+            sqlite_name = raw_path.lstrip('/') or str(BASE_DIR / 'db.sqlite3')
+        return {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': sqlite_name,
+        }
+
+    if scheme not in {'postgres', 'postgresql', 'pgsql'}:
+        raise ValueError(f'DATABASE_URL scheme no soportado: {scheme}')
+
+    config = {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': unquote(parsed.path.lstrip('/')),
+        'USER': unquote(parsed.username or ''),
+        'PASSWORD': unquote(parsed.password or ''),
+        'HOST': parsed.hostname or '',
+        'PORT': str(parsed.port or '5432'),
+    }
+
+    query = parse_qs(parsed.query)
+    options = {}
+    sslmode = query.get('sslmode', [None])[0]
+    if sslmode:
+        options['sslmode'] = sslmode
+    connect_timeout = query.get('connect_timeout', [None])[0]
+    if connect_timeout:
+        options['connect_timeout'] = int(connect_timeout)
+    if options:
+        config['OPTIONS'] = options
+
+    return config
 
 # Carga básica de variables de entorno desde backend/.env (opcional)
 env_file = BASE_DIR / '.env'
@@ -31,10 +85,10 @@ if env_file.exists():
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-*ch=a!122prcpcs!1@s!fcvaipoy5sauadv&*f^$t@fdky-knb'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-*ch=a!122prcpcs!1@s!fcvaipoy5sauadv&*f^$t@fdky-knb')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() == 'true'
+DEBUG = _env_to_bool(os.getenv('DJANGO_DEBUG', 'True'))
 
 # Hosts permitidos por Django; configurable por entorno.
 ALLOWED_HOSTS = [host.strip() for host in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if host.strip()]
@@ -97,11 +151,15 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+database_url = os.getenv('DATABASE_URL', '').strip()
+if database_url:
+    default_database = _build_database_config_from_url(database_url)
+else:
+    default_database = _build_sqlite_database_config()
+
+default_database['CONN_MAX_AGE'] = int(os.getenv('DATABASE_CONN_MAX_AGE', '60'))
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': default_database,
 }
 
 
@@ -174,6 +232,9 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
+csrf_trusted_origins_raw = os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '')
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_trusted_origins_raw.split(',') if origin.strip()]
+
 # Seguridad base DRF: lectura publica, escritura autenticada.
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -191,8 +252,8 @@ EMAIL_HOST = os.getenv('EMAIL_HOST', '')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
-EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() == 'true'
+EMAIL_USE_TLS = _env_to_bool(os.getenv('EMAIL_USE_TLS', 'True'))
+EMAIL_USE_SSL = _env_to_bool(os.getenv('EMAIL_USE_SSL', 'False'))
 EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '5'))
 DEFAULT_FROM_EMAIL = os.getenv(
     'DEFAULT_FROM_EMAIL',

@@ -135,9 +135,13 @@ Ejemplo de payload final enviado por POST:
 
 Archivo de referencia: `backend/.env.example`
 
+- `DJANGO_SECRET_KEY`
 - `DJANGO_DEBUG`
 - `DJANGO_ALLOWED_HOSTS`
 - `DJANGO_CORS_ALLOWED_ORIGINS`
+- `DJANGO_CSRF_TRUSTED_ORIGINS`
+- `DATABASE_URL`
+- `DATABASE_CONN_MAX_AGE`
 - `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`
 - `EMAIL_USE_TLS`, `EMAIL_USE_SSL`, `EMAIL_TIMEOUT`
 - `DEFAULT_FROM_EMAIL`
@@ -147,6 +151,43 @@ Comportamiento email:
 
 - Si SMTP esta configurado, usa backend SMTP real.
 - Si faltan credenciales, usa backend de consola para desarrollo.
+
+Base de datos:
+
+- Si `DATABASE_URL` esta vacia, Django usa `backend/db.sqlite3`.
+- Si `DATABASE_URL` apunta a PostgreSQL, Django usa esa base para el entorno actual.
+
+## Separacion de Entornos
+
+Objetivo recomendado:
+
+- `master` -> Produccion
+- `develop` -> Staging
+- Backend y frontend separados por entorno
+- Base de datos separada por entorno
+
+Configuracion sugerida:
+
+- Backend produccion: servicio Render separado, rama `master`, `DATABASE_URL` de produccion.
+- Backend staging: servicio Render separado, rama `develop`, `DATABASE_URL` de staging.
+- Frontend produccion: despliegue separado que apunte al backend de produccion.
+- Frontend staging: despliegue separado que apunte al backend de staging.
+
+Variables clave para el frontend desplegado:
+
+- `NETLIFY_API_PROXY_TARGET`: URL base del backend del entorno actual.
+- `VITE_API_URL=/api`: mantiene al frontend consumiendo la API via proxy.
+
+Flujo recomendado:
+
+1. Desarrollar y probar en `develop` sobre staging.
+2. Validar cambios en frontend y backend de staging.
+3. Hacer merge de `develop` a `master` cuando el cambio este aprobado.
+4. Desplegar `master` solo en produccion.
+
+Regla importante:
+
+- El merge mueve codigo, no datos. Los datos de produccion se conservan si produccion sigue apuntando a su propia base persistente.
 
 ## Instalacion y Ejecucion Local
 
@@ -166,6 +207,14 @@ python manage.py runserver
 ```
 
 Backend por defecto en: `http://localhost:8000`
+
+Si quieres probar PostgreSQL local o una base remota:
+
+```bash
+# ejemplo
+DATABASE_URL=postgresql://usuario:password@host:5432/basedatos
+python manage.py migrate
+```
 
 ### 2) Frontend
 
