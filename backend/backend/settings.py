@@ -254,12 +254,13 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = _env_to_bool(os.getenv('EMAIL_USE_TLS', 'True'))
 EMAIL_USE_SSL = _env_to_bool(os.getenv('EMAIL_USE_SSL', 'False'))
-EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '5'))
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '20'))
 DEFAULT_FROM_EMAIL = os.getenv(
     'DEFAULT_FROM_EMAIL',
     EMAIL_HOST_USER or 'info@vicenteviajes.com',
 )
 CONTACT_RECIPIENT_EMAIL = os.getenv('CONTACT_RECIPIENT_EMAIL', 'info@vicenteviajes.com')
+CONTACT_EMAIL_LOGO_URL = os.getenv('CONTACT_EMAIL_LOGO_URL', '')
 
 email_password_is_placeholder = EMAIL_HOST_PASSWORD.startswith('CAMBIA_')
 

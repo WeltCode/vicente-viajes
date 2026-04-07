@@ -1,6 +1,4 @@
 import logging
-from base64 import b64encode
-from pathlib import Path
 from smtplib import SMTPException
 
 from django.conf import settings
@@ -17,16 +15,10 @@ logger = logging.getLogger(__name__)
 
 BRAND_NAME = 'Vicente Viajes'
 BRAND_DOMAIN = 'VicenteViajes.com'
-LOGO_PATH = Path(settings.BASE_DIR).parent / 'frontend' / 'src' / 'assets' / 'images' / 'vicentelogo.png'
 
 
 def _get_logo_src():
-    if not LOGO_PATH.exists():
-        return ''
-
-    logo_bytes = LOGO_PATH.read_bytes()
-    encoded_logo = b64encode(logo_bytes).decode('ascii')
-    return f'data:image/png;base64,{encoded_logo}'
+    return str(getattr(settings, 'CONTACT_EMAIL_LOGO_URL', '') or '').strip()
 
 
 def _build_contact_email_context(data):

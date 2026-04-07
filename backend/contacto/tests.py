@@ -11,6 +11,7 @@ from .models import mensaje_contacto
 @override_settings(
     EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
     DEFAULT_FROM_EMAIL="info@vicenteviajes.com",
+    CONTACT_EMAIL_LOGO_URL="https://example.com/logo-email.png",
     CONTACT_RECIPIENT_EMAIL="info@vicenteviajes.com",
 )
 class ContactoEmailTests(TestCase):
@@ -87,3 +88,5 @@ class ContactoEmailTests(TestCase):
         self.assertEqual(mimetype, "text/html")
         self.assertIn(payload["asunto"], html_body)
         self.assertIn("Recibido desde VicenteViajes.com", html_body)
+        self.assertIn("https://example.com/logo-email.png", html_body)
+        self.assertNotIn("data:image/png;base64", html_body)

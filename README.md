@@ -145,12 +145,14 @@ Archivo de referencia: `backend/.env.example`
 - `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`
 - `EMAIL_USE_TLS`, `EMAIL_USE_SSL`, `EMAIL_TIMEOUT`
 - `DEFAULT_FROM_EMAIL`
+- `CONTACT_EMAIL_LOGO_URL`
 - `CONTACT_RECIPIENT_EMAIL`
 
 Comportamiento email:
 
 - Si SMTP esta configurado, usa backend SMTP real.
 - Si faltan credenciales, usa backend de consola para desarrollo.
+- `CONTACT_EMAIL_LOGO_URL` permite mostrar un logo remoto en el correo HTML sin inflar el mensaje con base64.
 
 Base de datos:
 
