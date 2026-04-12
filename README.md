@@ -191,6 +191,40 @@ Regla importante:
 
 - El merge mueve codigo, no datos. Los datos de produccion se conservan si produccion sigue apuntando a su propia base persistente.
 
+## Buenas prácticas de entornos y datos
+
+- **Producción** (`https://nouvicenteviajes.netlify.app/`): usa PostgreSQL (Render). Solo recibe código validado desde staging. Nunca se suben datos ni archivos desde staging/local.
+- **Staging** (`https://staging-nouvicenteviajes.netlify.app/`): usa SQLite. Aquí se prueban cambios, subidas y ediciones de archivos y datos.
+- **Localhost**: usa SQLite. Desarrollo y pruebas inmediatas.
+
+### Cambio de entorno backend
+
+- Para producción:
+  ```powershell
+  Copy-Item "backend/.env.production" "backend/.env" -Force
+  ```
+- Para staging/desarrollo:
+  ```powershell
+  Copy-Item "backend/.env.staging" "backend/.env" -Force
+  ```
+
+### Importante
+
+- Nunca subas `db.sqlite3` ni la carpeta `media/` de staging/local a producción.
+- Solo el código se sube a producción, no los datos.
+- Si necesitas migrar datos, hazlo manualmente y con cuidado.
+
+### Visual del flujo
+
+```mermaid
+flowchart TD
+    Localhost -- push código --> Staging
+    Staging -- push código validado --> Producción
+    Staging -- pruebas, subidas, ediciones --> Staging
+    Localhost -- pruebas, subidas, ediciones --> Localhost
+    Producción -- solo código validado --> Producción
+```
+
 ## Instalacion y Ejecucion Local
 
 ### 1) Backend
