@@ -1,52 +1,543 @@
-## Vicente Viajes - Estado Actual del Proyecto
+# 🌴 Vicente Viajes - Plataforma de Turismo Full Stack
 
-Aplicacion full stack para mostrar y administrar contenido turistico (excursiones, playas, ofertas), recibir mensajes de contacto y ejecutar busquedas de vuelos contra un motor externo.
+**Plataforma completa de gestión y promoción de actividades turísticas, excursiones, playas y ofertas especiales con sistemas de reserva, administración y contacto.**
 
-## Stack Tecnologico
+---
 
-- Backend: Django + Django REST Framework + Token Auth
-- Frontend: React + Vite + React Router + Tailwind CSS + Framer Motion
-- Base de datos: SQLite (desarrollo)
-- Integracion externa: motor de vuelos por POST (QueryBridge)
+## 📋 Tabla de Contenidos
+- [Visión General](#-visión-general)
+- [Arquitectura del Proyecto](#-arquitectura-del-proyecto)
+- [Stack Tecnológico](#-stack-tecnológico)
+- [Ramas y Despliegue](#-ramas-y-despliegue)
+- [Módulos del Backend](#-módulos-del-backend)
+- [API REST](#-api-rest)
+- [Instalación y Setup](#-instalación-y-setup)
+- [Estructura de Carpetas](#-estructura-de-carpetas)
 
-## Estructura General
+---
 
-- backend/: API REST, autenticacion y logica de negocio
-- frontend/: web publica, panel admin y buscador de vuelos
-- netlify.toml / _redirects: soporte de despliegue frontend
+## 🎯 Visión General
 
-## Modulos Backend
+Vicente Viajes es una **aplicación turística full-stack** que permite:
 
-- excursiones: CRUD de excursiones + endpoint de login por token
-- playas: CRUD de playas
-- ofertas: CRUD de ofertas + reordenamiento drag and drop
-- contacto: recepcion de formulario y envio de correo SMTP
+✅ **Usuarios públicos:**
+- Explorar excursiones disponibles
+- Ver playas y destinos
+- Consultar ofertas especiales
+- Buscar y reservar vuelos (integración externa)
+- Enviar mensajes de contacto
 
-## Rutas API Principales
+✅ **Administradores:**
+- Panel CRUD completo de contenido
+- Gestión de estados de excursiones
+- Reordenamiento de ofertas (drag & drop)
+- Visualización de mensajes de contacto
+- Autenticación tokenizada
 
-Base: `http://localhost:8000/api/`
+---
 
-- POST `login/` -> devuelve token para admin
-- GET/POST `excursiones/`
-- GET/PUT/DELETE `excursiones/<id>/`
-- GET/POST `playas/`
-- GET/PUT/DELETE `playas/<id>/`
-- GET/POST `ofertas/`
-- GET/PUT/DELETE `ofertas/<id>/`
-- POST `ofertas/reorder/` -> persiste nuevo orden visual
-- POST `contacto/enviar/` -> guarda mensaje y envia email
+## 🏗️ Arquitectura del Proyecto
 
-Notas de permisos:
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   CLIENTE (Frontend)                         │
+│  React + Vite + TypeScript + Tailwind CSS + Framer Motion    │
+│  ├─ Web Pública (viajes, playas, ofertas)                   │
+│  ├─ Panel Administrativo                                     │
+│  └─ Buscador de Vuelos (QueryBridge)                         │
+└──────────────────────┬──────────────────────────────────────┘
+                       │ HTTP/REST
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│              API REST (Backend - Django)                     │
+│  Django + Django REST Framework + Token Authentication       │
+│  ├─ /api/excursiones/      (Tours, actividades)            │
+│  ├─ /api/playas/           (Playas y destinos)             │
+│  ├─ /api/ofertas/          (Ofertas especiales)            │
+│  ├─ /api/estados/          (Estados de excursiones)        │
+│  ├─ /api/contacto/         (Mensajes de contacto)          │
+│  └─ /api/users/            (Autenticación)                 │
+└──────────────────────┬──────────────────────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│           BASE DE DATOS (PostgreSQL - Render)                │
+│  • Excursiones y tours disponibles                           │
+│  • Playas y destinos turísticos                              │
+│  • Ofertas y promociones                                     │
+│  • Estados de disponibilidad                                 │
+│  • Usuarios y perfiles                                       │
+│  • Mensajes de contacto                                      │
+└─────────────────────────────────────────────────────────────┘
+```
 
-- Lectura publica: usuarios anonimos solo ven registros activos en listados publicos.
-- Escritura y acceso administrativo: requiere token o credenciales validas.
+---
 
-## Flujo de Autenticacion Admin
+## 🛠️ Stack Tecnológico
 
-1. Frontend envia usuario/password a `POST /api/login/`.
-2. Backend valida credenciales y responde `{ token }`.
-3. Frontend guarda token en localStorage.
-4. Axios agrega `Authorization: Token <token>` automaticamente.
+### Backend
+| Componente | Tecnología | Versión |
+|-----------|-----------|---------|
+| Framework | Django | 6.0+ |
+| API REST | Django REST Framework | Latest |
+| Autenticación | Token Authentication | Built-in |
+| BD | PostgreSQL | 15+ |
+| Email | SMTP (Gmail) | Native |
+| Almacenamiento | Cloudinary | (Próximo) |
+
+### Frontend
+| Componente | Tecnología | Versión |
+|-----------|-----------|---------|
+| Framework | React | 18+ |
+| Build Tool | Vite | Latest |
+| Lenguaje | TypeScript/JavaScript | Latest |
+| UI Framework | Tailwind CSS | 3+ |
+| Animaciones | Framer Motion | 10+ |
+| Routing | React Router v6 | Latest |
+| HTTP Client | Axios | Latest |
+
+### DevOps & Deployment
+| Servicio | Función |
+|---------|---------|
+| **Render** | Backend (Django) + PostgreSQL |
+| **Netlify** | Frontend staging & producción |
+| **GitHub** | Control de versiones |
+| **Cloudinary** | CDN de imágenes (próximo) |
+
+---
+
+## 🌿 Ramas y Despliegue
+
+### Estrategia de Ramas (Git Flow)
+
+```
+                    ┌─────── staging-nouvicenteviajes.netlify.app
+                    │        (Rama: develop)
+    github.com      │        Backend: SQLite / Staging
+                    │        DEBUG=True
+                    │
+                ┌───┴────────────────────────────────────┐
+                │                                        │
+    DEVELOP ────┼─── Testing y Staging                   │
+    MASTER ─────┼─── Producción                          │
+                │                                        │
+                ├─────── nouvicenteviajes.netlify.app
+                │        (Rama: master)
+                │        Backend: PostgreSQL / Render
+                │        DEBUG=False
+                │
+                └─────── Render Backend API
+                         https://api-vicenteviajes.render.com
+```
+
+### Configuración por Rama
+
+| Rama | Entorno | BD | DEBUG | Frontend | Backend |
+|------|---------|-----|-------|---------|---------|
+| **develop** | Staging | SQLite (local) | True | `staging-nouvicenteviajes.netlify.app` | `.env.staging` |
+| **master** | Producción | PostgreSQL (Render) | False | `nouvicenteviajes.netlify.app` | `.env.production` |
+
+### Flujo de Deploy
+
+```
+1. Desarrollo en rama develop
+   ↓
+2. git push origin develop
+   ↓
+3. Netlify construye → staging-nouvicenteviajes.netlify.app
+   ↓
+4. Pruebas en staging
+   ↓
+5. git merge develop → master / git push origin master
+   ↓
+6. Netlify construye → nouvicenteviajes.netlify.app
+   ↓
+7. Render actualiza backend automáticamente
+```
+
+---
+
+## 📦 Módulos del Backend
+
+### 1. **Excursiones** (`/api/excursiones/`)
+Gestión de tours y actividades turísticas.
+
+**Campos:**
+- `title` - Nombre del tour
+- `description` - Descripción detallada
+- `price` - Precio en USD
+- `departure_date` - Fecha de salida
+- `group_size` - Tamaño del grupo
+- `duration` - Duración (horas)
+- `slug` - URL amigable
+- `image` - Imagen principal
+
+**Endpoints:**
+```
+GET    /api/excursiones/           → Lista de tours activos
+POST   /api/excursiones/           → Crear tour (admin)
+GET    /api/excursiones/{id}/      → Detalles
+PUT    /api/excursiones/{id}/      → Actualizar (admin)
+DELETE /api/excursiones/{id}/      → Eliminar (admin)
+```
+
+---
+
+### 2. **Playas** (`/api/playas/`)
+Catálogo de playas y destinos.
+
+**Campos:**
+- `name` - Nombre de la playa
+- `description` - Descripción
+- `location` - Ubicación geográfica
+- `characteristics` - Array de características
+- `image` - Foto de la playa
+- `slug` - URL amigable
+
+**Endpoints:**
+```
+GET    /api/playas/                → Lista de playas
+POST   /api/playas/                → Crear playa (admin)
+GET    /api/playas/{id}/           → Detalles
+PUT    /api/playas/{id}/           → Actualizar (admin)
+DELETE /api/playas/{id}/           → Eliminar (admin)
+```
+
+---
+
+### 3. **Ofertas** (`/api/ofertas/`)
+Promociones y ofertas especiales con reordenamiento visual.
+
+**Campos:**
+- `title` - Título de la oferta
+- `description` - Descripción
+- `discount_percentage` - % de descuento
+- `display_order` - Orden de visualización (drag & drop)
+- `image` - Imagen de la oferta
+- `is_active` - Activo/Inactivo
+
+**Endpoints:**
+```
+GET    /api/ofertas/                → Lista de ofertas
+POST   /api/ofertas/                → Crear oferta (admin)
+PUT    /api/ofertas/{id}/           → Actualizar (admin)
+DELETE /api/ofertas/{id}/           → Eliminar (admin)
+POST   /api/ofertas/reorder/        → Reordenar (admin)
+```
+
+**Reordenamiento (Drag & Drop):**
+```json
+POST /api/ofertas/reorder/
+{
+  "order": [3, 1, 2, 5, 4]  // IDs en nuevo orden
+}
+```
+
+---
+
+### 4. **Estados** (`/api/estados/`)
+Estados o regiones disponibles con excursiones asociadas.
+
+**Campos:**
+- `name` - Nombre del estado
+- `description` - Descripción
+- `image` - Imagen representativa
+- `subtitle` - Subtítulo
+- `excursion_date` - Fecha de la excursión
+- `is_active` - Activo/Inactivo
+
+**Lógica especial:**
+- Auto-desactiva Estados cuya fecha ha pasado (middleware)
+- Limpieza automática de datos vencidos
+
+---
+
+### 5. **Contacto** (`/api/contacto/`)
+Sistema de mensajes de contacto con envío de email.
+
+**Campos:**
+- `name` - Nombre del remitente
+- `email` - Email de contacto
+- `message` - Mensaje
+- `created_at` - Timestamp
+
+**Endpoints:**
+```
+POST   /api/contacto/enviar/       → Enviar mensaje
+GET    /api/contacto/mensajes/     → Listar (admin)
+```
+
+**Funcionalidades:**
+- ✅ Validación de email
+- ✅ Envío automático SMTP a `info@vicenteviajes.com`
+- ✅ Almacenamiento en BD
+- ✅ Notificación al admin
+
+---
+
+### 6. **Usuarios** (`/usuarios/`, `/api/login/`)
+Autenticación y gestión de perfiles.
+
+**Campos de User:**
+- `username` - Usuario único
+- `email` - Email
+- `password` - Hash bcrypt
+- `is_staff` - Es administrador
+- `is_active` - Activo/Inactivo
+
+**Endpoints:**
+```
+POST   /api/login/                 → Autenticación (devuelve token)
+GET    /api/users/profile/         → Perfil del usuario (auth)
+PUT    /api/users/profile/         → Actualizar perfil (auth)
+```
+
+---
+
+## 🔌 API REST - Referencia Completa
+
+### Autenticación
+
+```
+POST /api/login/
+{
+  "username": "admin_user",
+  "password": "secret_password"
+}
+
+Respuesta:
+{
+  "token": "abc123xyz789...",
+  "user": {
+    "id": 1,
+    "username": "admin_user",
+    "email": "admin@vicenteviajes.com"
+  }
+}
+```
+
+**Uso del Token:**
+```javascript
+// Axios configuración automática:
+headers: {
+  "Authorization": "Token abc123xyz789..."
+}
+```
+
+---
+
+### Headers Requeridos
+
+| Acción | Header | Requerido |
+|--------|--------|----------|
+| Lectura pública | - | No |
+| Escritura/Admin | `Authorization: Token <token>` | Sí |
+| CORS | `Origin: https://nouvicenteviajes.netlify.app` | Automático |
+
+---
+
+### Códigos HTTP
+
+| Código | Significado |
+|--------|------------|
+| `200` | OK - Exitoso |
+| `201` | Created - Recurso creado |
+| `400` | Bad Request - Error de validación |
+| `401` | Unauthorized - Falta autenticación |
+| `403` | Forbidden - No autorizado |
+| `404` | Not Found - Recurso no existe |
+| `500` | Server Error - Error interno |
+
+---
+
+## 💾 Estructura de Carpetas
+
+```
+vicente-viajes/
+│
+├── 📁 backend/                    # API REST (Django)
+│   ├── backend/
+│   │   ├── settings.py           # Configuración (carga .env)
+│   │   ├── urls.py               # Rutas principales
+│   │   └── wsgi.py               # Aplicación WSGI
+│   │
+│   ├── excursiones/              # Módulo de Tours
+│   │   ├── models.py             # Modelo Excursion
+│   │   ├── serializers.py        # Serializadores DRF
+│   │   ├── views.py              # ViewSets
+│   │   ├── urls.py               # Rutas
+│   │   └── migrations/           # Migraciones BD
+│   │
+│   ├── playas/                   # Módulo de Playas
+│   ├── ofertas/                  # Módulo de Ofertas
+│   ├── estados/                  # Módulo de Estados
+│   ├── contacto/                 # Módulo de Contacto
+│   │
+│   ├── .env.production           # Secrets producción
+│   ├── .env.staging              # Secrets staging
+│   ├── manage.py                 # CLI Django
+│   └── db.sqlite3                # BD local (staging)
+│
+├── 📁 frontend/                   # Aplicación React
+│   ├── src/
+│   │   ├── components/           # Componentes React
+│   │   ├── pages/                # Páginas
+│   │   ├── admin/                # Panel administrativo
+│   │   ├── services/             # API calls (axios)
+│   │   ├── styles/               # CSS/Tailwind
+│   │   └── App.jsx               # Componente raíz
+│   │
+│   ├── public/                   # Assets estáticos
+│   ├── index.html                # HTML principal
+│   └── package.json              # Dependencias
+│
+├── 📄 netlify.toml               # Configuración deploy
+├── 📄 README.md                  # Este archivo
+└── 📄 .gitignore                 # Archivos ignorados
+
+```
+
+---
+
+## ⚙️ Instalación y Setup
+
+### Requisitos Previos
+- Python 3.10+
+- Node.js 16+
+- PostgreSQL 13+ (producción)
+- Git
+
+### Backend (Django)
+
+```bash
+# 1. Clonar repositorio
+git clone https://github.com/WeltCode/vicente-viajes.git
+cd vicente-viajes/backend
+
+# 2. Crear entorno virtual
+python -m venv .venv
+
+# 3. Activar entorno (Windows)
+.venv\Scripts\activate
+# O (Mac/Linux)
+source .venv/bin/activate
+
+# 4. Instalar dependencias
+pip install -r requirements.txt
+
+# 5. Configurar variables de entorno
+cp .env.example .env.staging
+# Editar .env.staging con tus credenciales
+
+# 6. Ejecutar migraciones
+python manage.py migrate
+
+# 7. Crear superusuario
+python manage.py createsuperuser
+# username: admin
+# email: info@vicenteviajes.com
+# password: (tu contraseña)
+
+# 8. Iniciar servidor
+python manage.py runserver
+# http://localhost:8000
+```
+
+### Frontend (React)
+
+```bash
+# 1. Ir a carpeta frontend
+cd frontend
+
+# 2. Instalar dependencias
+npm install
+
+# 3. Crear archivo .env
+echo "VITE_API_URL=http://localhost:8000" > .env
+
+# 4. Iniciar servidor desarrollo
+npm run dev
+# http://localhost:5173
+```
+
+### Panel Administrativo
+
+```
+URL: http://localhost:8000/admin/
+Usuario: admin
+Contraseña: (la que creaste)
+```
+
+---
+
+## 🔐 Variables de Entorno
+
+### `.env.staging` (Desarrollo)
+```env
+DJANGO_SECRET_KEY=dev-key-unsafe
+DJANGO_DEBUG=True
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+DATABASE_URL=              # SQLite (vacío)
+DJANGO_CORS_ALLOWED_ORIGINS=http://localhost:5173
+EMAIL_HOST=                # Console output (desarrollo)
+```
+
+### `.env.production`
+```env
+DJANGO_SECRET_KEY=<tu-secret-key>
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=nouvicenteviajes.netlify.app,api.vicenteviajes.com
+DATABASE_URL=postgresql://usuario:password@host:5432/db_vicenteviajes
+DJANGO_CORS_ALLOWED_ORIGINS=https://nouvicenteviajes.netlify.app
+EMAIL_HOST=smtp.gmail.com
+EMAIL_HOST_USER=info@vicenteviajes.com
+EMAIL_HOST_PASSWORD=<app-password>
+```
+
+---
+
+## 📧 Sistema de Contacto
+
+El formulario de contacto envía emails automáticamente:
+
+**Flujo:**
+1. Usuario completa formulario en web
+2. Frontend envía POST a `/api/contacto/enviar/`
+3. Backend valida datos
+4. Envía email SMTP a `info@vicenteviajes.com`
+5. Guarda mensaje en BD para histórico
+
+**Email plantilla:**
+```
+De: Usuario <usuario@email.com>
+Para: info@vicenteviajes.com
+Asunto: Nuevo mensaje de contacto
+Cuerpo: [Mensaje del usuario]
+```
+
+---
+
+## 🚀 Próximas Mejoras
+
+- [ ] Integración Cloudinary para imágenes
+- [ ] Sistema de reservas y pagos
+- [ ] Notificaciones en tiempo real (WebSocket)
+- [ ] Análisis y reportes
+- [ ] App móvil (React Native)
+
+---
+
+## 📞 Soporte
+
+Para reportes de bugs o sugerencias:
+- **Email:** info@vicenteviajes.com
+- **GitHub Issues:** [WeltCode/vicente-viajes](https://github.com/WeltCode/vicente-viajes/issues)
+
+---
+
+## 📄 Licencia
+
+Proyecto propietario de Vicente Viajes. Todos los derechos reservados © 2026.
 
 ## Flujo del Buscador de Vuelos
 
