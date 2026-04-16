@@ -70,8 +70,31 @@ def _build_database_config_from_url(database_url_value):
 
     return config
 
-# Carga básica de variables de entorno desde backend/.env (opcional)
-env_file = BASE_DIR / '.env'
+# Detectar rama actual y cargar archivo .env correspondiente
+def get_current_branch():
+    try:
+        branch_file = BASE_DIR.parent / '.git' / 'HEAD'
+        if branch_file.exists():
+            content = branch_file.read_text().strip()
+            if 'ref: refs/heads/' in content:
+                return content.split('ref: refs/heads/')[-1]
+    except Exception:
+        pass
+    return 'master'  # Default a master/producción
+
+CURRENT_BRANCH = get_current_branch()
+
+# Determinar qué archivo .env usar según la rama
+if CURRENT_BRANCH == 'develop':
+    env_file = BASE_DIR / '.env.staging'
+else:
+    env_file = BASE_DIR / '.env.production'
+
+# Fallback a .env genérico si no existe el archivo específico
+if not env_file.exists():
+    env_file = BASE_DIR / '.env'
+
+# Cargar variables de entorno desde el archivo .env apropiado
 if env_file.exists():
     for raw_line in env_file.read_text(encoding='utf-8').splitlines():
         line = raw_line.strip()
