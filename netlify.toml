@@ -2,6 +2,17 @@
   command = "cd frontend && npm install && node scripts/generate-netlify-redirects.mjs && npm run build"
   publish = "frontend/dist"
 
+# Deploy context para producción (rama master)
+# Comentario de test: deploy separado por rama configurado correctamente
+[context.master]
+  command = "cd frontend && npm install && node scripts/generate-netlify-redirects.mjs && npm run build"
+  publish = "frontend/dist"
+
+# Deploy context para staging (rama develop)
+[context.develop]
+  command = "cd frontend && npm install && node scripts/generate-netlify-redirects.mjs && npm run build"
+  publish = "frontend/dist"
+
 [[headers]]
   for = "/*"
   [headers.values]

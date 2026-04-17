@@ -2,6 +2,7 @@
 # pylint: disable=protected-access
 from django.db import models
 from django.db.models import Max
+from cloudinary.models import CloudinaryField
 
 
 class Oferta(models.Model):
@@ -13,7 +14,7 @@ class Oferta(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     original_price = models.DecimalField(max_digits=10, decimal_places=2)
     validity = models.CharField(max_length=120)
-    image = models.URLField()
+    image = CloudinaryField('image', folder='Vicente Viajes/ofertas')
     display_order = models.PositiveIntegerField(default=0)
 
     is_hot_deal = models.BooleanField(default=False)

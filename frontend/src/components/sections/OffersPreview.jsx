@@ -126,9 +126,9 @@ export default function OffersPreview() {
               >
                 {/* Image */}
                 <div className="relative h-52 overflow-hidden">
-                  {offer.image ? (
+                  {offer.image_url || offer.image ? (
                     <img
-                      src={offer.image}
+                      src={offer.image_url || offer.image}
                       alt={offer.title || "Oferta"}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />

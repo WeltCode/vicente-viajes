@@ -310,7 +310,7 @@ def excursiones_detail(request, pk):
     if request.method == 'PUT':
         if not can_manage_content(request.user):
             return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-        serializer = ExcursionSerializer(excursion, data=request.data)
+        serializer = ExcursionSerializer(excursion, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

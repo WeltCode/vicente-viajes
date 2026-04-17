@@ -3,12 +3,13 @@
 from django.db import models
 from django.db.models import Max
 from django.utils import timezone
+from cloudinary.models import CloudinaryField
 
 
 class Estado(models.Model):
     title = models.CharField(max_length=120, blank=True, default='')
     subtitle = models.CharField(max_length=160, blank=True, default='')
-    image = models.FileField(upload_to='estados/')
+    image = CloudinaryField('image', folder='Vicente Viajes/estados')
     excursion_date = models.DateField()
     display_order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)

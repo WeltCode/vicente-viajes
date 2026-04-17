@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { Trash2, X } from "lucide-react";
@@ -65,6 +65,12 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
         }
   );
   const [error, setError] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(initialData?.image_url || initialData?.image || "");
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const inputRef = useRef(null);
+  const imageDep = initialData ? initialData.image : "";
 
   const formatIsoDate = (date) => {
     const year = date.getFullYear();
@@ -112,6 +118,7 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
     return formatIsoDate(new Date(inferredYear, monthIndex, safeDay));
   };
 
+
   const addDaysToDate = (isoDate, daysToAdd) => {
     if (!isoDate) return "";
     const date = new Date(`${isoDate}T00:00:00`);
@@ -119,6 +126,18 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
     date.setDate(date.getDate() + Math.max(0, Number(daysToAdd) || 0));
     return formatIsoDate(date);
   };
+
+  useEffect(() => {
+    if (imageFile) {
+      const objectUrl = URL.createObjectURL(imageFile);
+      setPreviewUrl(objectUrl);
+      return () => {
+        URL.revokeObjectURL(objectUrl);
+      };
+    } else {
+      setPreviewUrl((initialData && initialData.image) || "");
+    }
+  }, [imageFile, imageDep]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -219,44 +238,81 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
       return;
     }
 
+    if (!data.id && !imageFile) {
+      setError("Debes seleccionar una imagen.");
+      return;
+    }
+
+    setSaving(true);
     try {
-      const finalData = {
-        ...data,
-        short_description:
-          data.short_description?.trim() || data.description?.trim() || data.title?.trim() || "",
-        includes: Array.isArray(data.includes)
+      const formData = new FormData();
+      formData.append("title", data.title || "");
+      formData.append(
+        "short_description",
+        data.short_description?.trim() || data.description?.trim() || data.title?.trim() || ""
+      );
+      formData.append("description", data.description || "");
+      formData.append("location", data.location || "");
+      formData.append("duration", String(autoDuration || data.duration || "").replace(/\D/g, ""));
+      formData.append("price", parseFloat(data.price) || 0);
+      formData.append("currency", data.currency || "€");
+      formData.append(
+        "month",
+        data.month || ""
+      );
+      formData.append("departure_date", data.departure_date || "");
+      formData.append("return_date", data.return_date || "");
+      formData.append("group_size", data.group_size || "");
+      formData.append(
+        "rating",
+        data.rating ? Math.min(5, Math.max(0, parseFloat(data.rating))) : 0
+      );
+      formData.append(
+        "includes",
+        Array.isArray(data.includes)
           ? data.includes.join("\n")
-          : data.includes,
-        not_includes: Array.isArray(data.not_includes)
+          : data.includes || ""
+      );
+      formData.append(
+        "not_includes",
+        Array.isArray(data.not_includes)
           ? data.not_includes.join("\n")
-          : data.not_includes,
-        itinerary: (data.itinerary || []).map((d) => ({
-          day: d.day,
-          title: d.title,
-          description: d.description,
-          highlights: d.highlights
-            ? d.highlights
-                .split(",")
-                .map((h) => h.trim())
-                .filter(Boolean)
-            : [],
-        })),
-        departure_date: data.departure_date || null,
-        return_date: data.return_date || null,
-        rating: data.rating ? Math.min(5, Math.max(0, parseFloat(data.rating))) : 0,
-        duration: String(autoDuration || data.duration || "").replace(/\D/g, ""),
-        price: parseFloat(data.price),
-      };
+          : data.not_includes || ""
+      );
+      formData.append(
+        "itinerary",
+        JSON.stringify(
+          (data.itinerary || []).map((d) => ({
+            day: d.day,
+            title: d.title,
+            description: d.description,
+            highlights: d.highlights
+              ? d.highlights
+                  .split(",")
+                  .map((h) => h.trim())
+                  .filter(Boolean)
+              : [],
+          }))
+        )
+      );
+      formData.append("is_featured", String(Boolean(data.is_featured)));
+      formData.append("is_active", String(Boolean(data.is_active)));
+      formData.append("seo_title", data.seo_title || "");
+      formData.append("seo_description", data.seo_description || "");
+
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
 
       const headers = {
-        "Content-Type": "application/json",
-        "Authorization": `Token ${token}`,
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Token ${token}`,
       };
 
-      if (finalData.id) {
-        await axios.put(apiUrl(`excursiones/${finalData.id}/`), finalData, { headers });
+      if (data.id) {
+        await axios.put(apiUrl(`excursiones/${data.id}/`), formData, { headers });
       } else {
-        await axios.post(apiUrl("excursiones/"), finalData, { headers });
+        await axios.post(apiUrl("excursiones/"), formData, { headers });
       }
       onSaved();
     } catch (err) {
@@ -266,6 +322,8 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
           ? JSON.stringify(err.response.data)
           : err.message);
       setError(`Error: ${errorMessage}`);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -421,15 +479,59 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-semibold text-[#344443]">URL de Imagen *</label>
+              <label className="mb-1 block text-sm font-semibold text-[#344443]">Imagen *</label>
               <input
-                name="image"
-                value={data.image}
-                onChange={handleChange}
-                required
-                placeholder="https://example.com/image.jpg"
-                className="h-10 w-full rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                required={!data.id}
+                className="hidden"
               />
+              <div
+                onClick={() => inputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(true);
+                }}
+                onDragLeave={() => setIsDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setImageFile(e.dataTransfer.files?.[0] || null);
+                  setIsDragOver(false);
+                }}
+                className={`rounded-2xl border-2 border-dashed p-5 transition cursor-pointer ${
+                  isDragOver
+                    ? "border-[#1f7770] bg-[#e7f3f0]"
+                    : "border-[#c8d4d0] bg-[#f5f8f7] hover:border-[#1f7770]/60 hover:bg-[#edf4f2]"
+                }`}
+              >
+                <div className="flex flex-col items-center justify-center text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#1f7770] shadow-sm">
+                    <span className="text-xl font-semibold">+</span>
+                  </div>
+                  <p className="mt-3 text-sm font-semibold text-[#1a2632]">
+                    Arrastra una imagen aquí o haz click para seleccionarla
+                  </p>
+                  <p className="mt-1 text-xs text-[#60706f]">
+                    JPG, PNG, WEBP. Formato recomendado 16:9 o similar.
+                  </p>
+                </div>
+              </div>
+              {previewUrl && (
+                <img
+                  key={previewUrl}
+                  src={previewUrl}
+                  alt={data.title || "Excursión"}
+                  className="mt-3 h-44 w-full rounded-lg object-cover border border-[#d7dfdc]"
+                />
+              )}
+              {imageFile && (
+                <p className="mt-2 text-xs text-[#60706f]">Archivo: {imageFile.name}</p>
+              )}
+              {!data.id && !imageFile && (
+                <p className="mt-2 text-xs text-[#9e3f3f]">Se requiere una imagen para crear la excursión.</p>
+              )}
             </div>
 
             <div>

@@ -10,9 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+
 from pathlib import Path
 import os
 from urllib.parse import parse_qs, unquote, urlparse
+import cloudinary_storage
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -130,6 +132,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
+    'cloudinary_storage',
+    'cloudinary',
     'excursiones',
     'playas',
     'ofertas',
@@ -234,7 +238,13 @@ cors_origins_raw = os.getenv(
     'DJANGO_CORS_ALLOWED_ORIGINS',
     'http://localhost:5173,http://localhost:5175'
 )
-CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_raw.split(',') if origin.strip()]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5175",
+    "http://127.0.0.1:5175",
+]
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     "GET",
     "POST",
@@ -253,6 +263,11 @@ CORS_ALLOW_HEADERS = [
     "user-agent",
     "x-csrftoken",
     "x-requested-with",
+]
+CORS_EXPOSE_HEADERS = [
+    'access-control-allow-credentials',
+    'content-type',
+    'authorization',
 ]
 
 csrf_trusted_origins_raw = os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '')
@@ -292,3 +307,19 @@ if EMAIL_HOST and EMAIL_HOST_USER and EMAIL_HOST_PASSWORD and not email_password
 else:
     # Fallback para desarrollo local si faltan credenciales SMTP
     EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+
+# Configuración de Cloudinary para almacenamiento de imágenes
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+}
+
+cloudinary.config(**CLOUDINARY_STORAGE)
+
+# Usar Cloudinary como backend de almacenamiento por defecto para archivos media
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'

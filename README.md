@@ -27,12 +27,45 @@ Vicente Viajes es una **aplicación turística full-stack** que permite:
 - Buscar y reservar vuelos (integración externa)
 - Enviar mensajes de contacto
 
+<<<<<<< HEAD
 ✅ **Administradores:**
 - Panel CRUD completo de contenido
 - Gestión de estados de excursiones
 - Reordenamiento de ofertas (drag & drop)
 - Visualización de mensajes de contacto
 - Autenticación tokenizada
+
+## Integración Cloudinary
+
+El proyecto incluye integración completa con Cloudinary para gestión de imágenes:
+
+### Configuración
+1. Crear cuenta en [Cloudinary](https://cloudinary.com)
+2. Obtener credenciales: Cloud Name, API Key, API Secret
+3. Configurar variables de entorno en `.env`:
+  ```
+  CLOUDINARY_CLOUD_NAME=tu_cloud_name
+  CLOUDINARY_API_KEY=tu_api_key
+  CLOUDINARY_API_SECRET=tu_api_secret
+  ```
+
+### Funcionalidades
+- **Widget de subida**: Formularios admin con widget Cloudinary para subir imágenes directamente
+- **Organización automática**: Imágenes se guardan en carpetas específicas (excursiones/, playas/, ofertas/, estados/)
+- **Optimización**: Transformaciones automáticas (redimensionamiento, compresión, formato webp)
+- **Galería admin**: Vista `/admin/gallery/` para ver todas las imágenes organizadas por tipo
+- **Vista previa**: Miniaturas en el admin con enlaces directos a edición
+
+### Modelos con imágenes
+- `Excursion.image`: CloudinaryField(folder='excursiones')
+- `Playa.image`: CloudinaryField(folder='playas')
+- `Oferta.image`: CloudinaryField(folder='ofertas')
+- `Estado.image`: CloudinaryField(folder='estados')
+
+### Testing
+Ejecutar `python test_cloudinary.py` para verificar configuración y crear carpetas automáticamente.
+
+## Rutas API Principales
 
 ---
 

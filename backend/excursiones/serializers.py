@@ -6,9 +6,22 @@ from decimal import Decimal
 
 class ExcursionSerializer(serializers.ModelSerializer):
     # Serializer full para CRUD de excursiones con adaptaciones de formato.
+    image_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Excursion
         fields = '__all__'
+        # image_url se añade dinámicamente
+        extra_fields = ['image_url']
+
+    def get_image_url(self, obj):
+        if hasattr(obj, 'image') and obj.image:
+            # CloudinaryField puede tener .url o .build_url()
+            try:
+                return obj.image.url
+            except Exception:
+                return str(obj.image)
+        return None
     
     def validate_price(self, value):
         # Normaliza y valida precio numerico antes de persistir.
@@ -58,4 +71,6 @@ class ExcursionSerializer(serializers.ModelSerializer):
         # Garantiza estructura estable para el frontend.
         if ret.get('itinerary') is None:
             ret['itinerary'] = []
+        # Añade image_url explícitamente
+        ret['image_url'] = self.get_image_url(instance)
         return ret

@@ -28,7 +28,7 @@ const normalizeOffer = (item) => ({
   precio: money(item.price),
   precioOriginal: money(item.original_price),
   vigencia: item.validity || "",
-  imagen: item.image || "",
+  imagen: item.image_url || item.image || "",
 });
 
 const cardVariants = {

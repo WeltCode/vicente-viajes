@@ -1,4 +1,5 @@
 from django.db import models
+from cloudinary.models import CloudinaryField
 
 
 class Playa(models.Model):
@@ -8,7 +9,7 @@ class Playa(models.Model):
     short_description = models.CharField(max_length=255)
     description = models.TextField()
 
-    image = models.URLField()
+    image = CloudinaryField('image', folder='Vicente Viajes/playas')
     location = models.CharField(max_length=100)
     duration = models.CharField(max_length=50, blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2)
