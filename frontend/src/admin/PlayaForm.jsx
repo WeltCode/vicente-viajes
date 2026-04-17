@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { X } from "lucide-react";
@@ -36,6 +36,24 @@ const PlayaForm = ({ initialData, onSaved, onCancel }) => {
   });
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(initialData?.image_url || initialData?.image || "");
+  const [isDragOver, setIsDragOver] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (!imageFile) {
+      setPreviewUrl(initialData?.image || "");
+      return undefined;
+    }
+
+    const objectUrl = URL.createObjectURL(imageFile);
+    setPreviewUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [imageFile, initialData?.image]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -61,19 +79,35 @@ const PlayaForm = ({ initialData, onSaved, onCancel }) => {
           data.title,
       };
 
+      const formData = new FormData();
+      formData.append("title", finalData.title || "");
+      formData.append("slug", finalData.slug || "");
+      formData.append("short_description", finalData.short_description || "");
+      formData.append("description", finalData.description || "");
+      formData.append("location", finalData.location || "");
+      formData.append("duration", finalData.duration || "");
+      formData.append("price", finalData.price);
+      formData.append("rating", finalData.rating);
+      formData.append("group_size", finalData.group_size || "");
+      formData.append("characteristics", finalData.characteristics || "");
+      formData.append("is_active", String(Boolean(finalData.is_active)));
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+
       const headers = {
-        "Content-Type": "application/json",
+        'Content-Type': 'multipart/form-data',
         Authorization: `Token ${token}`,
       };
 
       if (finalData.id) {
         await axios.put(
           apiUrl(`playas/${finalData.id}/`),
-          finalData,
+          formData,
           { headers }
         );
       } else {
-        await axios.post(apiUrl("playas/"), finalData, {
+        await axios.post(apiUrl("playas/"), formData, {
           headers,
         });
       }
@@ -178,17 +212,61 @@ const PlayaForm = ({ initialData, onSaved, onCancel }) => {
             </div>
           </div>
 
-          {/* URL Imagen */}
+          {/* Imagen */}
           <div>
-            <label className={labelCls}>URL de Imagen *</label>
+            <label className={labelCls}>Imagen *</label>
             <input
-              name="image"
-              value={data.image}
-              onChange={handleChange}
-              required
-              className={inputCls}
-              placeholder="https://..."
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+              required={!isEdit}
+              className="hidden"
             />
+            <div
+              onClick={() => inputRef.current?.click()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragOver(true);
+              }}
+              onDragLeave={() => setIsDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setImageFile(e.dataTransfer.files?.[0] || null);
+                setIsDragOver(false);
+              }}
+              className={`rounded-2xl border-2 border-dashed p-5 transition cursor-pointer ${
+                isDragOver
+                  ? "border-[#1f7770] bg-[#e7f3f0]"
+                  : "border-[#c8d4d0] bg-[#f5f8f7] hover:border-[#1f7770]/60 hover:bg-[#edf4f2]"
+              }`}
+            >
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#1f7770] shadow-sm">
+                  <span className="text-xl font-semibold">+</span>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-[#1a2632]">
+                  Arrastra una imagen aquí o haz click para seleccionarla
+                </p>
+                <p className="mt-1 text-xs text-[#60706f]">
+                  JPG, PNG, WEBP. Formato recomendado 16:9 o similar.
+                </p>
+              </div>
+            </div>
+            {previewUrl && (
+               <img
+                 key={previewUrl}
+                 src={previewUrl}
+                 alt={data.title || "Playa"}
+                 className="mt-3 h-44 w-full rounded-lg object-cover border border-[#d7dfdc]"
+               />
+            )}
+            {imageFile && (
+              <p className="mt-2 text-xs text-[#60706f]">Archivo: {imageFile.name}</p>
+            )}
+            {!isEdit && !imageFile && (
+              <p className="mt-2 text-xs text-[#9e3f3f]">Se requiere una imagen para crear la playa.</p>
+            )}
           </div>
 
           {/* Duración + Tamaño de grupo */}

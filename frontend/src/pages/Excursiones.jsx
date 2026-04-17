@@ -582,7 +582,7 @@ const ExcursionCard = ({ excursion, index, onViewDetails }) => (
   >
     <div className="relative h-60 overflow-hidden">
       <img
-        src={excursion.image}
+        src={excursion.image_url || excursion.image}
         alt={excursion.title}
         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
       />
@@ -661,7 +661,7 @@ const ExcursionModal = ({ excursion, onClose }) => (
       {/* Header Image */}
       <div className="relative h-64">
         <img
-          src={excursion.image}
+          src={excursion.image_url || excursion.image}
           alt={excursion.title}
           className="w-full h-full object-cover"
         />

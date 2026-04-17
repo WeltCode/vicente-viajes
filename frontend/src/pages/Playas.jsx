@@ -32,7 +32,7 @@ const normalizeBeach = (b) => {
     location: b.location,
     price: priceStr,
     rating: Number.isNaN(rating) ? 0 : rating,
-    image: b.image,
+    image: b.image_url || b.image,
     features,
     description: b.description || b.short_description || "",
     duration,

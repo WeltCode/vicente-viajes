@@ -152,7 +152,7 @@ const OfertasAdmin = () => {
             {filteredItems.map((item, index) => (
               <article key={`mobile-${item.id}`} className="rounded-2xl border border-[#ccd4d2] bg-white p-3.5 shadow-sm">
                 <div className="flex items-start gap-3">
-                  <img src={item.image} alt={item.title} className="h-20 w-20 shrink-0 rounded-xl object-cover" />
+                  <img src={item.image_url || item.image} alt={item.title} className="h-20 w-20 shrink-0 rounded-xl object-cover" />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap gap-1.5">
                       <span className="rounded-full bg-[#e6ecea] px-2.5 py-1 text-xs font-semibold text-[#637371]">Orden {item.display_order || index + 1}</span>

@@ -2,10 +2,13 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
 from django.views.static import serve
+from .gallery import image_gallery_view
+from . import admin as custom_admin
 
 # Enrutador principal: centraliza todos los modulos API bajo /api/.
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/', custom_admin.admin_site.urls),
+    path('admin/gallery/', image_gallery_view, name='image_gallery'),
     path('api/', include('excursiones.urls')),      # 👈 excursiones API
     path('api/', include('playas.urls')),           # 👈 playas API
     path('api/', include('ofertas.urls')),          # 👈 ofertas API

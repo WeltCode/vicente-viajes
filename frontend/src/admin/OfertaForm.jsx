@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { X } from "lucide-react";
@@ -37,6 +37,24 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
   });
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(initialData?.image_url || initialData?.image || "");
+  const [isDragOver, setIsDragOver] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (!imageFile) {
+      setPreviewUrl(initialData?.image || "");
+      return undefined;
+    }
+
+    const objectUrl = URL.createObjectURL(imageFile);
+    setPreviewUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [imageFile, initialData?.image]);
 
   const computedDiscount = calcDiscount(data.price, data.original_price);
 
@@ -65,19 +83,34 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
         original_price: parseFloat(data.original_price) || 0,
       };
 
+      const formData = new FormData();
+      formData.append("title", finalData.title || "");
+      formData.append("city", finalData.city || "");
+      formData.append("destination", finalData.destination || "");
+      formData.append("nights", finalData.nights || "");
+      formData.append("discount", finalData.discount || "");
+      formData.append("price", finalData.price);
+      formData.append("original_price", finalData.original_price);
+      formData.append("validity", finalData.validity || "");
+      formData.append("is_hot_deal", String(Boolean(finalData.is_hot_deal)));
+      formData.append("is_active", String(Boolean(finalData.is_active)));
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+
       const headers = {
-        "Content-Type": "application/json",
+        'Content-Type': 'multipart/form-data',
         Authorization: `Token ${token}`,
       };
 
       if (finalData.id) {
         await axios.put(
           apiUrl(`ofertas/${finalData.id}/`),
-          finalData,
+          formData,
           { headers }
         );
       } else {
-        await axios.post(apiUrl("ofertas/"), finalData, { headers });
+        await axios.post(apiUrl("ofertas/"), formData, { headers });
       }
       onSaved();
     } catch (err) {
@@ -226,15 +259,59 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
           </div>
 
           <div>
-            <label className={labelCls}>URL de imagen *</label>
+            <label className={labelCls}>Imagen *</label>
             <input
-              name="image"
-              value={data.image}
-              onChange={handleChange}
-              required
-              className={inputCls}
-              placeholder="https://..."
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+              required={!isEdit}
+              className="hidden"
             />
+            <div
+              onClick={() => inputRef.current?.click()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragOver(true);
+              }}
+              onDragLeave={() => setIsDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setImageFile(e.dataTransfer.files?.[0] || null);
+                setIsDragOver(false);
+              }}
+              className={`rounded-2xl border-2 border-dashed p-5 transition cursor-pointer ${
+                isDragOver
+                  ? "border-[#1f7770] bg-[#e7f3f0]"
+                  : "border-[#c8d4d0] bg-[#f5f8f7] hover:border-[#1f7770]/60 hover:bg-[#edf4f2]"
+              }`}
+            >
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#1f7770] shadow-sm">
+                  <span className="text-xl font-semibold">+</span>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-[#1a2632]">
+                  Arrastra una imagen aquí o haz click para seleccionarla
+                </p>
+                <p className="mt-1 text-xs text-[#60706f]">
+                  JPG, PNG, WEBP. Formato recomendado 16:9 o similar.
+                </p>
+              </div>
+            </div>
+            {previewUrl && (
+               <img
+                 key={previewUrl}
+                 src={previewUrl}
+                 alt={data.title || "Oferta"}
+                 className="mt-3 h-44 w-full rounded-lg object-cover border border-[#d7dfdc]"
+               />
+            )}
+            {imageFile && (
+              <p className="mt-2 text-xs text-[#60706f]">Archivo: {imageFile.name}</p>
+            )}
+            {!isEdit && !imageFile && (
+              <p className="mt-2 text-xs text-[#9e3f3f]">Se requiere una imagen para crear la oferta.</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
 from django.contrib.auth.models import User
+from cloudinary.models import CloudinaryField
 
 class Excursion(models.Model):
     # Información básica
@@ -10,8 +11,8 @@ class Excursion(models.Model):
     short_description = models.CharField(max_length=255)
     description = models.TextField()
 
-    # Imagen principal (por ahora URL)
-    image = models.URLField()
+    # Imagen principal
+    image = CloudinaryField('image', folder='Vicente Viajes/excursiones')
 
     # Datos de la experiencia
     location = models.CharField(max_length=100)
