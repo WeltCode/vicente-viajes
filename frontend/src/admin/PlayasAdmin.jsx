@@ -134,7 +134,7 @@ const PlayasAdmin = () => {
                 <article key={`mobile-${item.id}`} className="rounded-2xl border border-[#ccd4d2] bg-white p-3.5 shadow-sm">
                   <div className="flex items-start gap-3">
                     <img
-                      src={item.image || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=320&q=80"}
+                      src={item.image_url || item.image || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=320&q=80"}
                       alt={item.title}
                       className="h-20 w-20 shrink-0 rounded-xl object-cover"
                     />
@@ -213,10 +213,7 @@ const PlayasAdmin = () => {
                     >
                       <td className="px-5 py-3">
                         <img
-                          src={
-                            item.image ||
-                            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=320&q=80"
-                          }
+                          src={item.image_url || item.image || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=320&q=80"}
                           alt={item.title}
                           className="h-11 w-14 rounded-lg object-cover"
                         />

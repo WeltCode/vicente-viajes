@@ -279,7 +279,7 @@ const ExcursionesAdmin = () => {
                   <tr key={item.id} className="border-b border-[#dce3e0] last:border-b-0 hover:bg-[#f6f8f7]">
                     <td className="px-5 py-3">
                       <img
-                        src={item.image || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=320&q=80"}
+                        src={item.image_url || item.image || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=320&q=80"}
                         alt={item.title}
                         className="h-11 w-14 rounded-lg object-cover"
                       />
