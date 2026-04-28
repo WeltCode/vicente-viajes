@@ -42,18 +42,18 @@ const PlayaForm = ({ initialData, onSaved, onCancel }) => {
   const inputRef = useRef(null);
 
   useEffect(() => {
-    if (!imageFile) {
-      setPreviewUrl(initialData?.image || "");
-      return undefined;
+    if (imageFile) {
+      const objectUrl = URL.createObjectURL(imageFile);
+      setPreviewUrl(objectUrl);
+      return () => {
+        URL.revokeObjectURL(objectUrl);
+      };
+    } else {
+      // Prioriza image_url, luego image
+      setPreviewUrl(initialData?.image_url || initialData?.image || "");
     }
-
-    const objectUrl = URL.createObjectURL(imageFile);
-    setPreviewUrl(objectUrl);
-
-    return () => {
-      URL.revokeObjectURL(objectUrl);
-    };
-  }, [imageFile, initialData?.image]);
+    // eslint-disable-next-line
+  }, [imageFile, initialData?.image_url, initialData?.image]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

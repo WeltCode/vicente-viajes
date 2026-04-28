@@ -135,9 +135,11 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
         URL.revokeObjectURL(objectUrl);
       };
     } else {
-      setPreviewUrl((initialData && initialData.image) || "");
+      // Prioriza image_url, luego image
+      setPreviewUrl(initialData?.image_url || initialData?.image || "");
     }
-  }, [imageFile, imageDep]);
+    // eslint-disable-next-line
+  }, [imageFile, initialData?.image_url, initialData?.image]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
