@@ -60,7 +60,7 @@ class Excursion(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    profile_image = models.FileField(upload_to='profiles/', blank=True, null=True)
+    profile_image = CloudinaryField('image', folder='Vicente Viajes/Usuarios', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
