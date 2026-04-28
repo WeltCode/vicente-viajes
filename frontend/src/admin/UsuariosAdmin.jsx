@@ -131,7 +131,8 @@ export default function UsuariosAdmin() {
       payload.append("email", form.email.trim());
       payload.append("role", form.role);
       payload.append("is_active", String(form.is_active));
-      if (form.password.trim()) {
+      // Solo enviar password si tiene valor
+      if (form.password && form.password.trim()) {
         payload.append("password", form.password);
       }
       if (form.profile_image) {

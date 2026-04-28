@@ -15,8 +15,14 @@ from pathlib import Path
 import os
 from urllib.parse import parse_qs, unquote, urlparse
 import cloudinary_storage
+# Cargar variables de entorno desde .env explícitamente
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / '.env')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+import cloudinary
+
+# Cloudinary
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -227,6 +233,13 @@ USE_TZ = True
 STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Configuración de Cloudinary desde variables de entorno
+cloudinary.config(
+    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.getenv('CLOUDINARY_API_KEY'),
+    api_secret=os.getenv('CLOUDINARY_API_SECRET')
+)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
