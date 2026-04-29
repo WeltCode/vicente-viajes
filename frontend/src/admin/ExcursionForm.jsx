@@ -3,6 +3,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { Trash2, X } from "lucide-react";
 import { apiUrl } from "../services/api";
+import GallerySelect from "../components/GallerySelect";
 
 const MESES = [
   "Enero",
@@ -66,6 +67,7 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
   );
   const [error, setError] = useState(null);
   const [imageFile, setImageFile] = useState(null);
+  const [galleryUrl, setGalleryUrl] = useState("");
   const [previewUrl, setPreviewUrl] = useState(initialData?.image_url || initialData?.image || "");
   const [isDragOver, setIsDragOver] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -129,17 +131,19 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
 
   useEffect(() => {
     if (imageFile) {
+      setGalleryUrl(""); // Si sube nueva, limpia galería
       const objectUrl = URL.createObjectURL(imageFile);
       setPreviewUrl(objectUrl);
       return () => {
         URL.revokeObjectURL(objectUrl);
       };
+    } else if (galleryUrl) {
+      setPreviewUrl(galleryUrl);
     } else {
-      // Prioriza image_url, luego image
       setPreviewUrl(initialData?.image_url || initialData?.image || "");
     }
     // eslint-disable-next-line
-  }, [imageFile, initialData?.image_url, initialData?.image]);
+  }, [imageFile, galleryUrl, initialData?.image_url, initialData?.image]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -240,7 +244,7 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
       return;
     }
 
-    if (!data.id && !imageFile) {
+    if (!data.id && !imageFile && !galleryUrl) {
       setError("Debes seleccionar una imagen.");
       return;
     }
@@ -304,6 +308,8 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
 
       if (imageFile) {
         formData.append("image", imageFile);
+      } else if (galleryUrl) {
+        formData.append("image", galleryUrl); // El backend debe aceptar URL
       }
 
       const headers = {
@@ -482,12 +488,16 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
 
             <div>
               <label className="mb-1 block text-sm font-semibold text-[#344443]">Imagen *</label>
+              <div className="mb-2 text-sm font-semibold text-[#1a2632]">Carga una imagen</div>
               <input
                 ref={inputRef}
                 type="file"
                 accept="image/*"
-                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                required={!data.id}
+                onChange={(e) => {
+                  setImageFile(e.target.files?.[0] || null);
+                  setGalleryUrl("");
+                }}
+                required={!data.id && !galleryUrl}
                 className="hidden"
               />
               <div
@@ -500,6 +510,7 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
                 onDrop={(e) => {
                   e.preventDefault();
                   setImageFile(e.dataTransfer.files?.[0] || null);
+                  setGalleryUrl("");
                   setIsDragOver(false);
                 }}
                 className={`rounded-2xl border-2 border-dashed p-5 transition cursor-pointer ${
@@ -520,6 +531,16 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
                   </p>
                 </div>
               </div>
+              <div className="my-3 text-center text-[#60706f] font-semibold text-sm">— ó —</div>
+              <GallerySelect
+                onSelect={(url) => {
+                  setGalleryUrl(url);
+                  setImageFile(null);
+                }}
+                selectedUrl={galleryUrl}
+                token={token}
+                folder="excursiones"
+              />
               {previewUrl && (
                 <img
                   key={previewUrl}
@@ -531,7 +552,7 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
               {imageFile && (
                 <p className="mt-2 text-xs text-[#60706f]">Archivo: {imageFile.name}</p>
               )}
-              {!data.id && !imageFile && (
+              {!data.id && !imageFile && !galleryUrl && (
                 <p className="mt-2 text-xs text-[#9e3f3f]">Se requiere una imagen para crear la excursión.</p>
               )}
             </div>

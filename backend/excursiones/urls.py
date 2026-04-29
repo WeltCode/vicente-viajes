@@ -8,6 +8,7 @@ from .views import (
     users_detail,
     users_reset_password,
 )
+from .cloudinary_gallery import CloudinaryExcursionGalleryView
 
 urlpatterns = [
     # Login token para panel admin frontend.
@@ -19,4 +20,6 @@ urlpatterns = [
     # CRUD excursiones.
     path('excursiones/', excursiones_list),
     path('excursiones/<int:pk>/', excursiones_detail),
+    # Galería de imágenes de Cloudinary para excursiones
+    path('excursiones/gallery/', CloudinaryExcursionGalleryView.as_view()),
 ]

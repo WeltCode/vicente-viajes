@@ -3,6 +3,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { X } from "lucide-react";
 import { apiUrl } from "../services/api";
+import GallerySelect from "../components/GallerySelect";
 
 const labelCls =
   "block text-xs font-semibold uppercase tracking-wide text-[#344443] mb-1";
@@ -260,6 +261,7 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
 
           <div>
             <label className={labelCls}>Imagen *</label>
+            <div className="mb-2 text-sm font-semibold text-[#1a2632]">Carga una imagen</div>
             <input
               ref={inputRef}
               type="file"
@@ -298,18 +300,28 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
                 </p>
               </div>
             </div>
+            <div className="my-3 text-center text-[#60706f] font-semibold text-sm">— ó selecciona una de la galería —</div>
+            <GallerySelect
+              onSelect={(url) => {
+                setPreviewUrl(url);
+                setImageFile(null);
+              }}
+              selectedUrl={previewUrl}
+              token={token}
+              folder="ofertas"
+            />
             {previewUrl && (
-               <img
-                 key={previewUrl}
-                 src={previewUrl}
-                 alt={data.title || "Oferta"}
-                 className="mt-3 h-44 w-full rounded-lg object-cover border border-[#d7dfdc]"
-               />
+              <img
+                key={previewUrl}
+                src={previewUrl}
+                alt={data.title || "Oferta"}
+                className="mt-3 h-44 w-full rounded-lg object-cover border border-[#d7dfdc]"
+              />
             )}
             {imageFile && (
               <p className="mt-2 text-xs text-[#60706f]">Archivo: {imageFile.name}</p>
             )}
-            {!isEdit && !imageFile && (
+            {!isEdit && !imageFile && !previewUrl && (
               <p className="mt-2 text-xs text-[#9e3f3f]">Se requiere una imagen para crear la oferta.</p>
             )}
           </div>

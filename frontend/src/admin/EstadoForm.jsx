@@ -3,6 +3,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { CalendarDays, ImagePlus, UploadCloud, X } from "lucide-react";
 import { apiUrl } from "../services/api";
+import GallerySelect from "../components/GallerySelect";
 
 const labelCls =
   "block text-xs font-semibold uppercase tracking-wide text-[#344443] mb-1";
@@ -10,90 +11,85 @@ const inputCls =
   "w-full rounded-xl border border-[#d7dfdc] bg-[#dbe1de] px-3 py-2 text-sm text-[#1a2632] outline-none transition placeholder:text-[#8fa09f] focus:border-[#1f7770]";
 
 const EstadoForm = ({ initialData, onSaved, onCancel }) => {
+    const inputRef = useRef(null);
+    const [imageFile, setImageFile] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState(initialData?.image_url || initialData?.image || "");
+    const [isDragOver, setIsDragOver] = useState(false);
+    const [error, setError] = useState(null);
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+      if (imageFile) {
+        const objectUrl = URL.createObjectURL(imageFile);
+        setPreviewUrl(objectUrl);
+        return () => {
+          URL.revokeObjectURL(objectUrl);
+        };
+      } else {
+        setPreviewUrl(initialData?.image_url || initialData?.image || "");
+      }
+      // eslint-disable-next-line
+    }, [imageFile, initialData?.image_url, initialData?.image]);
+
+    const handleChange = (e) => {
+      const { name, value, type, checked } = e.target;
+      setData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    };
+
+    const assignFile = (file) => {
+      setImageFile(file);
+      if (file) {
+        setPreviewUrl("");
+      }
+    };
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      setError(null);
+      setSaving(true);
+      try {
+        const formData = new FormData();
+        formData.append("title", data.title || "");
+        formData.append("subtitle", data.subtitle || "");
+        formData.append("excursion_date", data.excursion_date || "");
+        formData.append("is_active", String(Boolean(data.is_active)));
+        if (imageFile) {
+          formData.append("image", imageFile);
+        }
+
+        const headers = {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Token ${token}`,
+        };
+
+        if (data.id) {
+          await axios.put(apiUrl(`estados/${data.id}/`), formData, { headers });
+        } else {
+          await axios.post(apiUrl("estados/"), formData, { headers });
+        }
+        onSaved();
+      } catch (err) {
+        const errData = err.response?.data;
+        setError(
+          errData?.detail ||
+            (errData && typeof errData === "object"
+              ? JSON.stringify(errData)
+              : err.message)
+        );
+      } finally {
+        setSaving(false);
+      }
+    };
   const { token } = useAuth();
   const isEdit = Boolean(initialData?.id);
   const [data, setData] = useState({
     title: "",
     subtitle: "",
     excursion_date: "",
-    image_url: "",
     is_active: true,
-    ...initialData,
   });
-  const [imageFile, setImageFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(initialData?.image_url || "");
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [error, setError] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const inputRef = useRef(null);
 
-  useEffect(() => {
-    if (!imageFile) {
-      setPreviewUrl(initialData?.image_url || "");
-      return undefined;
-    }
-
-    const objectUrl = URL.createObjectURL(imageFile);
-    setPreviewUrl(objectUrl);
-
-    return () => {
-      URL.revokeObjectURL(objectUrl);
-    };
-  }, [imageFile, initialData?.image_url]);
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
-  };
-
-  const assignFile = (file) => {
-    setImageFile(file || null);
-    setIsDragOver(false);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!isEdit && !imageFile) {
-      setError("Debes seleccionar una imagen.");
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const formData = new FormData();
-      formData.append("title", data.title || "");
-      formData.append("subtitle", data.subtitle || "");
-      formData.append("excursion_date", data.excursion_date || "");
-      formData.append("is_active", String(Boolean(data.is_active)));
-      if (imageFile) {
-        formData.append("image", imageFile);
-      }
-
-      const headers = {
-        "Content-Type": "multipart/form-data",
-        Authorization: `Token ${token}`,
-      };
-
-      if (data.id) {
-        await axios.put(apiUrl(`estados/${data.id}/`), formData, { headers });
-      } else {
-        await axios.post(apiUrl("estados/"), formData, { headers });
-      }
-      onSaved();
-    } catch (err) {
-      const errData = err.response?.data;
-      setError(
-        errData?.detail ||
-          (errData && typeof errData === "object"
-            ? JSON.stringify(errData)
-            : err.message)
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
+// (Eliminado bloque de código fuera de función que causaba errores)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 sm:p-4">
@@ -134,36 +130,8 @@ const EstadoForm = ({ initialData, onSaved, onCancel }) => {
           </div>
 
           <div>
-            <label className={labelCls}>Subtitulo (opcional)</label>
-            <input
-              name="subtitle"
-              value={data.subtitle}
-              onChange={handleChange}
-              className={inputCls}
-              placeholder="Salida especial de fin de semana"
-            />
-          </div>
-
-          <div>
-            <label className={labelCls}>Fecha de la excursion *</label>
-            <div className="relative">
-              <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6f7f7e]" />
-              <input
-                name="excursion_date"
-                type="date"
-                value={data.excursion_date || ""}
-                onChange={handleChange}
-                required
-                className="w-full rounded-xl border border-[#d7dfdc] bg-[#dbe1de] pl-9 pr-3 py-2 text-sm text-[#1a2632] outline-none transition focus:border-[#1f7770]"
-              />
-            </div>
-            <p className="mt-1 text-xs text-[#60706f]">
-              Los estados se ordenan automaticamente por esta fecha y se desactivan solos cuando llega el dia indicado.
-            </p>
-          </div>
-
-          <div>
             <label className={labelCls}>Imagen vertical *</label>
+            <div className="mb-2 text-sm font-semibold text-[#1a2632]">Carga una imagen</div>
             <input
               ref={inputRef}
               type="file"
@@ -182,28 +150,35 @@ const EstadoForm = ({ initialData, onSaved, onCancel }) => {
               onDrop={(e) => {
                 e.preventDefault();
                 assignFile(e.dataTransfer.files?.[0] || null);
+                setIsDragOver(false);
               }}
               className={`rounded-2xl border-2 border-dashed p-5 transition cursor-pointer ${
                 isDragOver
                   ? "border-[#1f7770] bg-[#e7f3f0]"
                   : "border-[#c8d4d0] bg-[#f5f8f7] hover:border-[#1f7770]/60 hover:bg-[#edf4f2]"
-              }`}
-            >
+              }`}>
               <div className="flex flex-col items-center justify-center text-center">
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#1f7770] shadow-sm">
                   {isDragOver ? <UploadCloud className="h-6 w-6" /> : <ImagePlus className="h-6 w-6" />}
                 </div>
                 <p className="mt-3 text-sm font-semibold text-[#1a2632]">
-                  Arrastra una imagen aqui o haz click para seleccionarla
+                  Arrastra una imagen aquí o haz click para seleccionarla
                 </p>
                 <p className="mt-1 text-xs text-[#60706f]">
-                  Formato vertical 9:16 recomendado. Maximo 3 MB. JPG, PNG, WEBP.
+                  Formato vertical 9:16 recomendado. Máximo 3 MB. JPG, PNG, WEBP.
                 </p>
               </div>
             </div>
-            <p className="mt-1 text-xs text-[#60706f]">
-              Recomendado formato vertical (9:16), estilo estado de WhatsApp. Maximo 3 MB. Formatos: JPG, PNG, WEBP.
-            </p>
+            <div className="my-3 text-center text-[#60706f] font-semibold text-sm">— ó selecciona una de la galería —</div>
+            <GallerySelect
+              onSelect={(url) => {
+                setPreviewUrl(url);
+                setImageFile(null);
+              }}
+              selectedUrl={previewUrl}
+              token={token}
+              folder="estados"
+            />
             {previewUrl && (
               <img
                 src={previewUrl}
@@ -213,6 +188,9 @@ const EstadoForm = ({ initialData, onSaved, onCancel }) => {
             )}
             {imageFile && (
               <p className="mt-2 text-xs text-[#60706f]">Archivo: {imageFile.name}</p>
+            )}
+            {!isEdit && !imageFile && !previewUrl && (
+              <p className="mt-2 text-xs text-[#9e3f3f]">Se requiere una imagen para crear el estado.</p>
             )}
           </div>
 
