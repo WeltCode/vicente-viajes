@@ -116,7 +116,8 @@ if env_file.exists():
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-*ch=a!122prcpcs!1@s!fcvaipoy5sauadv&*f^$t@fdky-knb')
+# Permitir tanto DJANGO_SECRET_KEY como SECRET_KEY para compatibilidad
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY') or os.getenv('SECRET_KEY', 'django-insecure-*ch=a!122prcpcs!1@s!fcvaipoy5sauadv&*f^$t@fdky-knb')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = _env_to_bool(os.getenv('DJANGO_DEBUG', 'True'))
