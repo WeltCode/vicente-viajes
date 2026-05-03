@@ -36,7 +36,11 @@ def estados_list(request):
     if not can_manage_content(request.user):
         return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
-    serializer = EstadoSerializer(data=request.data)
+    data = request.data.copy()
+    # Si image es una URL, pásala como image_url explícitamente
+    if 'image' in request.data and isinstance(request.data['image'], str) and request.data['image'].startswith('http'):
+        data['image_url'] = request.data['image']
+    serializer = EstadoSerializer(data=data, context={'request': request})
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -61,9 +65,13 @@ def estados_detail(request, pk):
     if request.method == 'PUT':
         if not can_manage_content(request.user):
             return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+        data = request.data.copy()
+        # Si image es una URL, pásala como image_url explícitamente
+        if 'image' in request.data and isinstance(request.data['image'], str) and request.data['image'].startswith('http'):
+            data['image_url'] = request.data['image']
         serializer = EstadoSerializer(
             estado,
-            data=request.data,
+            data=data,
             partial=True,
             context={'request': request},
         )

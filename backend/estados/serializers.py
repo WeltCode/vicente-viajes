@@ -7,10 +7,48 @@ MAX_IMAGE_SIZE = 3 * 1024 * 1024
 ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp'}
 
 
+
 class EstadoSerializer(serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField()
+    image_url = serializers.CharField(write_only=True, required=False)
+    image_url_out = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Estado
+        fields = '__all__'
+        extra_fields = ['image_url', 'image_url_out']
+
+    def get_image_url_out(self, obj):
+        request = self.context.get('request')
+        if not obj.image:
+            return ''
+        image_url = obj.image.url
+        return request.build_absolute_uri(image_url) if request else image_url
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['image_url'] = self.get_image_url_out(instance)
+        return rep
+
+    def update(self, instance, validated_data):
+        image_url = validated_data.pop('image_url', None)
+        if image_url:
+            instance.image = image_url
+        return super().update(instance, validated_data)
+
+    def create(self, validated_data):
+        image_url = validated_data.pop('image_url', None)
+        instance = super().create(validated_data)
+        if image_url:
+            instance.image = image_url
+            instance.save()
+        return instance
 
     def validate_image(self, value):
+        # Si es una URL (galería), permitirla directamente sin validar extensión ni tamaño
+        if isinstance(value, str) and value.startswith('http'):
+            return value
+
+        # Solo validar archivos subidos
         file_name = (getattr(value, 'name', '') or '').lower()
         file_size = int(getattr(value, 'size', 0) or 0)
 

@@ -39,23 +39,26 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState(null);
+  const [galleryUrl, setGalleryUrl] = useState("");
   const [previewUrl, setPreviewUrl] = useState(initialData?.image_url || initialData?.image || "");
   const [isDragOver, setIsDragOver] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
     if (imageFile) {
+      setGalleryUrl(""); // Si sube nueva, limpia galería
       const objectUrl = URL.createObjectURL(imageFile);
       setPreviewUrl(objectUrl);
       return () => {
         URL.revokeObjectURL(objectUrl);
       };
+    } else if (galleryUrl) {
+      setPreviewUrl(galleryUrl);
     } else {
-      // Prioriza image_url, luego image
       setPreviewUrl(initialData?.image_url || initialData?.image || "");
     }
     // eslint-disable-next-line
-  }, [imageFile, initialData?.image_url, initialData?.image]);
+  }, [imageFile, galleryUrl, initialData?.image_url, initialData?.image]);
 
   const computedDiscount = calcDiscount(data.price, data.original_price);
 
@@ -97,6 +100,8 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
       formData.append("is_active", String(Boolean(finalData.is_active)));
       if (imageFile) {
         formData.append("image", imageFile);
+      } else if (galleryUrl) {
+        formData.append("image", galleryUrl); // Igual que ExcursionForm
       }
 
       const headers = {
@@ -303,10 +308,10 @@ const OfertaForm = ({ initialData, onSaved, onCancel }) => {
             <div className="my-3 text-center text-[#60706f] font-semibold text-sm">— ó selecciona una de la galería —</div>
             <GallerySelect
               onSelect={(url) => {
-                setPreviewUrl(url);
+                setGalleryUrl(url);
                 setImageFile(null);
               }}
-              selectedUrl={previewUrl}
+              selectedUrl={galleryUrl || previewUrl}
               token={token}
               folder="ofertas"
             />

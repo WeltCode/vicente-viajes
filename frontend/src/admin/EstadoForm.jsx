@@ -13,6 +13,7 @@ const inputCls =
 const EstadoForm = ({ initialData, onSaved, onCancel }) => {
     const inputRef = useRef(null);
     const [imageFile, setImageFile] = useState(null);
+    const [galleryUrl, setGalleryUrl] = useState("");
     const [previewUrl, setPreviewUrl] = useState(initialData?.image_url || initialData?.image || "");
     const [isDragOver, setIsDragOver] = useState(false);
     const [error, setError] = useState(null);
@@ -20,16 +21,19 @@ const EstadoForm = ({ initialData, onSaved, onCancel }) => {
 
     useEffect(() => {
       if (imageFile) {
+        setGalleryUrl("");
         const objectUrl = URL.createObjectURL(imageFile);
         setPreviewUrl(objectUrl);
         return () => {
           URL.revokeObjectURL(objectUrl);
         };
+      } else if (galleryUrl) {
+        setPreviewUrl(galleryUrl);
       } else {
         setPreviewUrl(initialData?.image_url || initialData?.image || "");
       }
       // eslint-disable-next-line
-    }, [imageFile, initialData?.image_url, initialData?.image]);
+    }, [imageFile, galleryUrl, initialData?.image_url, initialData?.image]);
 
     const handleChange = (e) => {
       const { name, value, type, checked } = e.target;
@@ -51,10 +55,28 @@ const EstadoForm = ({ initialData, onSaved, onCancel }) => {
         const formData = new FormData();
         formData.append("title", data.title || "");
         formData.append("subtitle", data.subtitle || "");
-        formData.append("excursion_date", data.excursion_date || "");
+        // Asegura formato YYYY-MM-DD
+        let dateValue = data.excursion_date || "";
+        if (dateValue && dateValue.length > 0) {
+          // Si ya es YYYY-MM-DD, lo deja igual
+          const match = dateValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+          if (!match) {
+            // Intenta formatear si viene en otro formato
+            const d = new Date(dateValue);
+            if (!isNaN(d.getTime())) {
+              const yyyy = d.getFullYear();
+              const mm = String(d.getMonth() + 1).padStart(2, '0');
+              const dd = String(d.getDate()).padStart(2, '0');
+              dateValue = `${yyyy}-${mm}-${dd}`;
+            }
+          }
+        }
+        formData.append("excursion_date", dateValue);
         formData.append("is_active", String(Boolean(data.is_active)));
         if (imageFile) {
           formData.append("image", imageFile);
+        } else if (galleryUrl) {
+          formData.append("image", galleryUrl);
         }
 
         const headers = {
@@ -82,11 +104,28 @@ const EstadoForm = ({ initialData, onSaved, onCancel }) => {
     };
   const { token } = useAuth();
   const isEdit = Boolean(initialData?.id);
-  const [data, setData] = useState({
-    title: "",
-    subtitle: "",
-    excursion_date: "",
-    is_active: true,
+  const [data, setData] = useState(() => {
+    // Si initialData, usar sus valores, asegurando formato de fecha correcto
+    let date = initialData?.excursion_date || "";
+    if (date && date.length > 0) {
+      // Si no es YYYY-MM-DD, intenta formatear
+      const match = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!match) {
+        const d = new Date(date);
+        if (!isNaN(d.getTime())) {
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          date = `${yyyy}-${mm}-${dd}`;
+        }
+      }
+    }
+    return {
+      title: initialData?.title || "",
+      subtitle: initialData?.subtitle || "",
+      excursion_date: date,
+      is_active: initialData?.is_active !== undefined ? initialData.is_active : true,
+    };
   });
 
 // (Eliminado bloque de código fuera de función que causaba errores)
@@ -118,6 +157,7 @@ const EstadoForm = ({ initialData, onSaved, onCancel }) => {
             </div>
           )}
 
+
           <div>
             <label className={labelCls}>Titulo (opcional)</label>
             <input
@@ -126,6 +166,18 @@ const EstadoForm = ({ initialData, onSaved, onCancel }) => {
               onChange={handleChange}
               className={inputCls}
               placeholder="Estado en playa"
+            />
+          </div>
+
+          <div>
+            <label className={labelCls}>Fecha de excursión *</label>
+            <input
+              name="excursion_date"
+              type="date"
+              value={data.excursion_date}
+              onChange={handleChange}
+              className={inputCls}
+              required
             />
           </div>
 
@@ -172,10 +224,10 @@ const EstadoForm = ({ initialData, onSaved, onCancel }) => {
             <div className="my-3 text-center text-[#60706f] font-semibold text-sm">— ó selecciona una de la galería —</div>
             <GallerySelect
               onSelect={(url) => {
-                setPreviewUrl(url);
+                setGalleryUrl(url);
                 setImageFile(null);
               }}
-              selectedUrl={previewUrl}
+              selectedUrl={galleryUrl || previewUrl}
               token={token}
               folder="estados"
             />
