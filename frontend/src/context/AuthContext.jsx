@@ -3,6 +3,50 @@ import axios from "axios";
 import { apiUrl } from "../services/api";
 
 const AuthContext = createContext();
+const SESSION_TOKEN_KEY = "admin_session_token";
+const SESSION_USER_KEY = "admin_session_user";
+const SESSION_STARTED_AT_KEY = "admin_session_started_at";
+const LEGACY_STORAGE_KEYS = ["token", "admin_user"];
+const ADMIN_SESSION_MAX_AGE_MS = 8 * 60 * 60 * 1000;
+
+function clearLegacyAuthStorage() {
+  LEGACY_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+}
+
+function clearAdminSessionStorage() {
+  sessionStorage.removeItem(SESSION_TOKEN_KEY);
+  sessionStorage.removeItem(SESSION_USER_KEY);
+  sessionStorage.removeItem(SESSION_STARTED_AT_KEY);
+}
+
+function readStoredAdminSession() {
+  clearLegacyAuthStorage();
+
+  const token = sessionStorage.getItem(SESSION_TOKEN_KEY);
+  const rawUser = sessionStorage.getItem(SESSION_USER_KEY);
+  const startedAt = Number(sessionStorage.getItem(SESSION_STARTED_AT_KEY) || 0);
+
+  if (!token || !startedAt || !Number.isFinite(startedAt)) {
+    clearAdminSessionStorage();
+    return { token: null, user: null };
+  }
+
+  if (Date.now() - startedAt >= ADMIN_SESSION_MAX_AGE_MS) {
+    clearAdminSessionStorage();
+    return { token: null, user: null };
+  }
+
+  if (!rawUser) {
+    return { token, user: null };
+  }
+
+  try {
+    return { token, user: JSON.parse(rawUser) };
+  } catch {
+    clearAdminSessionStorage();
+    return { token: null, user: null };
+  }
+}
 
 function getRoleLabel(role) {
   if (role === "superuser") return "Super Usuario";
@@ -17,36 +61,67 @@ function getPermissionTags(role) {
 }
 
 export const AuthProvider = ({ children }) => {
-  // Se hidrata token persistido para no cerrar sesion al recargar.
-  const [token, setToken] = useState(() => localStorage.getItem("token") || null);
-  const [user, setUser] = useState(() => {
-    const raw = localStorage.getItem("admin_user");
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return null;
+  const initialSession = readStoredAdminSession();
+  const [token, setToken] = useState(initialSession.token);
+  const [user, setUser] = useState(initialSession.user);
+
+  const logout = () => {
+    if (token) {
+      axios.post(apiUrl("logout/")).catch(() => null);
     }
-  });
+    clearLegacyAuthStorage();
+    clearAdminSessionStorage();
+    setToken(null);
+    setUser(null);
+  };
+
+  useEffect(() => {
+    clearLegacyAuthStorage();
+  }, []);
 
   useEffect(() => {
     if (token) {
-      localStorage.setItem("token", token);
+      sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+      if (!sessionStorage.getItem(SESSION_STARTED_AT_KEY)) {
+        sessionStorage.setItem(SESSION_STARTED_AT_KEY, String(Date.now()));
+      }
       // Header global para todas las llamadas axios posteriores.
       axios.defaults.headers.common["Authorization"] = `Token ${token}`;
     } else {
-      localStorage.removeItem("token");
+      clearAdminSessionStorage();
       delete axios.defaults.headers.common["Authorization"];
     }
   }, [token]);
 
   useEffect(() => {
     if (user) {
-      localStorage.setItem("admin_user", JSON.stringify(user));
+      sessionStorage.setItem(SESSION_USER_KEY, JSON.stringify(user));
     } else {
-      localStorage.removeItem("admin_user");
+      sessionStorage.removeItem(SESSION_USER_KEY);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!token) return undefined;
+
+    const startedAt = Number(sessionStorage.getItem(SESSION_STARTED_AT_KEY) || 0);
+    if (!startedAt || !Number.isFinite(startedAt)) {
+      logout();
+      return undefined;
+    }
+
+    const remainingMs = ADMIN_SESSION_MAX_AGE_MS - (Date.now() - startedAt);
+    if (remainingMs <= 0) {
+      logout();
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      logout();
+    }, remainingMs);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [token]);
 
   const refreshUser = async () => {
     if (!token) return null;
@@ -79,6 +154,8 @@ export const AuthProvider = ({ children }) => {
         headers: { 'Content-Type': 'application/json' }
       });
       if (resp.data && resp.data.token) {
+        clearLegacyAuthStorage();
+        sessionStorage.setItem(SESSION_STARTED_AT_KEY, String(Date.now()));
         setToken(resp.data.token);
         setUser(resp.data.user || null);
         return resp;
@@ -89,11 +166,6 @@ export const AuthProvider = ({ children }) => {
       console.error('Login error:', error.response?.data || error.message);
       throw error;
     }
-  };
-
-  const logout = () => {
-    setToken(null);
-    setUser(null);
   };
 
   const updateCurrentUser = async (payload, config = {}) => {

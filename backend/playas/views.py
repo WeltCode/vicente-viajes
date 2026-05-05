@@ -2,8 +2,9 @@
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication, BasicAuthentication
+from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from backend.authentication import AdminTokenAuthentication
 
 from .models import Playa
 from .serializers import PlayaSerializer
@@ -14,7 +15,7 @@ def can_manage_content(user):
 
 
 @api_view(['GET', 'POST'])
-@authentication_classes([TokenAuthentication, BasicAuthentication])
+@authentication_classes([AdminTokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def playas_list(request):
     if request.method == 'GET':
@@ -37,7 +38,7 @@ def playas_list(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
-@authentication_classes([TokenAuthentication, BasicAuthentication])
+@authentication_classes([AdminTokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def playas_detail(request, pk):
     # Endpoint detalle: lectura puntual, edicion y borrado por id.

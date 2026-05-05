@@ -3,6 +3,7 @@ from .views import (
     excursiones_list,
     excursiones_detail,
     login_view,
+    logout_view,
     me_view,
     users_list,
     users_detail,
@@ -13,6 +14,7 @@ from .cloudinary_gallery import CloudinaryExcursionGalleryView
 urlpatterns = [
     # Login token para panel admin frontend.
     path('login/', login_view),
+    path('logout/', logout_view),
     path('me/', me_view),
     path('users/', users_list),
     path('users/<int:pk>/', users_detail),

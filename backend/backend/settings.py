@@ -31,6 +31,10 @@ def _env_to_bool(raw_input, default=False):
     return raw_value in {'1', 'true', 'yes', 'on'}
 
 
+def _split_csv_env(raw_value):
+    return [item.strip() for item in str(raw_value or '').split(',') if item.strip()]
+
+
 def _build_sqlite_database_config():
     return {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -115,15 +119,21 @@ if env_file.exists():
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-# Permitir tanto DJANGO_SECRET_KEY como SECRET_KEY para compatibilidad
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY') or os.getenv('SECRET_KEY', 'django-insecure-*ch=a!122prcpcs!1@s!fcvaipoy5sauadv&*f^$t@fdky-knb')
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = _env_to_bool(os.getenv('DJANGO_DEBUG', 'True'))
+DEBUG = _env_to_bool(os.getenv('DJANGO_DEBUG'), default=False)
+
+# SECURITY WARNING: keep the secret key used in production secret!
+# Permitir tanto DJANGO_SECRET_KEY como SECRET_KEY para compatibilidad.
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY') or os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-local-dev-only'
+    else:
+        raise RuntimeError('Falta configurar DJANGO_SECRET_KEY o SECRET_KEY para ejecutar Django con DEBUG=False.')
 
 # Hosts permitidos por Django; configurable por entorno.
-ALLOWED_HOSTS = [host.strip() for host in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if host.strip()]
+allowed_hosts_default = 'localhost,127.0.0.1' if DEBUG else ''
+ALLOWED_HOSTS = _split_csv_env(os.getenv('DJANGO_ALLOWED_HOSTS', allowed_hosts_default))
 
 
 # Application definition
@@ -248,16 +258,10 @@ cloudinary.config(
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS para permitir frontend local/deploy hablar con la API.
-cors_origins_raw = os.getenv(
-    'DJANGO_CORS_ALLOWED_ORIGINS',
-    'http://localhost:5173,http://localhost:5175'
+cors_origins_default = 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:5175,http://127.0.0.1:5175' if DEBUG else ''
+CORS_ALLOWED_ORIGINS = _split_csv_env(
+    os.getenv('DJANGO_CORS_ALLOWED_ORIGINS', cors_origins_default)
 )
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5175",
-    "http://127.0.0.1:5175",
-]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     "GET",
@@ -284,19 +288,23 @@ CORS_EXPOSE_HEADERS = [
     'authorization',
 ]
 
-csrf_trusted_origins_raw = os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '')
-CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_trusted_origins_raw.split(',') if origin.strip()]
+csrf_trusted_origins_default = ','.join(CORS_ALLOWED_ORIGINS) if DEBUG else ''
+CSRF_TRUSTED_ORIGINS = _split_csv_env(
+    os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', csrf_trusted_origins_default)
+)
 
 # Seguridad base DRF: lectura publica, escritura autenticada.
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'backend.authentication.AdminTokenAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
 }
+
+ADMIN_TOKEN_MAX_AGE_SECONDS = int(os.getenv('ADMIN_TOKEN_MAX_AGE_SECONDS', '28800'))
 
 # Email para el formulario de contacto.
 # En producción usa SMTP real; en desarrollo, si faltan credenciales, se mantiene la salida por consola.
@@ -313,6 +321,10 @@ DEFAULT_FROM_EMAIL = os.getenv(
 )
 CONTACT_RECIPIENT_EMAIL = os.getenv('CONTACT_RECIPIENT_EMAIL', 'info@vicenteviajes.com')
 CONTACT_EMAIL_LOGO_URL = os.getenv('CONTACT_EMAIL_LOGO_URL', '')
+CONTACT_EMAIL_PROVIDER = os.getenv('CONTACT_EMAIL_PROVIDER', 'django').strip().lower()
+CONTACT_EMAIL_ASYNC = _env_to_bool(os.getenv('CONTACT_EMAIL_ASYNC'), default=True)
+RESEND_API_KEY = os.getenv('RESEND_API_KEY', '').strip()
+RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', DEFAULT_FROM_EMAIL).strip()
 
 email_password_is_placeholder = EMAIL_HOST_PASSWORD.startswith('CAMBIA_')
 

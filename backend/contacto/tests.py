@@ -1,4 +1,5 @@
 # pyright: reportAttributeAccessIssue=false
+import json
 from unittest.mock import patch
 
 from django.conf import settings
@@ -13,6 +14,8 @@ from .models import mensaje_contacto
     DEFAULT_FROM_EMAIL="info@vicenteviajes.com",
     CONTACT_EMAIL_LOGO_URL="https://example.com/logo-email.png",
     CONTACT_RECIPIENT_EMAIL="info@vicenteviajes.com",
+    CONTACT_EMAIL_PROVIDER="django",
+    CONTACT_EMAIL_ASYNC=True,
 )
 class ContactoEmailTests(TestCase):
     @patch("contacto.views.Thread")
@@ -100,3 +103,28 @@ class ContactoEmailTests(TestCase):
         self.assertIn("Recibido desde VicenteViajes.com", html_body)
         self.assertIn("https://example.com/logo-email.png", html_body)
         self.assertNotIn("data:image/png;base64", html_body)
+
+    @override_settings(CONTACT_EMAIL_PROVIDER="resend", CONTACT_EMAIL_ASYNC=False, RESEND_API_KEY="re_test", RESEND_FROM_EMAIL="Vicente Viajes <info@vicenteviajes.com>")
+    @patch("contacto.views.urlopen")
+    def test_contact_message_can_send_via_resend(self, mock_urlopen):
+        mock_response = mock_urlopen.return_value.__enter__.return_value
+        mock_response.status = 200
+
+        payload = {
+            "nombre": "Ana López",
+            "email": "ana@example.com",
+            "telefono": "600000000",
+            "asunto": "informacion",
+            "mensaje": "Necesito detalles de un paquete.",
+        }
+
+        response = self.client.post("/api/contacto/enviar/", data=payload, content_type="application/json")
+
+        self.assertEqual(response.status_code, 201)
+        request = mock_urlopen.call_args.args[0]
+        self.assertEqual(request.full_url, "https://api.resend.com/emails")
+        self.assertEqual(request.get_header("Authorization"), "Bearer re_test")
+        sent_payload = json.loads(request.data.decode("utf-8"))
+        self.assertEqual(sent_payload["to"], [settings.CONTACT_RECIPIENT_EMAIL])
+        self.assertEqual(sent_payload["reply_to"], payload["email"])
+        self.assertEqual(sent_payload["from"], "Vicente Viajes <info@vicenteviajes.com>")

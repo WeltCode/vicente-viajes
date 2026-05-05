@@ -3,8 +3,9 @@ from django.utils import timezone
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication, BasicAuthentication
+from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from backend.authentication import AdminTokenAuthentication
 
 from .models import Estado, EstadoConfig
 from .serializers import EstadoSerializer, EstadoConfigSerializer
@@ -16,7 +17,7 @@ def can_manage_content(user):
 
 
 @api_view(['GET', 'POST'])
-@authentication_classes([TokenAuthentication, BasicAuthentication])
+@authentication_classes([AdminTokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def estados_list(request):
     sync_expired_states()
@@ -48,7 +49,7 @@ def estados_list(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
-@authentication_classes([TokenAuthentication, BasicAuthentication])
+@authentication_classes([AdminTokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def estados_detail(request, pk):
     sync_expired_states()
@@ -88,7 +89,7 @@ def estados_detail(request, pk):
 
 
 @api_view(['POST'])
-@authentication_classes([TokenAuthentication, BasicAuthentication])
+@authentication_classes([AdminTokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def estados_reorder(request):
     if not can_manage_content(request.user):
@@ -114,7 +115,7 @@ def estados_reorder(request):
 
 
 @api_view(['GET', 'PUT'])
-@authentication_classes([TokenAuthentication, BasicAuthentication])
+@authentication_classes([AdminTokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def estados_config(request):
     config, _ = EstadoConfig.objects.get_or_create(pk=1)  # pyright: ignore[reportAttributeAccessIssue]

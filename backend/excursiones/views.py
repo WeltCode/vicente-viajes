@@ -3,12 +3,13 @@
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication, BasicAuthentication
+from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.utils import timezone
 from rest_framework.authtoken.models import Token
+from backend.authentication import AdminTokenAuthentication
 
 from .models import Excursion, UserProfile
 from .serializers import ExcursionSerializer
@@ -109,12 +110,22 @@ def login_view(request):
             status=status.HTTP_403_FORBIDDEN
         )
     
-    token, _ = Token.objects.get_or_create(user=user)  # pyright: ignore[reportAttributeAccessIssue]
+    Token.objects.filter(user=user).delete()  # pyright: ignore[reportAttributeAccessIssue]
+    token = Token.objects.create(user=user)  # pyright: ignore[reportAttributeAccessIssue]
     return Response({'token': token.key, 'user': user_payload(user, request=request)})
 
 
+@api_view(['POST'])
+@authentication_classes([AdminTokenAuthentication, BasicAuthentication])
+@permission_classes([IsAuthenticatedOrReadOnly])
+def logout_view(request):
+    if request.auth:
+        request.auth.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 @api_view(['GET', 'PATCH'])
-@authentication_classes([TokenAuthentication, BasicAuthentication])
+@authentication_classes([AdminTokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def me_view(request):
     if not request.user or not request.user.is_authenticated:
@@ -152,7 +163,7 @@ def me_view(request):
 
 
 @api_view(['GET', 'POST'])
-@authentication_classes([TokenAuthentication, BasicAuthentication])
+@authentication_classes([AdminTokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def users_list(request):
     if not request.user or not request.user.is_authenticated or not request.user.is_superuser:
@@ -192,7 +203,7 @@ def users_list(request):
 
 
 @api_view(['PUT', 'DELETE'])
-@authentication_classes([TokenAuthentication, BasicAuthentication])
+@authentication_classes([AdminTokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def users_detail(request, pk):
     if not request.user or not request.user.is_authenticated or not request.user.is_superuser:
@@ -247,7 +258,7 @@ def users_detail(request, pk):
 
 
 @api_view(['POST'])
-@authentication_classes([TokenAuthentication, BasicAuthentication])
+@authentication_classes([AdminTokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def users_reset_password(request, pk):
     if not request.user or not request.user.is_authenticated or not request.user.is_superuser:
@@ -272,7 +283,7 @@ def users_reset_password(request, pk):
 
 
 @api_view(['GET', 'POST'])
-@authentication_classes([TokenAuthentication, BasicAuthentication])
+@authentication_classes([AdminTokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def excursiones_list(request):
     sync_expired_excursions()
@@ -297,7 +308,7 @@ def excursiones_list(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
-@authentication_classes([TokenAuthentication, BasicAuthentication])
+@authentication_classes([AdminTokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def excursiones_detail(request, pk):
     # Endpoint detalle: lectura puntual, edicion y borrado por id.
