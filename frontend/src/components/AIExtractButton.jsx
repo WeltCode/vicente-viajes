@@ -58,7 +58,7 @@ const AIExtractButton = ({ onExtracted, className = "" }) => {
 
       const { warnings: w = [], ...fields } = data;
       if (w.length > 0) setWarnings(w);
-      onExtracted(fields);
+      onExtracted({ ...fields, _warnings: w });
     } catch (err) {
       setError(err.response?.data?.error || "Error al procesar la imagen con IA.");
     } finally {

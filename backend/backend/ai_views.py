@@ -1,15 +1,44 @@
 import base64
+import io
 import json
 import re
+from datetime import date
 
 import anthropic
 from django.conf import settings
+from PIL import Image
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from backend.authentication import AdminTokenAuthentication
+
+
+def _fix_date_year(date_str: str) -> str:
+    """
+    Recibe una fecha 'YYYY-MM-DD' (que puede venir con un año incorrecto de Claude)
+    y devuelve la próxima ocurrencia futura de ese mes/día.
+    - Si la fecha ya es hoy o futura → se conserva.
+    - Si ya pasó → se usa el año siguiente.
+    Esto resuelve carteles que solo indican mes/día sin año explícito.
+    """
+    if not date_str:
+        return date_str
+    try:
+        parts = date_str.split("-")
+        if len(parts) != 3:
+            return date_str
+        _, month_s, day_s = parts
+        month = int(month_s)
+        day = int(day_s)
+        today = date.today()
+        candidate = date(today.year, month, day)
+        if candidate >= today:
+            return candidate.strftime("%Y-%m-%d")
+        return date(today.year + 1, month, day).strftime("%Y-%m-%d")
+    except (ValueError, TypeError):
+        return date_str
 
 # ---------------------------------------------------------------------------
 # Prompt principal enviado a Claude
@@ -122,14 +151,52 @@ def extract_poster(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # Validar tamaño máximo 5 MB
-    if image_file.size > 5 * 1024 * 1024:
+    # Validar tamaño máximo 20 MB antes de procesar
+    if image_file.size > 20 * 1024 * 1024:
         return Response(
-            {"error": "La imagen no puede superar los 5 MB."},
+            {"error": "La imagen no puede superar los 20 MB."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    image_data = base64.standard_b64encode(image_file.read()).decode("utf-8")
+    # Comprimir la imagen si su base64 superaría el límite de 5 MB de Claude
+    # base64 infla el tamaño ~33%, por lo que el límite real del binario es ~3.75 MB
+    MAX_CLAUDE_BYTES = 5 * 1024 * 1024  # 5 MB en base64
+    raw_bytes = image_file.read()
+
+    def compress_image(data: bytes, target_b64_bytes: int) -> tuple[bytes, str]:
+        """Comprime la imagen iterativamente hasta que su base64 quepa en target_b64_bytes."""
+        img = Image.open(io.BytesIO(data))
+        # Convertir a RGB si es necesario (RGBA, P, etc.) para guardar como JPEG
+        if img.mode not in ("RGB", "L"):
+            img = img.convert("RGB")
+        out_mime = "image/jpeg"
+
+        quality = 85
+        max_dim = 2048  # redimensionar si es muy grande
+
+        # Reducir dimensiones si la imagen es enorme
+        w, h = img.size
+        if max(w, h) > max_dim:
+            ratio = max_dim / max(w, h)
+            img = img.resize((int(w * ratio), int(h * ratio)), Image.LANCZOS)
+
+        for _ in range(8):  # máximo 8 intentos
+            buf = io.BytesIO()
+            img.save(buf, format="JPEG", quality=quality, optimize=True)
+            compressed = buf.getvalue()
+            if len(base64.standard_b64encode(compressed)) <= target_b64_bytes:
+                return compressed, out_mime
+            # Reducir calidad y dimensiones en cada intento
+            quality = max(30, quality - 10)
+            w, h = img.size
+            img = img.resize((int(w * 0.85), int(h * 0.85)), Image.LANCZOS)
+
+        return compressed, out_mime
+
+    if len(base64.standard_b64encode(raw_bytes)) > MAX_CLAUDE_BYTES:
+        raw_bytes, mime_type = compress_image(raw_bytes, MAX_CLAUDE_BYTES)
+
+    image_data = base64.standard_b64encode(raw_bytes).decode("utf-8")
 
     try:
         client = anthropic.Anthropic(api_key=api_key)
@@ -189,5 +256,10 @@ def extract_poster(request):
             {"error": "No se pudo parsear la respuesta de Claude.", "raw": raw_text},
             status=status.HTTP_502_BAD_GATEWAY,
         )
+
+    # Corregir el año en fechas: carteles sin año explícito → próxima ocurrencia
+    for field in ("departure_date", "return_date", "excursion_date"):
+        if extracted.get(field):
+            extracted[field] = _fix_date_year(extracted[field])
 
     return Response(extracted, status=status.HTTP_200_OK)

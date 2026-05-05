@@ -43,7 +43,7 @@ const getVisibleCardsForViewport = () => {
   if (typeof window === "undefined") return DEFAULT_VISIBLE_CARDS;
   if (window.innerWidth < 768) return 1;
   if (window.innerWidth < 1024) return 2;
-  return 4;
+  return 3;
 };
 
 const getCyclicSlice = (list, start, count) => {
@@ -346,7 +346,7 @@ const FeaturedDestinations = () => {
                   <img
                     src={item.image_url || item.image}
                     alt={item.title || "Estado"}
-                    className="h-[380px] sm:h-[420px] md:h-[430px] lg:h-[360px] w-full object-cover"
+                    className="h-[520px] sm:h-[580px] md:h-[620px] lg:h-[460px] w-full object-cover"
                   />
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#122127]/70 to-transparent px-4 pb-4 pt-10 text-left text-white">
                     <p className="text-sm font-semibold">{item.title || `Estado ${item.id}`}</p>

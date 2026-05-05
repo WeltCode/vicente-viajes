@@ -7,7 +7,7 @@ import Footer from "../components/layout/Footer";
 import WhatsAppButton from "../components/WhatsAppButton";
 import PageHeader from "../components/sections/PageHeader";
 import PageSeo from "../components/seo/PageSeo";
-import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane, Hotel, Camera } from "lucide-react";
+import { MapPin, Clock, Users, Star, ArrowRight, X, Calendar, CheckCircle, Plane, Hotel, Camera, Info } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import { apiUrl } from "../services/api";
 import { buildWhatsAppUrl } from "../services/siteContact";
@@ -332,7 +332,7 @@ import { buildWhatsAppUrl } from "../services/siteContact";
 
 const excursions = [];
 
-const months = [
+const MONTH_NAMES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
 ];
@@ -341,6 +341,19 @@ const Excursiones = () => {
   const [excursions, setExcursions] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [selectedExcursion, setSelectedExcursion] = useState(null);
+
+  // Carrusel dinámico: meses desde el actual hasta 12 meses adelante
+  const months = (() => {
+    const today = new Date();
+    const curMonthIdx = today.getMonth(); // 0-based
+    const curYear = today.getFullYear();
+    return Array.from({ length: 12 }, (_, i) => {
+      const idx = (curMonthIdx + i) % 12;
+      const year = curMonthIdx + i >= 12 ? curYear + 1 : curYear;
+      const name = MONTH_NAMES[idx];
+      return { label: year > curYear ? `${name} ${year}` : name, value: name };
+    });
+  })();
   const [isPressed, setIsPressed] = useState(false);
   const [startX, setStartX] = useState(0);
   const scrollContainerRef = useRef(null);
@@ -433,10 +446,10 @@ const Excursiones = () => {
     ? excursions.filter((e) => e.month === selectedMonth)
     : excursions;
 
-  const groupedByMonth = months.reduce((acc, month) => {
-    const monthExcursions = excursions.filter((e) => e.month === month);
+  const groupedByMonth = months.reduce((acc, { value }) => {
+    const monthExcursions = excursions.filter((e) => e.month === value);
     if (monthExcursions.length > 0) {
-      acc[month] = monthExcursions;
+      acc[value] = monthExcursions;
     }
     return acc;
   }, {});
@@ -479,17 +492,17 @@ const Excursiones = () => {
             >
               Todos
             </button>
-            {months.map((month) => (
+            {months.map(({ label, value }) => (
               <button
-                key={month}
-                onClick={() => setSelectedMonth(month)}
+                key={label}
+                onClick={() => setSelectedMonth(value)}
                 className={`flex-shrink-0 snap-start px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap ${
-                  selectedMonth === month
+                  selectedMonth === value
                     ? "bg-gradient-to-r from-teal to-sage text-white shadow-lg"
                     : "bg-mist text-muted-foreground hover:bg-teal/10 hover:text-teal"
                 }`}
               >
-                {month}
+                {label}
               </button>
             ))}
           </div>
@@ -671,6 +684,17 @@ const ExcursionModal = ({ excursion, onClose }) => (
         >
           <X className="w-5 h-5 text-white" />
         </button>
+        {/* Ver imagen completa */}
+        <a
+          href={excursion.image_url || excursion.image}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="absolute top-4 left-4 flex items-center gap-1.5 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white/90 hover:text-white text-xs px-2.5 py-1.5 rounded-full transition-all border border-white/20"
+        >
+          <Camera className="w-3.5 h-3.5" />
+          Ver imagen completa
+        </a>
         <div className="absolute bottom-4 left-6 right-6">
           <div className="flex items-center gap-2 text-white/80 text-sm mb-2">
             <MapPin className="w-4 h-4" />
@@ -756,36 +780,40 @@ const ExcursionModal = ({ excursion, onClose }) => (
           </div>
         </div>
 
-        {/* Includes */}
+        {/* Includes + Observaciones */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <div>
-            <h4 className="font-bold text-foreground mb-4 flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-primary" />
-              Incluye
-            </h4>
-            <ul className="space-y-2">
-              {excursion.includes.map((item, i) => (
-                <li key={i} className="flex items-center gap-2 text-sm">
-                  <div className="w-2 h-2 rounded-full bg-primary" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold text-foreground mb-4 flex items-center gap-2">
-              <X className="w-5 h-5 text-sage" />
-              No Incluye
-            </h4>
-            <ul className="space-y-2">
-              {excursion.notIncludes.map((item, i) => (
-                <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-2 h-2 rounded-full bg-sage" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
+          {excursion.includes.length > 0 && (
+            <div>
+              <h4 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-primary" />
+                Incluye
+              </h4>
+              <ul className="space-y-2">
+                {excursion.includes.map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm">
+                    <div className="w-2 h-2 rounded-full bg-primary" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {excursion.notIncludes.length > 0 && (
+            <div>
+              <h4 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                <Info className="w-5 h-5 text-amber-500" />
+                Observaciones
+              </h4>
+              <ul className="space-y-2">
+                {excursion.notIncludes.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <div className="mt-1.5 w-2 h-2 shrink-0 rounded-full bg-amber-400" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* CTA */}

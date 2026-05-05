@@ -27,13 +27,18 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
     initialData
       ? {
           ...initialData,
+          is_active: initialData.is_active !== undefined ? initialData.is_active : true,
+          is_featured: initialData.is_featured !== undefined ? initialData.is_featured : false,
+          rating: initialData.rating !== undefined && initialData.rating !== ""
+            ? String(initialData.rating)
+            : (Math.random() * (4.9 - 4.7) + 4.7).toFixed(1),
           duration: String(initialData.duration || "").replace(/\D/g, ""),
           includes: Array.isArray(initialData.includes)
             ? initialData.includes.join("\n")
-            : initialData.includes,
+            : initialData.includes || "",
           not_includes: Array.isArray(initialData.not_includes)
             ? initialData.not_includes.join("\n")
-            : initialData.not_includes,
+            : initialData.not_includes || "",
           itinerary: (initialData.itinerary || []).map((d, i) => ({
             day: d.day || i + 1,
             title: d.title || "",
@@ -57,7 +62,7 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
           departure_date: "",
           return_date: "",
           group_size: "",
-          rating: "",
+          rating: (Math.random() * (4.9 - 4.7) + 4.7).toFixed(1),
           itinerary: [],
           not_includes: "",
           is_featured: false,
@@ -230,11 +235,38 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
       if (fields.currency)          next.currency          = fields.currency;
       if (fields.departure_date)    next.departure_date    = fields.departure_date;
       if (fields.return_date)       next.return_date       = fields.return_date;
-      if (fields.month)             next.month             = fields.month;
+
+      // Derivar el mes desde departure_date si Claude no lo extrajo explícitamente
+      const MESES_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
+        "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+      // Normalizar: buscar coincidencia exacta ignorando mayúsculas/tildes
+      const normalizeMes = (val) => {
+        if (!val) return null;
+        const normalize = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        return MESES_ES.find((m) => normalize(m) === normalize(String(val))) || null;
+      };
+
+      // Prioridad: 1) departure_date (más fiable), 2) month devuelto por Claude
+      let resolvedMonth = null;
+      if (fields.departure_date) {
+        const d = new Date(fields.departure_date + "T12:00:00");
+        if (!isNaN(d.getTime())) resolvedMonth = MESES_ES[d.getMonth()];
+      }
+      if (!resolvedMonth && fields.month) {
+        resolvedMonth = normalizeMes(fields.month);
+      }
+      if (resolvedMonth) next.month = resolvedMonth;
       if (fields.group_size)        next.group_size        = String(fields.group_size);
       if (fields.rating)            next.rating            = String(fields.rating);
       if (fields.includes)          next.includes          = fields.includes;
-      if (fields.not_includes)      next.not_includes      = fields.not_includes;
+      if (fields.not_includes || fields._warnings?.length) {
+        const parts = [
+          fields.not_includes || "",
+          (fields._warnings || []).join("\n"),
+        ].filter(Boolean);
+        next.not_includes = parts.join("\n");
+      }
       if (fields.seo_title)         next.seo_title         = fields.seo_title;
       if (fields.seo_description)   next.seo_description   = fields.seo_description;
 
@@ -405,7 +437,7 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
             </div>
           )}
 
-          <AIExtractButton onExtracted={handleAIExtract} className="mb-4" />
+          {!data.id && <AIExtractButton onExtracted={handleAIExtract} className="mb-4" />}
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -543,7 +575,6 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
                   setImageFile(e.target.files?.[0] || null);
                   setGalleryUrl("");
                 }}
-                required={!data.id && !galleryUrl}
                 className="hidden"
               />
               <div
@@ -684,12 +715,12 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-semibold text-[#344443]">No incluye (usa Enter para agregar cada elemento en una linea)</label>
+                <label className="mb-1 block text-sm font-semibold text-[#344443]">Observaciones (condiciones, información importante, consejos — una por línea)</label>
                 <textarea
                   name="not_includes"
                   value={data.not_includes}
                   onChange={handleChange}
-                  placeholder={"Vuelos internacionales\nPropinas\nGastos personales\nSeguro de viaje"}
+                  placeholder={"Reembolso del 100% hasta 7 días antes\nSe recomienda llevar calzado cómodo\nDocumentación requerida: pasaporte en vigor"}
                   className="h-28 w-full resize-none overflow-y-auto rounded-lg border border-[#c9d2cf] bg-[#dbe1de] px-3 py-2.5 text-sm text-[#364847] outline-none focus:border-[#1f7770]"
                   rows={4}
                 />
