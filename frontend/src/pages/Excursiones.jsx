@@ -621,7 +621,6 @@ const ExcursionCard = ({ excursion, index, onViewDetails }) => (
           </span>
         )}
       </div>
-      <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{excursion.short_description}</p>
       <div className="flex items-center gap-4 text-sm text-muted-foreground mb-5">
         <span className="flex items-center gap-1.5 bg-mist px-3 py-1.5 rounded-full">
           <Clock className="w-4 h-4 text-teal" />
