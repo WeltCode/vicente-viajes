@@ -101,6 +101,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/CHECKLIST_SALIDA_PRODUCCION.md
 
 # PyBuilder
 target/
