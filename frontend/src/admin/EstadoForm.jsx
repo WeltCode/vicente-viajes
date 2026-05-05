@@ -11,41 +11,43 @@ const inputCls =
   "w-full rounded-xl border border-[#d7dfdc] bg-[#dbe1de] px-3 py-2 text-sm text-[#1a2632] outline-none transition placeholder:text-[#8fa09f] focus:border-[#1f7770]";
 
 const EstadoForm = ({ initialData, onSaved, onCancel }) => {
-    const inputRef = useRef(null);
-    const [imageFile, setImageFile] = useState(null);
-    const [galleryUrl, setGalleryUrl] = useState("");
-    const [previewUrl, setPreviewUrl] = useState(initialData?.image_url || initialData?.image || "");
-    const [isDragOver, setIsDragOver] = useState(false);
-    const [error, setError] = useState(null);
-    const [saving, setSaving] = useState(false);
+  const inputRef = useRef(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [galleryUrl, setGalleryUrl] = useState("");
+  const [previewUrl, setPreviewUrl] = useState(initialData?.image_url || initialData?.image || "");
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-    useEffect(() => {
-      if (imageFile) {
-        setGalleryUrl("");
-        const objectUrl = URL.createObjectURL(imageFile);
-        setPreviewUrl(objectUrl);
-        return () => {
-          URL.revokeObjectURL(objectUrl);
-        };
-      } else if (galleryUrl) {
-        setPreviewUrl(galleryUrl);
-      } else {
-        setPreviewUrl(initialData?.image_url || initialData?.image || "");
-      }
-      // eslint-disable-next-line
-    }, [imageFile, galleryUrl, initialData?.image_url, initialData?.image]);
+  useEffect(() => {
+    if (imageFile) {
+      setGalleryUrl("");
+      const objectUrl = URL.createObjectURL(imageFile);
+      setPreviewUrl(objectUrl);
+      return () => {
+        URL.revokeObjectURL(objectUrl);
+      };
+    }
 
-    const handleChange = (e) => {
-      const { name, value, type, checked } = e.target;
-      setData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
-    };
+    if (galleryUrl) {
+      setPreviewUrl(galleryUrl);
+    } else {
+      setPreviewUrl(initialData?.image_url || initialData?.image || "");
+    }
+    // eslint-disable-next-line
+  }, [imageFile, galleryUrl, initialData?.image_url, initialData?.image]);
 
-    const assignFile = (file) => {
-      setImageFile(file);
-      if (file) {
-        setPreviewUrl("");
-      }
-    };
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+  };
+
+  const assignFile = (file) => {
+    setImageFile(file);
+    if (file) {
+      setPreviewUrl("");
+    }
+  };
 
     const handleSubmit = async (e) => {
       e.preventDefault();
@@ -76,7 +78,7 @@ const EstadoForm = ({ initialData, onSaved, onCancel }) => {
         if (imageFile) {
           formData.append("image", imageFile);
         } else if (galleryUrl) {
-          formData.append("image", galleryUrl);
+          formData.append("image_url", galleryUrl);
         }
 
         const headers = {
@@ -121,6 +123,7 @@ const EstadoForm = ({ initialData, onSaved, onCancel }) => {
       }
     }
     return {
+      id: initialData?.id,
       title: initialData?.title || "",
       subtitle: initialData?.subtitle || "",
       excursion_date: date,

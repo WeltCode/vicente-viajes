@@ -17,11 +17,32 @@ class EstadoSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_fields = ['image_url', 'image_url_out']
 
+    def to_internal_value(self, data):
+        mutable_data = data.copy()
+        image_value = mutable_data.get('image')
+
+        if isinstance(image_value, str) and image_value.startswith('http'):
+            mutable_data['image_url'] = image_value
+            mutable_data.pop('image', None)
+
+        return super().to_internal_value(mutable_data)
+
+    def _resolve_image_url(self, image_value):
+        if not image_value:
+            return ''
+
+        if isinstance(image_value, str):
+            return image_value
+
+        return getattr(image_value, 'url', '') or ''
+
     def get_image_url_out(self, obj):
         request = self.context.get('request')
-        if not obj.image:
+        image_url = self._resolve_image_url(obj.image)
+        if not image_url:
             return ''
-        image_url = obj.image.url
+        if image_url.startswith('http'):
+            return image_url
         return request.build_absolute_uri(image_url) if request else image_url
 
     def to_representation(self, instance):
@@ -55,6 +76,7 @@ class EstadoSerializer(serializers.ModelSerializer):
         if file_size > MAX_IMAGE_SIZE:
             raise serializers.ValidationError('La imagen no puede superar 3 MB.')
 
+        # Si es archivo subido, sí valida extensión
         if not any(file_name.endswith(extension) for extension in ALLOWED_IMAGE_EXTENSIONS):
             raise serializers.ValidationError('Formato no permitido. Usa JPG, PNG o WEBP.')
 
@@ -64,17 +86,6 @@ class EstadoSerializer(serializers.ModelSerializer):
         if value < timezone.localdate():
             raise serializers.ValidationError('La fecha de la excursión no puede estar en el pasado.')
         return value
-
-    def get_image_url(self, obj):
-        request = self.context.get('request')
-        if not obj.image:
-            return ''
-        image_url = obj.image.url
-        return request.build_absolute_uri(image_url) if request else image_url
-
-    class Meta:
-        model = Estado
-        fields = '__all__'
 
 
 class EstadoConfigSerializer(serializers.ModelSerializer):
