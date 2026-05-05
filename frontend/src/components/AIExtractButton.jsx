@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import axios from "axios";
-import { useAuth } from "../../context/AuthContext";
-import { apiUrl } from "../../services/api";
+import { useAuth } from "../context/AuthContext";
+import { apiUrl } from "../services/api";
 import { Sparkles, Upload, X } from "lucide-react";
 
 /**
