@@ -1,6 +1,6 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { LayoutGrid, Map, Waves, ImageIcon, Tag, Users, LogOut, Camera, UserRound } from "lucide-react";
+import { LayoutGrid, Map, Waves, ImageIcon, Tag, Users, LogOut, Camera, UserRound, TriangleAlert, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import logoImage from "../assets/images/vicentelogo.png";
 
@@ -17,9 +17,40 @@ const AdminLayout = () => {
   const userName = displayName || user?.username || "admin";
   const fileInputRef = useRef(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const links = isSuperUser
     ? [...baseLinks, { to: "usuarios", label: "Usuarios", icon: Users }]
     : baseLinks;
+
+  const closePasswordModal = () => {
+    if (savingPassword || user?.must_change_password) return;
+    setShowPasswordModal(false);
+    setPasswordError("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
+  };
+
+  useEffect(() => {
+    if (user?.must_change_password) {
+      setPasswordError("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
+      setShowPasswordModal(true);
+      return;
+    }
+
+    setShowPasswordModal(false);
+  }, [user?.must_change_password]);
 
   const handleProfileImageChange = async (event) => {
     const file = event.target.files?.[0];
@@ -35,6 +66,42 @@ const AdminLayout = () => {
     } finally {
       setUploadingImage(false);
       event.target.value = "";
+    }
+  };
+
+  const handleChangePassword = async (event) => {
+    event.preventDefault();
+
+    const normalizedPassword = newPassword.trim();
+    const normalizedConfirm = confirmPassword.trim();
+
+    if (!normalizedPassword) {
+      setPasswordError("La nueva contraseña es obligatoria.");
+      return;
+    }
+
+    if (normalizedPassword.length < 8) {
+      setPasswordError("La contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+
+    if (normalizedPassword !== normalizedConfirm) {
+      setPasswordError("Las contraseñas no coinciden.");
+      return;
+    }
+
+    setSavingPassword(true);
+    setPasswordError("");
+    try {
+      const formData = new FormData();
+      formData.append("password", normalizedPassword);
+      await updateCurrentUser(formData);
+      closePasswordModal();
+      window.alert("Tu contraseña se actualizo correctamente.");
+    } catch (error) {
+      setPasswordError(error?.response?.data?.detail || "No se pudo actualizar la contraseña.");
+    } finally {
+      setSavingPassword(false);
     }
   };
 
@@ -209,6 +276,7 @@ const AdminLayout = () => {
                     </span>
                   ))}
                 </div>
+
               </div>
 
               <nav className="overflow-x-auto pb-1">
@@ -238,10 +306,99 @@ const AdminLayout = () => {
           </div>
 
           <div className="min-h-screen p-3 sm:p-4 lg:p-5">
+            {user?.must_change_password && (
+              <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold">Debes sustituir tu clave temporal</p>
+                    <p className="text-sm">Tu acceso fue restablecido por un superusuario. Antes de continuar, define una contraseña personal y segura.</p>
+                  </div>
+                </div>
+              </div>
+            )}
             <Outlet />
           </div>
         </main>
       </div>
+
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
+            <div className="mb-4 flex items-start gap-3">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Sustituye tu clave temporal</h2>
+                <p className="text-sm text-slate-600">Para seguir usando el sistema, crea ahora una contraseña que solo tu conozcas.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              {passwordError && (
+                <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                  {passwordError}
+                </div>
+              )}
+
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-900">
+                Estabas usando una clave temporal generada por un superusuario. Sustituyela por una contraseña personal para completar el acceso.
+              </div>
+
+              <label className="block space-y-1">
+                <span className="text-sm font-medium text-slate-700">Nueva contraseña</span>
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-11 text-sm outline-none focus:border-slate-600"
+                    placeholder="Minimo 8 caracteres"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700"
+                    aria-label={showNewPassword ? "Ocultar contrasena" : "Mostrar contrasena"}
+                  >
+                    {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </label>
+
+              <label className="block space-y-1">
+                <span className="text-sm font-medium text-slate-700">Confirmar contraseña</span>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-11 text-sm outline-none focus:border-slate-600"
+                    placeholder="Repite la nueva contraseña"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700"
+                    aria-label={showConfirmPassword ? "Ocultar contrasena" : "Mostrar contrasena"}
+                  >
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </label>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="submit"
+                  disabled={savingPassword}
+                  className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {savingPassword ? "Guardando..." : "Guardar nueva contraseña"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

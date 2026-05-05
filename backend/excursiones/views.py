@@ -45,6 +45,7 @@ def user_payload(user, request=None):
         'is_staff': bool(user.is_staff),
         'role': user_role(user),
         'profile_image_url': profile_image_url,
+        'must_change_password': bool(profile.must_change_password),
     }
 
 
@@ -134,6 +135,7 @@ def me_view(request):
     password = str(request.data.get('password') or '').strip()
     if password:
         request.user.set_password(password)
+        profile.must_change_password = False
 
     if parse_bool(request.data.get('remove_profile_image')):
         if profile.profile_image:
@@ -262,6 +264,9 @@ def users_reset_password(request, pk):
 
     user.set_password(new_password)
     user.save(update_fields=['password'])
+    profile = get_or_create_profile(user)
+    profile.must_change_password = True
+    profile.save(update_fields=['must_change_password', 'updated_at'])
     Token.objects.get_or_create(user=user)  # pyright: ignore[reportAttributeAccessIssue]
     return Response({'detail': 'Password actualizado'})
 

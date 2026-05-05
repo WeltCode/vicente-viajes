@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import { UserPlus, Pencil, Trash2, KeyRound, ImagePlus, UploadCloud, X } from "lucide-react";
+import { UserPlus, Pencil, Trash2, KeyRound, ImagePlus, UploadCloud, X, Eye, EyeOff, Copy, RefreshCw } from "lucide-react";
 import { apiUrl } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 const API_BASE = apiUrl("users/");
 
@@ -44,7 +45,13 @@ function displayName(user) {
   return [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username;
 }
 
+function generateTemporaryPassword() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+  return Array.from({ length: 12 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+}
+
 export default function UsuariosAdmin() {
+  const { isSuperUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -52,6 +59,14 @@ export default function UsuariosAdmin() {
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
+  const [resetTarget, setResetTarget] = useState(null);
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetPasswordConfirm, setResetPasswordConfirm] = useState("");
+  const [resetError, setResetError] = useState("");
+  const [resetting, setResetting] = useState(false);
+  const [showCreatePassword, setShowCreatePassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showResetPasswordConfirm, setShowResetPasswordConfirm] = useState(false);
   const imageInputRef = useRef(null);
 
   const isEditing = useMemo(() => Boolean(form.id), [form.id]);
@@ -76,6 +91,7 @@ export default function UsuariosAdmin() {
   function openCreate() {
     setError("");
     setForm(emptyForm);
+    setShowCreatePassword(false);
     setShowModal(true);
   }
 
@@ -101,6 +117,45 @@ export default function UsuariosAdmin() {
     setShowModal(false);
     setForm(emptyForm);
     setIsDragOver(false);
+    setShowCreatePassword(false);
+  }
+
+  function openResetModal(user) {
+    if (!isSuperUser) return;
+    setResetTarget(user);
+    const temporaryPassword = generateTemporaryPassword();
+    setResetPassword(temporaryPassword);
+    setResetPasswordConfirm(temporaryPassword);
+    setResetError("");
+    setShowResetPassword(true);
+    setShowResetPasswordConfirm(true);
+  }
+
+  function closeResetModal() {
+    if (resetting) return;
+    setResetTarget(null);
+    setResetPassword("");
+    setResetPasswordConfirm("");
+    setResetError("");
+    setShowResetPassword(false);
+    setShowResetPasswordConfirm(false);
+  }
+
+  async function copyTemporaryPassword() {
+    if (!resetPassword) return;
+    try {
+      await navigator.clipboard.writeText(resetPassword);
+      window.alert("Clave temporal copiada al portapapeles.");
+    } catch {
+      window.alert("No se pudo copiar la clave temporal.");
+    }
+  }
+
+  function regenerateTemporaryPassword() {
+    const temporaryPassword = generateTemporaryPassword();
+    setResetPassword(temporaryPassword);
+    setResetPasswordConfirm(temporaryPassword);
+    setResetError("");
   }
 
   function assignProfileImage(file) {
@@ -131,8 +186,7 @@ export default function UsuariosAdmin() {
       payload.append("email", form.email.trim());
       payload.append("role", form.role);
       payload.append("is_active", String(form.is_active));
-      // Solo enviar password si tiene valor
-      if (form.password && form.password.trim()) {
+      if (!isEditing && form.password && form.password.trim()) {
         payload.append("password", form.password);
       }
       if (form.profile_image) {
@@ -180,16 +234,40 @@ export default function UsuariosAdmin() {
     }
   }
 
-  async function onResetPassword(user) {
-    const newPassword = window.prompt(`Nueva contraseña para ${user.username}:`);
-    if (!newPassword || !newPassword.trim()) return;
+  async function onResetPassword(e) {
+    e.preventDefault();
+    if (!resetTarget || !isSuperUser) return;
+
+    const normalizedPassword = resetPassword.trim();
+    const normalizedConfirm = resetPasswordConfirm.trim();
+
+    if (!normalizedPassword) {
+      setResetError("La nueva contraseña es obligatoria.");
+      return;
+    }
+
+    if (normalizedPassword.length < 8) {
+      setResetError("La contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+
+    if (normalizedPassword !== normalizedConfirm) {
+      setResetError("Las contraseñas no coinciden.");
+      return;
+    }
+
+    setResetting(true);
+    setResetError("");
     try {
-      await axios.post(`${API_BASE}${user.id}/reset-password/`, {
-        password: newPassword,
+      await axios.post(`${API_BASE}${resetTarget.id}/reset-password/`, {
+        password: normalizedPassword,
       });
-      window.alert("Contraseña actualizada.");
+      closeResetModal();
+      window.alert("Contraseña restablecida correctamente.");
     } catch (err) {
-      window.alert(err?.response?.data?.detail || "No se pudo cambiar la contraseña.");
+      setResetError(err?.response?.data?.detail || "No se pudo restablecer la contraseña.");
+    } finally {
+      setResetting(false);
     }
   }
 
@@ -255,11 +333,11 @@ export default function UsuariosAdmin() {
               <div className="mt-3 flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => onResetPassword(user)}
+                  onClick={() => openResetModal(user)}
                   className="inline-flex flex-1 items-center justify-center gap-1 rounded-md border border-slate-200 px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                 >
                   <KeyRound size={14} />
-                  Clave
+                  Restablecer contraseña
                 </button>
                 <button
                   type="button"
@@ -347,12 +425,12 @@ export default function UsuariosAdmin() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => onResetPassword(user)}
+                          onClick={() => openResetModal(user)}
                           className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                           title="Restablecer contraseña"
                         >
                           <KeyRound size={14} />
-                          Clave
+                          Restablecer contraseña
                         </button>
                         <button
                           type="button"
@@ -547,18 +625,35 @@ export default function UsuariosAdmin() {
                   </select>
                 </label>
 
-                <label className="space-y-1">
-                  <span className="text-sm font-medium text-slate-700">
-                    {isEditing ? "Nueva contraseña (opcional)" : "Contraseña"}
-                  </span>
-                  <input
-                    type="text"
-                    value={form.password}
-                    onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-600"
-                    placeholder={isEditing ? "Solo si deseas cambiarla" : "Mínimo 8 caracteres"}
-                  />
-                </label>
+                {isEditing ? (
+                  <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+                    <div>
+                      <p className="text-sm font-medium text-slate-700">Contraseña gestionada por superusuario</p>
+                      <p className="text-xs text-slate-500">La clave temporal se genera desde el listado de usuarios.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="space-y-1">
+                    <span className="text-sm font-medium text-slate-700">Contraseña inicial</span>
+                    <div className="relative">
+                      <input
+                        type={showCreatePassword ? "text" : "password"}
+                        value={form.password}
+                        onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-11 text-sm outline-none focus:border-slate-600"
+                        placeholder="Minimo 8 caracteres"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCreatePassword((prev) => !prev)}
+                        className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700"
+                        aria-label={showCreatePassword ? "Ocultar contrasena" : "Mostrar contrasena"}
+                      >
+                        {showCreatePassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </label>
+                )}
               </div>
 
               <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
@@ -585,6 +680,120 @@ export default function UsuariosAdmin() {
                   className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {saving ? "Guardando..." : isEditing ? "Actualizar" : "Crear usuario"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {resetTarget && isSuperUser && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Restablecer contraseña</h2>
+                <p className="text-sm text-slate-600">
+                  Genera o ajusta una clave temporal para {resetTarget.username} y compártela para que pueda acceder al sistema.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeResetModal}
+                className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
+                aria-label="Cerrar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={onResetPassword} className="space-y-4">
+              {resetError && (
+                <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                  {resetError}
+                </div>
+              )}
+
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-800">
+                Esta clave puede ser temporal. Cuando el usuario acceda, podra cambiarla desde su panel.
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={regenerateTemporaryPassword}
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  <RefreshCw size={15} />
+                  Generar clave temporal
+                </button>
+                <button
+                  type="button"
+                  onClick={copyTemporaryPassword}
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  <Copy size={15} />
+                  Copiar clave
+                </button>
+              </div>
+
+              <label className="block space-y-1">
+                <span className="text-sm font-medium text-slate-700">Nueva contraseña</span>
+                <div className="relative">
+                  <input
+                    type={showResetPassword ? "text" : "password"}
+                    value={resetPassword}
+                    onChange={(e) => setResetPassword(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-11 text-sm outline-none focus:border-slate-600"
+                    placeholder="Minimo 8 caracteres"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700"
+                    aria-label={showResetPassword ? "Ocultar contrasena" : "Mostrar contrasena"}
+                  >
+                    {showResetPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </label>
+
+              <label className="block space-y-1">
+                <span className="text-sm font-medium text-slate-700">Confirmar contraseña</span>
+                <div className="relative">
+                  <input
+                    type={showResetPasswordConfirm ? "text" : "password"}
+                    value={resetPasswordConfirm}
+                    onChange={(e) => setResetPasswordConfirm(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-11 text-sm outline-none focus:border-slate-600"
+                    placeholder="Repite la nueva contraseña"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPasswordConfirm((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700"
+                    aria-label={showResetPasswordConfirm ? "Ocultar contrasena" : "Mostrar contrasena"}
+                  >
+                    {showResetPasswordConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </label>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={closeResetModal}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={resetting}
+                  className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {resetting ? "Restableciendo..." : "Guardar nueva contraseña"}
                 </button>
               </div>
             </form>
