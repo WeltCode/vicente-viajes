@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { Trash2, X } from "lucide-react";
 import { apiUrl } from "../services/api";
 import GallerySelect from "../components/GallerySelect";
+import AIExtractButton from "../components/AIExtractButton";
 
 const MESES = [
   "Enero",
@@ -214,6 +215,49 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
     }));
   };
 
+  // -----------------------------------------------------------------------
+  // Handler IA: mapea los campos extraídos por Claude al estado del formulario
+  // -----------------------------------------------------------------------
+  const handleAIExtract = (fields) => {
+    setData((prev) => {
+      const next = { ...prev };
+
+      if (fields.title)             next.title             = fields.title;
+      if (fields.short_description) next.short_description = fields.short_description;
+      if (fields.description)       next.description       = fields.description;
+      if (fields.location)          next.location          = fields.location;
+      if (fields.price)             next.price             = String(fields.price);
+      if (fields.currency)          next.currency          = fields.currency;
+      if (fields.departure_date)    next.departure_date    = fields.departure_date;
+      if (fields.return_date)       next.return_date       = fields.return_date;
+      if (fields.month)             next.month             = fields.month;
+      if (fields.group_size)        next.group_size        = String(fields.group_size);
+      if (fields.rating)            next.rating            = String(fields.rating);
+      if (fields.includes)          next.includes          = fields.includes;
+      if (fields.not_includes)      next.not_includes      = fields.not_includes;
+      if (fields.seo_title)         next.seo_title         = fields.seo_title;
+      if (fields.seo_description)   next.seo_description   = fields.seo_description;
+
+      if (Array.isArray(fields.itinerary) && fields.itinerary.length > 0) {
+        next.itinerary = fields.itinerary.map((d, i) => ({
+          day: d.day || i + 1,
+          title: d.title || "",
+          description: d.description || "",
+          highlights: Array.isArray(d.highlights)
+            ? d.highlights.join(", ")
+            : d.highlights || "",
+        }));
+      }
+
+      // Recalcular duración si hay fechas
+      if (next.departure_date && next.return_date) {
+        next.duration = calculateDurationFromDates(next.departure_date, next.return_date);
+      }
+
+      return next;
+    });
+  };
+
   const removeDay = (index) => {
     setData((prev) => {
       const arr = [...prev.itinerary];
@@ -360,6 +404,8 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
               {error}
             </div>
           )}
+
+          <AIExtractButton onExtracted={handleAIExtract} className="mb-4" />
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

@@ -326,6 +326,9 @@ CONTACT_EMAIL_ASYNC = _env_to_bool(os.getenv('CONTACT_EMAIL_ASYNC'), default=Tru
 RESEND_API_KEY = os.getenv('RESEND_API_KEY', '').strip()
 RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', DEFAULT_FROM_EMAIL).strip()
 
+# Anthropic / Claude
+ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY', '').strip()
+
 email_password_is_placeholder = EMAIL_HOST_PASSWORD.startswith('CAMBIA_')
 
 if EMAIL_HOST and EMAIL_HOST_USER and EMAIL_HOST_PASSWORD and not email_password_is_placeholder:
