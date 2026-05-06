@@ -1,7 +1,18 @@
+import re
 from rest_framework import serializers
 from django.utils import timezone
 from .models import Excursion
 from decimal import Decimal
+
+
+def _cloudinary_public_id_from_url(url):
+    """
+    Extrae el public_id de una URL completa de Cloudinary.
+    Ejemplo: https://res.cloudinary.com/demo/image/upload/v1234/folder/file.jpg
+             → 'folder/file'
+    """
+    match = re.search(r'/upload/(?:v\d+/)?(.+?)(?:\.[a-zA-Z0-9]+)?$', str(url))
+    return match.group(1) if match else None
 
 
 class ExcursionSerializer(serializers.ModelSerializer):
@@ -57,6 +68,15 @@ class ExcursionSerializer(serializers.ModelSerializer):
         # Alinea formato de entrada con el almacenado interno multilinea.
         if isinstance(value, list):
             return "\n".join(value)
+        return value
+
+    def validate_image(self, value):
+        # Si el frontend envía la URL completa de Cloudinary (desde galería),
+        # extrae el public_id para que CloudinaryField lo almacene correctamente.
+        if isinstance(value, str) and 'res.cloudinary.com' in value:
+            public_id = _cloudinary_public_id_from_url(value)
+            if public_id:
+                return public_id
         return value
 
     def to_representation(self, instance):

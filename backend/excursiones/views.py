@@ -302,7 +302,13 @@ def excursiones_list(request):
 
     serializer = ExcursionSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
+        try:
+            serializer.save()
+        except Exception as exc:
+            return Response(
+                {'detail': f'Error al guardar la excursión: {exc}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -328,7 +334,13 @@ def excursiones_detail(request, pk):
             return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
         serializer = ExcursionSerializer(excursion, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            try:
+                serializer.save()
+            except Exception as exc:
+                return Response(
+                    {'detail': f'Error al guardar la excursión: {exc}'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
