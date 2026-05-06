@@ -447,7 +447,13 @@ const Excursiones = () => {
     : excursions;
 
   const groupedByMonth = months.reduce((acc, { value }) => {
-    const monthExcursions = excursions.filter((e) => e.month === value);
+    const monthExcursions = excursions
+      .filter((e) => e.month === value)
+      .sort((a, b) => {
+        if (!a.departure_date) return 1;
+        if (!b.departure_date) return -1;
+        return new Date(a.departure_date) - new Date(b.departure_date);
+      });
     if (monthExcursions.length > 0) {
       acc[value] = monthExcursions;
     }

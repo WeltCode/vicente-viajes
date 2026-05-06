@@ -53,18 +53,24 @@ const ExcursionesAdmin = () => {
     }
   };
 
-  const filteredItems = items.filter((item) => {
-    const q = query.trim().toLowerCase();
-    if (!q) {
-      return true;
-    }
-    return (
-      item.title?.toLowerCase().includes(q) ||
-      item.location?.toLowerCase().includes(q) ||
-      item.month?.toLowerCase().includes(q) ||
-      String(item.departure_date || "").toLowerCase().includes(q)
-    );
-  });
+  const filteredItems = items
+    .filter((item) => {
+      const q = query.trim().toLowerCase();
+      if (!q) {
+        return true;
+      }
+      return (
+        item.title?.toLowerCase().includes(q) ||
+        item.location?.toLowerCase().includes(q) ||
+        item.month?.toLowerCase().includes(q) ||
+        String(item.departure_date || "").toLowerCase().includes(q)
+      );
+    })
+    .sort((a, b) => {
+      if (!a.departure_date) return 1;
+      if (!b.departure_date) return -1;
+      return new Date(a.departure_date) - new Date(b.departure_date);
+    });
 
   const formatPrice = (value) => {
     const numeric = Number(value);
