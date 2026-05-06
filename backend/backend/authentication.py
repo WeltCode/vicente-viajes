@@ -14,4 +14,11 @@ class AdminTokenAuthentication(TokenAuthentication):
             token.delete()
             raise AuthenticationFailed('La sesion ha expirado. Inicia sesion de nuevo.')
 
+        # Ventana deslizante: renovar el token en cada uso para que el timeout
+        # sea de inactividad y no absoluto desde el login.
+        # Solo escribir en BD si han pasado más de 30s para no saturar.
+        if token_age > 30:
+            token.created = timezone.now()
+            token.save(update_fields=['created'])
+
         return user, token

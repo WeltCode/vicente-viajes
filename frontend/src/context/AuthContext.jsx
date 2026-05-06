@@ -7,7 +7,7 @@ const SESSION_TOKEN_KEY = "admin_session_token";
 const SESSION_USER_KEY = "admin_session_user";
 const SESSION_STARTED_AT_KEY = "admin_session_started_at";
 const LEGACY_STORAGE_KEYS = ["token", "admin_user"];
-const ADMIN_SESSION_MAX_AGE_MS = 8 * 60 * 60 * 1000;
+const ADMIN_SESSION_MAX_AGE_MS = 10 * 60 * 1000; // 10 minutos de inactividad
 
 function clearLegacyAuthStorage() {
   LEGACY_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
@@ -104,23 +104,34 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (!token) return undefined;
 
-    const startedAt = Number(sessionStorage.getItem(SESSION_STARTED_AT_KEY) || 0);
-    if (!startedAt || !Number.isFinite(startedAt)) {
+    const lastActivity = Number(sessionStorage.getItem(SESSION_STARTED_AT_KEY) || 0);
+    if (!lastActivity || !Number.isFinite(lastActivity)) {
       logout();
       return undefined;
     }
 
-    const remainingMs = ADMIN_SESSION_MAX_AGE_MS - (Date.now() - startedAt);
+    const remainingMs = ADMIN_SESSION_MAX_AGE_MS - (Date.now() - lastActivity);
     if (remainingMs <= 0) {
       logout();
       return undefined;
     }
 
-    const timeoutId = window.setTimeout(() => {
-      logout();
-    }, remainingMs);
+    // Timeout que se resetea con cada interacción del usuario
+    let timeoutId = window.setTimeout(() => logout(), remainingMs);
 
-    return () => window.clearTimeout(timeoutId);
+    const resetTimer = () => {
+      sessionStorage.setItem(SESSION_STARTED_AT_KEY, String(Date.now()));
+      window.clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => logout(), ADMIN_SESSION_MAX_AGE_MS);
+    };
+
+    const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'];
+    ACTIVITY_EVENTS.forEach((evt) => window.addEventListener(evt, resetTimer, { passive: true }));
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      ACTIVITY_EVENTS.forEach((evt) => window.removeEventListener(evt, resetTimer));
+    };
   }, [token]);
 
   const refreshUser = async () => {
