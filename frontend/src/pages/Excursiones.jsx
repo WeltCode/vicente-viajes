@@ -442,8 +442,15 @@ const Excursiones = () => {
     setIsPressed(false);
   };
 
+  const sortByDate = (arr) =>
+    [...arr].sort((a, b) => {
+      if (!a.departure_date) return 1;
+      if (!b.departure_date) return -1;
+      return new Date(a.departure_date) - new Date(b.departure_date);
+    });
+
   const filteredExcursions = selectedMonth
-    ? excursions.filter((e) => e.month === selectedMonth)
+    ? sortByDate(excursions.filter((e) => e.month === selectedMonth))
     : excursions;
 
   const groupedByMonth = months.reduce((acc, { value }) => {
