@@ -610,7 +610,7 @@ const ExcursionCard = ({ excursion, index, onViewDetails }) => (
       <img
         src={excursion.image_url || excursion.image}
         alt={excursion.title}
-        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-110"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-forest/70 via-transparent to-transparent" />
       {excursion.is_featured && (
@@ -688,7 +688,7 @@ const ExcursionModal = ({ excursion, onClose }) => (
         <img
           src={excursion.image_url || excursion.image}
           alt={excursion.title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover object-top"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-midnight/80 to-transparent" />
         <button
