@@ -304,7 +304,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-ADMIN_TOKEN_MAX_AGE_SECONDS = int(os.getenv('ADMIN_TOKEN_MAX_AGE_SECONDS', '28800'))
+ADMIN_TOKEN_MAX_AGE_SECONDS = int(os.getenv('ADMIN_TOKEN_MAX_AGE_SECONDS', '600'))
 
 # Email para el formulario de contacto.
 # En producción usa SMTP real; en desarrollo, si faltan credenciales, se mantiene la salida por consola.

@@ -7,7 +7,7 @@ from rest_framework.exceptions import AuthenticationFailed
 class AdminTokenAuthentication(TokenAuthentication):
     def authenticate_credentials(self, key):
         user, token = super().authenticate_credentials(key)
-        max_age_seconds = int(getattr(settings, 'ADMIN_TOKEN_MAX_AGE_SECONDS', 28800) or 28800)
+        max_age_seconds = int(getattr(settings, 'ADMIN_TOKEN_MAX_AGE_SECONDS', 600) or 600)
         token_age = (timezone.now() - token.created).total_seconds()
 
         if token_age >= max_age_seconds:

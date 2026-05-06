@@ -103,6 +103,9 @@ instance/
 docs/_build/
 docs/CHECKLIST_SALIDA_PRODUCCION.md
 
+# Documentación interna del proyecto (manuales, capturas)
+docs/
+
 # PyBuilder
 target/
 
