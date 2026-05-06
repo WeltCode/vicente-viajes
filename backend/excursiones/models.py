@@ -50,9 +50,16 @@ class Excursion(models.Model):
         ordering = ["-created_at"]
 
     def save(self, *args, **kwargs):
-        # Slug de respaldo para URLs amigables si no llega desde admin.
+        # Slug único basado en el título; añade sufijo numérico si ya existe.
         if not self.slug:
-            self.slug = slugify(self.title)
+            base_slug = slugify(self.title)
+            slug = base_slug
+            qs = Excursion.objects.exclude(pk=self.pk)  # pyright: ignore[reportAttributeAccessIssue]
+            counter = 1
+            while qs.filter(slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
         if self.departure_date and self.departure_date <= timezone.localdate():
             self.is_active = False
         super().save(*args, **kwargs)
