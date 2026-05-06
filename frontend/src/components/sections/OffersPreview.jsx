@@ -152,7 +152,7 @@ export default function OffersPreview() {
                   </div>
                   {offer.discount && (
                     <span className="absolute top-3 right-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-bold text-rose-600 shadow">
-                      -{offer.discount}
+                      {offer.discount.startsWith('-') ? offer.discount : `-${offer.discount}`}
                     </span>
                   )}
 
