@@ -44,14 +44,22 @@ const PlayasAdmin = () => {
     }
   };
 
-  const filteredItems = items.filter((item) => {
-    const q = query.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      item.title?.toLowerCase().includes(q) ||
-      item.location?.toLowerCase().includes(q)
-    );
-  });
+  const filteredItems = items
+    .filter((item) => {
+      const q = query.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        item.title?.toLowerCase().includes(q) ||
+        item.location?.toLowerCase().includes(q) ||
+        item.month?.toLowerCase().includes(q) ||
+        String(item.departure_date || "").toLowerCase().includes(q)
+      );
+    })
+    .sort((a, b) => {
+      if (!a.departure_date) return 1;
+      if (!b.departure_date) return -1;
+      return new Date(a.departure_date) - new Date(b.departure_date);
+    });
 
   const formatPrice = (value) => {
     const numeric = Number(value);
@@ -64,6 +72,32 @@ const PlayasAdmin = () => {
     try {
       return new Date(value + "T12:00:00").toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" });
     } catch { return value; }
+  };
+
+  const isExpiredDate = (value) => {
+    if (!value) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const d = new Date(`${value}T00:00:00`);
+    return !Number.isNaN(d.getTime()) && d <= today;
+  };
+
+  const getDateAlert = (value, isActive) => {
+    if (!value) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const d = new Date(`${value}T00:00:00`);
+    const diffDays = Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 0)
+      return { label: "Vencida", className: "bg-[#f2dcdc] text-[#b55353]" };
+    if (!isActive)
+      return { label: "Desactivada", className: "bg-[#ecefef] text-[#637371]" };
+    if (diffDays <= 5)
+      return {
+        label: diffDays === 1 ? "Sale mañana" : `Expira en ${diffDays} días`,
+        className: "bg-[#f5ead2] text-[#a06e1c]",
+      };
+    return null;
   };
 
   return (
@@ -133,9 +167,23 @@ const PlayasAdmin = () => {
                       className="h-20 w-20 shrink-0 rounded-xl object-cover"
                     />
                     <div className="min-w-0 flex-1">
-                      <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${item.is_active ? "bg-[#d7ece2] text-[#2f7f66]" : "bg-[#f2dcdc] text-[#b55353]"}`}>
-                        {item.is_active ? "Activa" : "Desactivada"}
-                      </span>
+                      {(() => {
+                        const alert = getDateAlert(item.departure_date, item.is_active);
+                        if (alert) {
+                          return (
+                            <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${alert.className}`}>
+                              {alert.label}
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            item.is_active ? "bg-[#d7ece2] text-[#2f7f66]" : "bg-[#ecefef] text-[#637371]"
+                          }`}>
+                            {item.is_active ? "Activa" : "Desactivada"}
+                          </span>
+                        );
+                      })()}
                       <h3 className="mt-2 text-base font-semibold text-[#1f2d31]">{item.title}</h3>
                       <p className="text-sm text-[#2f4a49]">{item.location}</p>
                     </div>
@@ -214,15 +262,23 @@ const PlayasAdmin = () => {
                         {formatDate(item.departure_date)}
                       </td>
                       <td className="px-5 py-3">
-                        <span
-                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            item.is_active
-                              ? "bg-[#d7ece2] text-[#2f7f66]"
-                              : "bg-[#f2dcdc] text-[#b55353]"
-                          }`}
-                        >
-                          {item.is_active ? "Activa" : "Desactivada"}
-                        </span>
+                        {(() => {
+                          const alert = getDateAlert(item.departure_date, item.is_active);
+                          if (alert) {
+                            return (
+                              <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${alert.className}`}>
+                                {alert.label}
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                              item.is_active ? "bg-[#d7ece2] text-[#2f7f66]" : "bg-[#ecefef] text-[#637371]"
+                            }`}>
+                              {item.is_active ? "Activa" : "Desactivada"}
+                            </span>
+                          );
+                        })()}
                       </td>
                       {canManageContent && (
                         <td className="px-5 py-3 text-right">

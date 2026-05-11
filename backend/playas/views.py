@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from django.utils import timezone
 from backend.authentication import AdminTokenAuthentication
 
 from .models import Playa
@@ -14,11 +15,21 @@ def can_manage_content(user):
     return bool(user and user.is_authenticated and (user.is_staff or user.is_superuser))
 
 
+def sync_expired_playas():
+    """Desactiva automáticamente playas cuya fecha de salida ya llegó."""
+    Playa.objects.filter(  # pyright: ignore[reportAttributeAccessIssue]
+        departure_date__isnull=False,
+        departure_date__lte=timezone.localdate(),
+        is_active=True,
+    ).update(is_active=False)
+
+
 @api_view(['GET', 'POST'])
 @authentication_classes([AdminTokenAuthentication, BasicAuthentication])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def playas_list(request):
     if request.method == 'GET':
+        sync_expired_playas()
         # Publico: solo activas. Admin autenticado: listado completo.
         if request.user and request.user.is_authenticated:
             playas = Playa.objects.all()  # pyright: ignore[reportAttributeAccessIssue]
@@ -42,6 +53,7 @@ def playas_list(request):
 @permission_classes([IsAuthenticatedOrReadOnly])
 def playas_detail(request, pk):
     # Endpoint detalle: lectura puntual, edicion y borrado por id.
+    sync_expired_playas()
     try:
         playa = Playa.objects.get(pk=pk)  # pyright: ignore[reportAttributeAccessIssue]
     except Playa.DoesNotExist:  # pyright: ignore[reportAttributeAccessIssue]
