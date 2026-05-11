@@ -18,6 +18,8 @@ Aplicación web completa para la gestión y promoción de excursiones, playas, o
 - [Variables de entorno](#variables-de-entorno)
 - [Instalación en desarrollo](#instalación-en-desarrollo)
 - [Despliegue en producción](#despliegue-en-producción)
+- [Integración de proveedor externo en /hoteles y /vuelos](#integración-de-proveedor-externo-en-hoteles-y-vuelos)
+- [Cómo solicitar acceso al repositorio (dev externo)](#cómo-solicitar-acceso-al-repositorio-dev-externo--integración-hoteles-o-vuelos)
 
 ---
 
@@ -485,4 +487,113 @@ El archivo `netlify.toml` incluye build command, headers de seguridad (HSTS, CSP
 
 ### Cloudinary
 Las credenciales de Cloudinary son compartidas entre entornos. Usar una cuenta separada para desarrollo si se quiere aislar los assets.
+
+---
+
+## Integración de proveedor externo en `/hoteles` y `/vuelos`
+
+Las páginas `/hoteles` y `/vuelos` son **contenedores de integración cerrados**: tienen el Navbar, Footer y estilos de Vicente Viajes ya montados. El proveedor externo **solo toca el bloque interior** delimitado por su `id`, sin acceso al resto del código.
+
+### Puntos de montaje disponibles
+
+| Página | ID del contenedor | Atributo de integración |
+|--------|-------------------|------------------------|
+| `/hoteles` | `hotel-search-root` | `data-integration="external-hotel-engine"` |
+| `/vuelos` | `flight-search-root` | `data-integration="external-flight-engine"` |
+
+El proveedor puede inyectar su widget de tres formas (ver ejemplos completos en [Integración de vuelos y hoteles](#integración-de-vuelos-y-hoteles)):
+- **Opción A** — `<script>` externo montado con `useEffect`
+- **Opción B** — `<iframe>` apuntando al motor del proveedor
+- **Opción C** — Componente React del SDK del proveedor
+
+La variable de entorno del proveedor se añade en `frontend/.env.local`:
+```env
+VITE_FLIGHTS_API_KEY=tu_clave_publica
+VITE_HOTELS_API_KEY=tu_clave_publica
+```
+
+> **Regla de oro:** Solo se editan los archivos `frontend/src/pages/Vuelos.jsx` y/o `frontend/src/pages/Hoteles.jsx`. Cualquier otra modificación queda fuera del alcance del proveedor.
+
+---
+
+## Cómo solicitar acceso al repositorio (dev externo — integración `/hoteles` o `/vuelos`)
+
+> Esta sección está dirigida a **desarrolladores de terceros** que quieren integrar su motor de búsqueda en Vicente Viajes.
+
+### Paso 1 — Contactar con el equipo
+
+Envía un correo a **info@vicenteviajes.com** o escribe por WhatsApp al número de Vicente Barahona con el asunto:
+
+```
+[Integración Web] Solicitud de acceso – /hoteles o /vuelos
+```
+
+Incluye en el mensaje:
+- Nombre completo y empresa
+- Servicio a integrar (hoteles / vuelos / ambos)
+- Nombre de usuario de GitHub con el que quieres acceder
+- Breve descripción técnica de cómo funciona tu widget (iframe, script, SDK React, etc.)
+
+### Paso 2 — Acceso de colaborador en GitHub
+
+El equipo de WeltBrave añadirá tu usuario de GitHub al repositorio [WeltCode/vicente-viajes](https://github.com/WeltCode/vicente-viajes) con el rol **Collaborator** de solo escritura en la rama designada.
+
+Se te creará una rama dedicada:
+```
+integration/hoteles-<tu-empresa>
+integration/vuelos-<tu-empresa>
+```
+
+Solo tendrás permisos de push sobre esa rama. **No se concede acceso a `master` ni a ninguna otra rama.**
+
+### Paso 3 — Archivos que puedes modificar
+
+Con el acceso concedido, tus cambios deben limitarse estrictamente a:
+
+```
+frontend/src/pages/Hoteles.jsx    ← si integras hoteles
+frontend/src/pages/Vuelos.jsx     ← si integras vuelos
+frontend/.env.local               ← añadir tu VITE_*_API_KEY (no se sube a git)
+```
+
+Cualquier cambio fuera de estos archivos será rechazado en la Pull Request.
+
+### Paso 4 — Pull Request y revisión
+
+Una vez lista tu integración:
+
+1. Abre una **Pull Request** desde tu rama `integration/...` hacia `master`.
+2. Describe qué motor has integrado y cómo probarlo localmente.
+3. El equipo de WeltBrave revisará que no rompa el diseño ni el resto de la web.
+4. Si todo está correcto, se aprueba y fusiona.
+
+### Paso 5 — Despliegue
+
+El merge a `master` dispara automáticamente el despliegue en Netlify. El proveedor recibirá confirmación cuando la integración esté en producción.
+
+---
+
+### Preguntas frecuentes para el proveedor externo
+
+**¿Puedo ver el código antes de que me den acceso?**
+No. El repositorio es privado. Se facilita esta documentación y, si es necesario, una demo en entorno de staging.
+
+**¿Qué versión de React/Node necesito?**
+React 19, Node.js 20+. Ver el `package.json` del frontend para dependencias exactas una vez tengas acceso.
+
+**¿Cómo pruebo localmente?**
+```bash
+git clone https://github.com/WeltCode/vicente-viajes.git
+cd frontend
+npm install
+# Crea frontend/.env.local con VITE_API_URL y tu VITE_*_API_KEY
+npm run dev
+# Abre http://localhost:5173/hoteles o /vuelos
+```
+
+**¿Hay entorno de staging?**
+Consulta con WeltBrave. Se puede montar un preview en Netlify para validar antes de ir a producción.
+
+**¿Qué pasa si mi widget necesita un proxy backend?**
+Contacta con WeltBrave para valorar añadir un endpoint proxy en Django que no exponga tu clave secreta en el frontend.
 
