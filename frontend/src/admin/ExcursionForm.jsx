@@ -101,6 +101,29 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
     return String(Math.max(1, diffDays));
   };
 
+  // Dado un año candidato y un mes (0-based) y día, decide si la fecha ya pasó
+  // (estrictamente antes de hoy). Si ya pasó, devuelve año+1.
+  const inferYearForDate = (monthIdx, day) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const candidate = new Date(today.getFullYear(), monthIdx, day);
+    return candidate < today ? today.getFullYear() + 1 : today.getFullYear();
+  };
+
+  // Corrige una fecha ISO (YYYY-MM-DD) que Claude pudo haber devuelto con año
+  // incorrecto: si la fecha ya pasó, la mueve al año siguiente.
+  const fixDateYear = (isoDate) => {
+    if (!isoDate) return isoDate;
+    const d = new Date(`${isoDate}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return isoDate;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (d < today) {
+      d.setFullYear(d.getFullYear() + 1);
+    }
+    return formatIsoDate(d);
+  };
+
   const syncDateWithMonth = (monthLabel, currentDateValue) => {
     const monthIndex = MESES.findIndex((mes) => mes === monthLabel);
     if (monthIndex === -1) return currentDateValue || "";
@@ -113,15 +136,13 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
       return "";
     }
 
-    const today = new Date();
+    const day = currentDateValue ? baseDate.getDate() : 1;
+    const safeDay = Math.min(day, new Date(2000, monthIndex + 1, 0).getDate());
+    // Si ya tenemos una fecha base con año explícito, respetarlo;
+    // si no (cambio manual de mes), inferir el año correcto.
     const inferredYear = currentDateValue
       ? baseDate.getFullYear()
-      : monthIndex < today.getMonth()
-        ? today.getFullYear() + 1
-        : today.getFullYear();
-
-    const day = currentDateValue ? baseDate.getDate() : 1;
-    const safeDay = Math.min(day, new Date(inferredYear, monthIndex + 1, 0).getDate());
+      : inferYearForDate(monthIndex, safeDay);
 
     return formatIsoDate(new Date(inferredYear, monthIndex, safeDay));
   };
@@ -233,8 +254,8 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
       if (fields.location)          next.location          = fields.location;
       if (fields.price)             next.price             = String(fields.price);
       if (fields.currency)          next.currency          = fields.currency;
-      if (fields.departure_date)    next.departure_date    = fields.departure_date;
-      if (fields.return_date)       next.return_date       = fields.return_date;
+      if (fields.departure_date)    next.departure_date    = fixDateYear(fields.departure_date);
+      if (fields.return_date)       next.return_date       = fixDateYear(fields.return_date);
 
       // Derivar el mes desde departure_date si Claude no lo extrajo explícitamente
       const MESES_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
@@ -437,7 +458,13 @@ const ExcursionForm = ({ initialData, onSaved, onCancel }) => {
             </div>
           )}
 
-          {!data.id && <AIExtractButton onExtracted={handleAIExtract} className="mb-4" />}
+          {!data.id && (
+            <AIExtractButton
+              onExtracted={handleAIExtract}
+              onImageFile={(file) => { setImageFile(file); setGalleryUrl(""); }}
+              className="mb-4"
+            />
+          )}
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

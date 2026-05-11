@@ -86,15 +86,20 @@ Devuelve ÚNICAMENTE un objeto JSON válido (sin texto adicional, sin bloques ma
 --- PLAYA o destino costero ---
 {
   "detected_type": "playa",
-  "title": "nombre de la playa o destino",
-  "short_description": "resumen breve",
-  "description": "descripción completa",
-  "location": "ubicación",
-  "price": "solo el número",
-  "duration": "solo el número de días",
-  "group_size": "número o vacío",
-  "rating": "número o vacío",
-  "characteristics": "característica1\ncaracterística2",
+  "title": "nombre de la playa o destino (p.ej. CALPE - Playa de la Fossa)",
+  "short_description": "resumen breve de 1-2 frases",
+  "description": "descripción completa de la playa",
+  "location": "ciudad o región",
+  "price": "precio adulto, solo el número",
+  "price_child": "precio niños/as 2-11 años o mayores 65 o discapacidad, solo el número, vacío si no aparece",
+  "departure_date": "YYYY-MM-DD si hay fecha concreta, vacío si no",
+  "month": "nombre del mes en español si aparece sin fecha exacta, vacío si no",
+  "return_time": "hora de regreso en formato HH:MM, p.ej. 23:59, vacío si no aparece",
+  "departure_info": "puntos de salida con horarios, uno por línea, p.ej. 00:25 Ventas (Metro) Hotel Ibis...\n00:40 Legazpi...",
+  "includes": "elemento1\nelemento2 (p.ej. Autobús ida y vuelta\nSeguro básico)",
+  "not_includes": "elemento1\nelemento2 (p.ej. Propinas del guía\nNingún otro servicio)",
+  "group_size": "mínimo de personas si aparece, vacío si no",
+  "characteristics": "característica1\ncaracterística2 (arena, aguas cristalinas, etc.)",
   "warnings": []
 }
 

@@ -9,9 +9,10 @@ import { Sparkles, Upload, X } from "lucide-react";
  *
  * Props:
  *   onExtracted(fields)  — callback con los campos extraídos (sin "warnings")
+ *   onImageFile(file)    — (opcional) callback con el File cuando se selecciona, para usarlo como imagen del formulario
  *   className            — clases extra para el contenedor
  */
-const AIExtractButton = ({ onExtracted, className = "" }) => {
+const AIExtractButton = ({ onExtracted, onImageFile, className = "" }) => {
   const { token } = useAuth();
   const inputRef = useRef(null);
   const [posterFile, setPosterFile] = useState(null);
@@ -25,6 +26,7 @@ const AIExtractButton = ({ onExtracted, className = "" }) => {
     setPosterFile(file);
     setError(null);
     setWarnings([]);
+    onImageFile?.(file);
   };
 
   const clearPoster = (e) => {

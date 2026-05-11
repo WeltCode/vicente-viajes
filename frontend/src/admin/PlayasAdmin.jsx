@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
-import { Waves, Search, Plus, Pencil, Trash2, Star } from "lucide-react";
+import { Waves, Search, Plus, Pencil, Trash2, Calendar } from "lucide-react";
 import PlayaForm from "./PlayaForm";
 import { apiUrl } from "../services/api";
 
@@ -59,17 +59,12 @@ const PlayasAdmin = () => {
     return `€${numeric.toLocaleString("es-ES")}`;
   };
 
-  const formatRating = (value) => {
-    const numeric = Number(value);
-    if (Number.isNaN(numeric)) return "0.0";
-    return numeric.toFixed(1);
+  const formatDate = (value) => {
+    if (!value) return "-";
+    try {
+      return new Date(value + "T12:00:00").toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" });
+    } catch { return value; }
   };
-
-  const parseFeatures = (value) =>
-    String(value || "")
-      .split(",")
-      .map((f) => f.trim())
-      .filter(Boolean);
 
   return (
     <section className="space-y-4">
@@ -129,7 +124,6 @@ const PlayasAdmin = () => {
         <>
           <div className="space-y-3 lg:hidden">
             {filteredItems.map((item) => {
-              const features = parseFeatures(item.characteristics);
               return (
                 <article key={`mobile-${item.id}`} className="rounded-2xl border border-[#ccd4d2] bg-white p-3.5 shadow-sm">
                   <div className="flex items-start gap-3">
@@ -148,21 +142,8 @@ const PlayasAdmin = () => {
                   </div>
 
                   <div className="mt-3 grid gap-2 text-sm text-[#2f4a49] sm:grid-cols-2">
-                    <p><span className="font-semibold text-[#1f2d31]">Precio:</span> {formatPrice(item.price)}</p>
-                    <p className="inline-flex items-center gap-1"><Star className="h-4 w-4 fill-[#c6943d] text-[#c6943d]" />{formatRating(item.rating)}</p>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap gap-1">
-                    {features.slice(0, 3).map((f) => (
-                      <span key={`${item.id}-${f}`} className="rounded-full bg-[#e0eeeb] px-2 py-0.5 text-xs font-medium text-[#1f7770]">
-                        {f}
-                      </span>
-                    ))}
-                    {features.length > 3 && (
-                      <span className="rounded-full bg-[#e8eceb] px-2 py-0.5 text-xs font-medium text-[#637371]">
-                        +{features.length - 3}
-                      </span>
-                    )}
+                    <p><span className="font-semibold text-[#1f2d31]">Precio:</span> {formatPrice(item.price)}{item.price_child ? ` / ${formatPrice(item.price_child)} niño` : ""}</p>
+                    <p className="inline-flex items-center gap-1"><Calendar className="h-4 w-4 text-[#1f7770]" />{formatDate(item.departure_date)}</p>
                   </div>
 
                   {canManageContent && (
@@ -196,17 +177,16 @@ const PlayasAdmin = () => {
                   <th className="px-5 py-3 text-left font-semibold">Imagen</th>
                   <th className="px-5 py-3 text-left font-semibold">Nombre</th>
                   <th className="px-5 py-3 text-left font-semibold">Ubicación</th>
-                  <th className="px-5 py-3 text-left font-semibold">Precio</th>
-                  <th className="px-5 py-3 text-left font-semibold">Rating</th>
-                  <th className="px-5 py-3 text-left font-semibold">Características</th>
+                  <th className="px-5 py-3 text-left font-semibold">Precio Adulto</th>
+                  <th className="px-5 py-3 text-left font-semibold">Precio Niño</th>
+                  <th className="px-5 py-3 text-left font-semibold">Fecha</th>
                   <th className="px-5 py-3 text-left font-semibold">Estado</th>
                   {canManageContent && <th className="px-5 py-3 text-right font-semibold">Acciones</th>}
                 </tr>
               </thead>
               <tbody>
                 {filteredItems.map((item) => {
-                  const features = parseFeatures(item.characteristics);
-                  return (
+                    return (
                     <tr
                       key={item.id}
                       className="border-b border-[#dce3e0] last:border-b-0 hover:bg-[#f6f8f7]"
@@ -228,27 +208,10 @@ const PlayasAdmin = () => {
                         {formatPrice(item.price)}
                       </td>
                       <td className="px-5 py-3 text-base text-[#1f2d31]">
-                        <span className="inline-flex items-center gap-1">
-                          <Star className="h-4 w-4 fill-[#c6943d] text-[#c6943d]" />
-                          {formatRating(item.rating)}
-                        </span>
+                        {item.price_child ? formatPrice(item.price_child) : "-"}
                       </td>
-                      <td className="px-5 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {features.slice(0, 2).map((f) => (
-                            <span
-                              key={f}
-                              className="rounded-full bg-[#e0eeeb] px-2 py-0.5 text-xs font-medium text-[#1f7770]"
-                            >
-                              {f}
-                            </span>
-                          ))}
-                          {features.length > 2 && (
-                            <span className="rounded-full bg-[#e8eceb] px-2 py-0.5 text-xs font-medium text-[#637371]">
-                              +{features.length - 2}
-                            </span>
-                          )}
-                        </div>
+                      <td className="px-5 py-3 text-base text-[#2f4a49]">
+                        {formatDate(item.departure_date)}
                       </td>
                       <td className="px-5 py-3">
                         <span

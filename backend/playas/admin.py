@@ -5,7 +5,7 @@ from .forms import PlayaAdminForm
 @admin.register(Playa)
 class PlayaAdmin(admin.ModelAdmin):
     form = PlayaAdminForm
-    list_display = ('title', 'location', 'price', 'rating', 'is_active', 'created_at')
+    list_display = ('title', 'location', 'price', 'price_child', 'departure_date', 'is_active', 'created_at')
     list_filter = ('is_active', 'location')
     search_fields = ('title', 'location')
     prepopulated_fields = {'slug': ('title',)}
