@@ -4,9 +4,9 @@
 # Más info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
 # Regla global: el owner revisa todo
-*  @WeltCode
+*  @vicenteviajes
 
 # Los archivos de integración también requieren revisión explícita del owner
 # (la regla más específica prevalece en GitHub)
-frontend/src/pages/Hoteles.jsx  @WeltCode
-frontend/src/pages/Vuelos.jsx   @WeltCode
+frontend/src/pages/Hoteles.jsx  @vicenteviajes
+frontend/src/pages/Vuelos.jsx   @vicenteviajes

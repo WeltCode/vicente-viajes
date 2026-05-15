@@ -2,10 +2,10 @@
 
 ## Acceso y flujo de trabajo
 
-1. Solicita que te añadan como **Outside Collaborator** en el repositorio `WeltCode/vicente-viajes`.
+1. Solicita que te añadan como **Outside Collaborator** en el repositorio `vicenteviajes/vicenteviajes-web`.
 2. Clona el repositorio y cambia a la rama de trabajo:
    ```bash
-   git clone https://github.com/WeltCode/vicente-viajes.git
+   git clone https://github.com/vicenteviajes/vicenteviajes-web.git
    cd vicente-viajes
    git checkout integracion/motores-externos
    ```
