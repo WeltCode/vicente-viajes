@@ -1,0 +1,12 @@
+# CODEOWNERS - Vicente Viajes
+# Cualquier PR que toque CUALQUIER archivo requiere aprobación del propietario del repositorio.
+# Esto protege todo el código existente aunque el colaborador externo tenga acceso de escritura.
+# Más info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Regla global: el owner revisa todo
+*  @WeltCode
+
+# Los archivos de integración también requieren revisión explícita del owner
+# (la regla más específica prevalece en GitHub)
+frontend/src/pages/Hoteles.jsx  @WeltCode
+frontend/src/pages/Vuelos.jsx   @WeltCode
