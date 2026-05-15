@@ -597,3 +597,87 @@ Consulta con WeltBrave. Se puede montar un preview en Netlify para validar antes
 **¿Qué pasa si mi widget necesita un proxy backend?**
 Contacta con WeltBrave para valorar añadir un endpoint proxy en Django que no exponga tu clave secreta en el frontend.
 
+---
+
+## Gestión de acceso para integradores externos (uso interno — WeltCode)
+
+> Esta sección es para el dev principal (`WeltCode`). Documenta el flujo acordado para dar acceso temporal a desarrolladores externos.
+
+### Contexto del repo
+
+| Cuenta | Rol | Acceso |
+|---|---|---|
+| `vicenteviajes` | Dueño (cliente) | Push directo a master |
+| `WeltCode` | Dev principal | Push directo a master (colaborador Write) |
+| Dev externo | Integrador temporal | Solo rama `integracion/motores-externos` → PR |
+
+> El repo está en una cuenta personal gratuita. Los colaboradores Write no pueden bypasear branch protection. Por eso WeltCode trabaja sin regla de protección en master y solo se activa cuando hay un dev externo trabajando.
+
+---
+
+### Flujo normal (sin dev externo)
+
+Trabajas libremente con push directo:
+
+```bash
+git add .
+git commit -m "descripción del cambio"
+git push origin master
+```
+
+---
+
+### Cuando llega el dev externo — activar acceso
+
+**1. Asegúrate de que el repo esté público**
+`Settings → Manage visibility → Make public`
+
+**2. Activa la protección de master**
+`Settings → Branches → Add classic branch protection rule`
+
+| Opción | Estado |
+|---|---|
+| Branch name pattern | `master` |
+| Require a pull request before merging | ✅ |
+| Required approvals | `1` |
+| Require review from Code Owners | ✅ |
+| Do not allow bypassing the above settings | ❌ (desactivado) |
+
+**3. Añade al dev externo como colaborador**
+`Settings → Collaborators → Add people` → su usuario de GitHub → rol **Write**
+
+**4. Compártele la guía de integración**
+```
+https://github.com/vicenteviajes/vicenteviajes-web/blob/master/.github/GUIA_INTEGRADOR_EXTERNO.md
+```
+
+El dev trabaja en la rama `integracion/motores-externos` → abre PR hacia `master` → tú lo revisas y apruebas.
+
+---
+
+### Cuando termina el dev externo — desactivar acceso
+
+**1. Elimina al colaborador**
+`Settings → Collaborators → elimina su usuario`
+
+**2. Elimina la regla de protección de master**
+`Settings → Branches → Delete rule`
+
+**3. Vuelve el repo a privado (opcional)**
+`Settings → Manage visibility → Make private`
+
+**4. Sincroniza tu máquina local**
+```bash
+git pull origin master
+```
+
+---
+
+### Archivos clave del sistema de control de acceso
+
+| Archivo | Propósito |
+|---|---|
+| `.github/CODEOWNERS` | Declara a `@vicenteviajes` como revisor requerido en todos los PR |
+| `.github/GUIA_INTEGRADOR_EXTERNO.md` | Instrucciones para el dev externo |
+| Rama `integracion/motores-externos` | Rama de trabajo del dev externo |
+
