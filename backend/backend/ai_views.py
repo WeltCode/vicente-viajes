@@ -72,13 +72,22 @@ Devuelve ÚNICAMENTE un objeto JSON válido (sin texto adicional, sin bloques ma
 --- OFERTA de viaje / paquete turístico ---
 {
   "detected_type": "oferta",
-  "title": "nombre de la oferta",
-  "city": "ciudad de salida si aparece",
-  "destination": "destino",
-  "nights": "solo el número de noches",
-  "price": "solo el número",
+  "title": "nombre de la oferta o destino (p.ej. GALICIA - O'GROVE, CAMBADOS, VIGO)",
+  "city": "ciudad de salida si aparece, vacío si no",
+  "destination": "destino principal",
+  "nights": "solo el número de noches (p.ej. 2 si dice 2 días 1 noche)",
+  "price": "precio adulto, solo el número",
+  "price_child": "precio niño/mayor 65/discapacidad, solo el número, vacío si no aparece",
   "original_price": "precio original tachado si aparece, vacío si no",
-  "validity": "texto de validez p.ej. Hasta 31/12/2025",
+  "departure_date": "YYYY-MM-DD primera fecha de salida si aparece, vacío si no",
+  "month": "nombre del mes en español si aparece sin fecha exacta, vacío si no",
+  "return_time": "hora de regreso en formato HH:MM, vacío si no aparece",
+  "hotel": "nombre del hotel si aparece, vacío si no",
+  "description": "descripción breve del destino/excursión de 1-2 frases",
+  "departure_info": "puntos de salida con horarios, uno por línea",
+  "includes": "qué incluye, uno por línea",
+  "not_includes": "qué no incluye, uno por línea",
+  "validity": "texto de validez si aparece, vacío si no",
   "is_hot_deal": false,
   "warnings": []
 }

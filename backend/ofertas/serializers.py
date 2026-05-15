@@ -9,7 +9,22 @@ class OfertaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Oferta
         fields = '__all__'
-        extra_fields = ['image_url', 'image_url_out']
+        extra_kwargs = {
+            'city': {'required': False, 'allow_blank': True},
+            'nights': {'required': False, 'allow_blank': True},
+            'validity': {'required': False, 'allow_blank': True},
+            'original_price': {'required': False},
+            'price_child': {'required': False},
+            'departure_date': {'required': False},
+            'month': {'required': False, 'allow_blank': True},
+            'return_time': {'required': False, 'allow_blank': True},
+            'hotel': {'required': False, 'allow_blank': True},
+            'description': {'required': False, 'allow_blank': True},
+            'departure_info': {'required': False, 'allow_blank': True},
+            'includes': {'required': False, 'allow_blank': True},
+            'not_includes': {'required': False, 'allow_blank': True},
+            'image_format': {'required': False},
+        }
 
     def get_image_url_out(self, obj):
         request = self.context.get('request')
@@ -20,7 +35,6 @@ class OfertaSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)
-        # Para compatibilidad con frontend: image_url como salida
         rep['image_url'] = self.get_image_url_out(instance)
         return rep
 
@@ -37,3 +51,4 @@ class OfertaSerializer(serializers.ModelSerializer):
             instance.image = image_url
             instance.save()
         return instance
+

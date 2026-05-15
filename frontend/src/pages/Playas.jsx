@@ -172,9 +172,12 @@ const Playas = () => {
                         </>
                       )}
                       {beach.priceChild != null && (
-                        <p className="text-xs text-forest/60 mt-0.5">
-                          Niño/Mayor65: €{beach.priceChild.toLocaleString("es-ES")}
-                        </p>
+                        <>
+                          <span className="text-xs text-forest/60 block mt-1.5">Niño / Mayor 65</span>
+                          <p className="text-base font-semibold bg-gradient-to-r from-teal to-sage bg-clip-text text-transparent">
+                            €{beach.priceChild.toLocaleString("es-ES")}
+                          </p>
+                        </>
                       )}
                     </div>
                     <motion.button

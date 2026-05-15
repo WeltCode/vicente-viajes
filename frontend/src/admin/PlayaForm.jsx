@@ -169,7 +169,9 @@ const PlayaForm = ({ initialData, onSaved, onCancel }) => {
     try {
       const formData = new FormData();
       formData.append("title", data.title || "");
-      formData.append("slug", data.slug || generateSlug(data.title));
+      // En creaciones, dejar slug vacío para que el backend genere uno único
+      // (permite títulos duplicados con distinta fecha)
+      formData.append("slug", isEdit ? (data.slug || "") : "");
       formData.append("short_description", data.short_description?.trim() || data.description?.slice(0, 255) || data.title);
       formData.append("description", data.description || "");
       formData.append("location", data.location || "");

@@ -19,14 +19,24 @@ const AIExtractButton = ({ onExtracted, onImageFile, className = "" }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [warnings, setWarnings] = useState([]);
+  const [isDragOver, setIsDragOver] = useState(false);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
+  const selectFile = (file) => {
     if (!file) return;
     setPosterFile(file);
     setError(null);
     setWarnings([]);
     onImageFile?.(file);
+  };
+
+  const handleFileChange = (e) => {
+    selectFile(e.target.files?.[0]);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    selectFile(e.dataTransfer.files?.[0]);
+    setIsDragOver(false);
   };
 
   const clearPoster = (e) => {
@@ -38,10 +48,7 @@ const AIExtractButton = ({ onExtracted, onImageFile, className = "" }) => {
   };
 
   const handleExtract = async () => {
-    if (!posterFile) {
-      inputRef.current?.click();
-      return;
-    }
+    if (!posterFile) return;
 
     setLoading(true);
     setError(null);
@@ -77,16 +84,16 @@ const AIExtractButton = ({ onExtracted, onImageFile, className = "" }) => {
         Rellenar formulario con IA
       </p>
 
-      <div className="flex items-center gap-2">
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
-          className="hidden"
-          onChange={handleFileChange}
-        />
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        className="hidden"
+        onChange={handleFileChange}
+      />
 
-        {posterFile ? (
+      {posterFile ? (
+        <div className="flex items-center gap-2">
           <div className="flex flex-1 items-center gap-2 overflow-hidden rounded-lg border border-[#1f7770]/30 bg-white px-2 py-1.5 text-xs text-[#344443]">
             <span className="truncate flex-1">{posterFile.name}</span>
             <button
@@ -97,27 +104,39 @@ const AIExtractButton = ({ onExtracted, onImageFile, className = "" }) => {
               <X size={13} />
             </button>
           </div>
-        ) : (
           <button
             type="button"
-            onClick={() => inputRef.current?.click()}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[#1f7770]/30 bg-white px-3 py-2 text-xs text-[#1f7770] transition hover:bg-[#1f7770]/5"
+            onClick={handleExtract}
+            disabled={loading}
+            className="flex shrink-0 items-center gap-1 rounded-lg bg-[#1f7770] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#175e59] disabled:opacity-40"
           >
-            <Upload size={13} />
-            Subir cartel / poster
+            <Sparkles size={12} />
+            {loading ? "Procesando…" : "Extraer"}
           </button>
-        )}
-
-        <button
-          type="button"
-          onClick={handleExtract}
-          disabled={!posterFile || loading}
-          className="flex shrink-0 items-center gap-1 rounded-lg bg-[#1f7770] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#175e59] disabled:opacity-40"
+        </div>
+      ) : (
+        <div
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+          onDragLeave={() => setIsDragOver(false)}
+          onDrop={handleDrop}
+          className={`rounded-xl border-2 border-dashed p-4 transition cursor-pointer ${
+            isDragOver
+              ? "border-[#1f7770] bg-[#e7f3f0]"
+              : "border-[#1f7770]/30 bg-white hover:border-[#1f7770]/60 hover:bg-[#edf4f2]"
+          }`}
         >
-          <Sparkles size={12} />
-          {loading ? "Procesando…" : "Extraer"}
-        </button>
-      </div>
+          <div className="flex flex-col items-center justify-center text-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f0f9f8] text-[#1f7770] shadow-sm">
+              <Upload size={18} />
+            </div>
+            <p className="mt-2 text-sm font-semibold text-[#1a2632]">
+              Arrastra el cartel aquí o haz click para seleccionarlo
+            </p>
+            <p className="mt-0.5 text-xs text-[#60706f]">JPG, PNG, WEBP</p>
+          </div>
+        </div>
+      )}
 
       {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
 

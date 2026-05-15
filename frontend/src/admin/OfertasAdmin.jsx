@@ -170,6 +170,8 @@ const OfertasAdmin = () => {
                   <p><span className="font-semibold text-[#1f2d31]">Noches:</span> {item.nights}</p>
                   <p><span className="font-semibold text-[#1f2d31]">Precio:</span> {formatMoney(item.price)} <span className="ml-1 text-[#6c7d7b] line-through">{formatMoney(item.original_price)}</span></p>
                   <p><span className="font-semibold text-[#1f2d31]">Descuento:</span> {item.discount}</p>
+                  {item.departure_date && <p><span className="font-semibold text-[#1f2d31]">Fecha:</span> {item.departure_date}</p>}
+                  {item.image_format && <p><span className="font-semibold text-[#1f2d31]">Formato:</span> {item.image_format}</p>}
                   <p>
                     <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${item.is_active ? "bg-[#d7ece2] text-[#2f7f66]" : "bg-[#f2dcdc] text-[#b55353]"}`}>
                       {item.is_active ? "Activa" : "Desactivada"}
@@ -211,6 +213,8 @@ const OfertasAdmin = () => {
                   <th className="px-5 py-3 text-left font-semibold">Noches</th>
                   <th className="px-5 py-3 text-left font-semibold">Precio</th>
                   <th className="px-5 py-3 text-left font-semibold">Descuento</th>
+                  <th className="px-5 py-3 text-left font-semibold">Fecha salida</th>
+                  <th className="px-5 py-3 text-left font-semibold">Formato</th>
                   <th className="px-5 py-3 text-left font-semibold">Hot Deal</th>
                   <th className="px-5 py-3 text-left font-semibold">Estado</th>
                   {canManageContent && <th className="px-5 py-3 text-right font-semibold">Acciones</th>}
@@ -254,6 +258,10 @@ const OfertasAdmin = () => {
                       </span>
                     </td>
                     <td className="px-5 py-3 text-base text-[#1f2d31]">{item.discount}</td>
+                    <td className="px-5 py-3 text-sm text-[#2f4a49]">{item.departure_date || <span className="text-[#aab4b2]">—</span>}</td>
+                    <td className="px-5 py-3">
+                      <span className="rounded-full bg-[#e6ecea] px-2.5 py-1 text-xs font-semibold text-[#637371]">{item.image_format || "A4"}</span>
+                    </td>
                     <td className="px-5 py-3">
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${

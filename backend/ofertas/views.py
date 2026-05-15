@@ -30,11 +30,7 @@ def ofertas_list(request):
     if not can_manage_content(request.user):
         return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
-    data = request.data.copy()
-    # Si image_url viene en el form-data, asegúrate de que se pase al serializer
-    if 'image_url' in request.data:
-        data['image_url'] = request.data['image_url']
-    serializer = OfertaSerializer(data=data)
+    serializer = OfertaSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -58,10 +54,7 @@ def ofertas_detail(request, pk):
     if request.method == 'PUT':
         if not can_manage_content(request.user):
             return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-        data = request.data.copy()
-        if 'image_url' in request.data:
-            data['image_url'] = request.data['image_url']
-        serializer = OfertaSerializer(oferta, data=data, partial=True)
+        serializer = OfertaSerializer(oferta, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
