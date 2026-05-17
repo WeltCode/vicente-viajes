@@ -1,3 +1,4 @@
+import re
 from rest_framework import serializers
 from django.utils import timezone
 from .models import Estado, EstadoConfig
@@ -5,6 +6,16 @@ from .models import Estado, EstadoConfig
 
 MAX_IMAGE_SIZE = 3 * 1024 * 1024
 ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp'}
+
+
+def _cloudinary_public_id_from_url(url):
+    """
+    Extrae el public_id de una URL completa de Cloudinary.
+    Ejemplo: https://res.cloudinary.com/demo/image/upload/v1234/folder/file.jpg
+             → 'folder/file'
+    """
+    match = re.search(r'/upload/(?:v\d+/)?(.+?)(?:\.[a-zA-Z0-9]+)?$', str(url))
+    return match.group(1) if match else None
 
 
 
@@ -53,16 +64,19 @@ class EstadoSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         image_url = validated_data.pop('image_url', None)
         if image_url:
-            instance.image = image_url
+            # Usa el public_id para que CloudinaryField lo gestione correctamente
+            public_id = _cloudinary_public_id_from_url(image_url)
+            instance.image = public_id or image_url
         return super().update(instance, validated_data)
 
     def create(self, validated_data):
         image_url = validated_data.pop('image_url', None)
-        instance = super().create(validated_data)
-        if image_url:
-            instance.image = image_url
-            instance.save()
-        return instance
+        # Si no viene fichero pero sí URL de galería, inyectarla en validated_data
+        # antes del único save para evitar el doble save que dispara el signal con un string.
+        if image_url and 'image' not in validated_data:
+            public_id = _cloudinary_public_id_from_url(image_url)
+            validated_data['image'] = public_id or image_url
+        return super().create(validated_data)
 
     def validate_image(self, value):
         # Si es una URL (galería), permitirla directamente sin validar extensión ni tamaño

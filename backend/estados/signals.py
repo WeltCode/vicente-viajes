@@ -24,7 +24,7 @@ def _destroy_cloudinary_image(public_id):
 def delete_estado_image_on_delete(sender, instance, **kwargs):
     """Elimina la imagen de Cloudinary cuando se borra un estado."""
     if instance.image:
-        _destroy_cloudinary_image(instance.image.public_id)
+        _destroy_cloudinary_image(getattr(instance.image, 'public_id', None))
 
 
 @receiver(pre_save, sender=Estado)
@@ -37,8 +37,9 @@ def delete_old_estado_image_on_update(sender, instance, **kwargs):
     except Estado.DoesNotExist:  # pyright: ignore[reportAttributeAccessIssue]
         return
 
-    old_public_id = old.image.public_id if old.image else None
-    new_public_id = instance.image.public_id if instance.image else None
+    # getattr seguro: si image es un string (URL asignada directamente) no tiene .public_id
+    old_public_id = getattr(old.image, 'public_id', None) if old.image else None
+    new_public_id = getattr(instance.image, 'public_id', None) if instance.image else None
 
     if old_public_id and old_public_id != new_public_id:
         _destroy_cloudinary_image(old_public_id)

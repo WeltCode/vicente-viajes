@@ -1,4 +1,5 @@
 # pylint: disable=no-member
+import logging
 from django.utils import timezone
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
@@ -10,6 +11,8 @@ from backend.authentication import AdminTokenAuthentication
 from .models import Estado, EstadoConfig
 from .serializers import EstadoSerializer, EstadoConfigSerializer
 from .services import sync_expired_states
+
+logger = logging.getLogger(__name__)
 
 
 def can_manage_content(user):
@@ -43,7 +46,14 @@ def estados_list(request):
         data['image_url'] = request.data['image']
     serializer = EstadoSerializer(data=data, context={'request': request})
     if serializer.is_valid():
-        serializer.save()
+        try:
+            serializer.save()
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Error al guardar estado (POST): %s", exc, exc_info=True)
+            return Response(
+                {'detail': 'Error interno al guardar el estado. Revisa la configuración de Cloudinary.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -77,7 +87,14 @@ def estados_detail(request, pk):
             context={'request': request},
         )
         if serializer.is_valid():
-            serializer.save()
+            try:
+                serializer.save()
+            except Exception as exc:  # noqa: BLE001
+                logger.error("Error al guardar estado (PUT %s): %s", pk, exc, exc_info=True)
+                return Response(
+                    {'detail': 'Error interno al guardar el estado. Revisa la configuración de Cloudinary.'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
             return Response(EstadoSerializer(serializer.instance, context={'request': request}).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
