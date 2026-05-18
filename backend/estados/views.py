@@ -40,11 +40,9 @@ def estados_list(request):
     if not can_manage_content(request.user):
         return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
-    data = request.data.copy()
-    # Si image es una URL, pásala como image_url explícitamente
-    if 'image' in request.data and isinstance(request.data['image'], str) and request.data['image'].startswith('http'):
-        data['image_url'] = request.data['image']
-    serializer = EstadoSerializer(data=data, context={'request': request})
+    # No usar request.data.copy(): Django 6 hace deepcopy que falla con TemporaryUploadedFile
+    # El serializer ya maneja la conversión image URL → image_url en to_internal_value
+    serializer = EstadoSerializer(data=request.data, context={'request': request})
     if serializer.is_valid():
         try:
             serializer.save()
@@ -76,13 +74,10 @@ def estados_detail(request, pk):
     if request.method == 'PUT':
         if not can_manage_content(request.user):
             return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-        data = request.data.copy()
-        # Si image es una URL, pásala como image_url explícitamente
-        if 'image' in request.data and isinstance(request.data['image'], str) and request.data['image'].startswith('http'):
-            data['image_url'] = request.data['image']
+        # No usar request.data.copy(): falla con TemporaryUploadedFile en Python 3.14
         serializer = EstadoSerializer(
             estado,
-            data=data,
+            data=request.data,
             partial=True,
             context={'request': request},
         )

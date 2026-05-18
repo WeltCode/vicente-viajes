@@ -29,14 +29,16 @@ class EstadoSerializer(serializers.ModelSerializer):
         extra_fields = ['image_url', 'image_url_out']
 
     def to_internal_value(self, data):
-        mutable_data = data.copy()
-        image_value = mutable_data.get('image')
-
+        image_value = data.get('image')
         if isinstance(image_value, str) and image_value.startswith('http'):
+            # image es URL (galería): no hay TemporaryUploadedFile → copy() es seguro
+            mutable_data = data.copy()
             mutable_data['image_url'] = image_value
             mutable_data.pop('image', None)
-
-        return super().to_internal_value(mutable_data)
+            return super().to_internal_value(mutable_data)
+        # image es fichero o está ausente: pasar data directamente para evitar
+        # QueryDict.__deepcopy__ que falla con TemporaryUploadedFile en Python 3.14
+        return super().to_internal_value(data)
 
     def _resolve_image_url(self, image_value):
         if not image_value:
