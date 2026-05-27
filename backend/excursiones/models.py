@@ -2,7 +2,6 @@ from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
 from django.contrib.auth.models import User
-from cloudinary.models import CloudinaryField
 
 class Excursion(models.Model):
     # Información básica
@@ -12,7 +11,7 @@ class Excursion(models.Model):
     description = models.TextField()
 
     # Imagen principal
-    image = CloudinaryField('image', folder='Vicente Viajes/excursiones')
+    image = models.ImageField(upload_to='Vicente Viajes/excursiones/', blank=True, null=True)
 
     # Datos de la experiencia
     location = models.CharField(max_length=100)
@@ -67,7 +66,7 @@ class Excursion(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    profile_image = CloudinaryField('image', folder='Vicente Viajes/Usuarios', blank=True, null=True)
+    profile_image = models.ImageField(upload_to='Vicente Viajes/Usuarios/', blank=True, null=True)
     must_change_password = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

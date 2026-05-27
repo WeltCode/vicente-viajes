@@ -1,6 +1,5 @@
 import logging
 
-import cloudinary.uploader
 from django.db.models.signals import post_delete, pre_save
 from django.dispatch import receiver
 
@@ -9,27 +8,28 @@ from .models import Excursion
 logger = logging.getLogger(__name__)
 
 
-def _destroy_cloudinary_image(public_id):
-    """Elimina una imagen de Cloudinary por su public_id. Silencia errores."""
-    if not public_id:
+def _destroy_cf_image(image_id):
+    """Elimina una imagen de Cloudflare Images por su ID. Silencia errores."""
+    if not image_id:
         return
     try:
-        cloudinary.uploader.destroy(public_id)
-        logger.info("Cloudinary: imagen eliminada → %s", public_id)
+        from backend.cloudflare_storage import CloudflareImagesStorage
+        CloudflareImagesStorage().delete(str(image_id))
+        logger.info("Cloudflare: imagen eliminada → %s", image_id)
     except Exception as exc:  # noqa: BLE001
-        logger.warning("Cloudinary: no se pudo eliminar %s — %s", public_id, exc)
+        logger.warning("Cloudflare: no se pudo eliminar %s — %s", image_id, exc)
 
 
 @receiver(post_delete, sender=Excursion)
 def delete_excursion_image_on_delete(sender, instance, **kwargs):
-    """Elimina la imagen de Cloudinary cuando se borra una excursión."""
+    """Elimina la imagen de Cloudflare cuando se borra una excursión."""
     if instance.image:
-        _destroy_cloudinary_image(instance.image.public_id)
+        _destroy_cf_image(str(instance.image))
 
 
 @receiver(pre_save, sender=Excursion)
 def delete_old_excursion_image_on_update(sender, instance, **kwargs):
-    """Elimina la imagen anterior de Cloudinary cuando se reemplaza por una nueva."""
+    """Elimina la imagen anterior de Cloudflare cuando se reemplaza por una nueva."""
     if not instance.pk:
         return
     try:
@@ -37,8 +37,8 @@ def delete_old_excursion_image_on_update(sender, instance, **kwargs):
     except Excursion.DoesNotExist:  # pyright: ignore[reportAttributeAccessIssue]
         return
 
-    old_public_id = old.image.public_id if old.image else None
-    new_public_id = instance.image.public_id if instance.image else None
+    old_id = str(old.image) if old.image else None
+    new_id = str(instance.image) if instance.image else None
 
-    if old_public_id and old_public_id != new_public_id:
-        _destroy_cloudinary_image(old_public_id)
+    if old_id and old_id != new_id:
+        _destroy_cf_image(old_id)

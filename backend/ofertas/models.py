@@ -3,7 +3,6 @@
 from django.db import models
 from django.db.models import Max
 from django.utils import timezone
-from cloudinary.models import CloudinaryField
 
 IMAGE_FORMAT_CHOICES = [
     ('A4', 'A4 (Retrato)'),
@@ -26,7 +25,7 @@ class Oferta(models.Model):
     validity = models.CharField(max_length=120, blank=True)
 
     # Imagen y formato
-    image = CloudinaryField('image', folder='Vicente Viajes/ofertas')
+    image = models.ImageField(upload_to='Vicente Viajes/ofertas/', blank=True, null=True)
     image_format = models.CharField(
         max_length=10, choices=IMAGE_FORMAT_CHOICES, default='A4',
         help_text="Formato de la imagen del cartel"

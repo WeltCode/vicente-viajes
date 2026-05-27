@@ -14,15 +14,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 from urllib.parse import parse_qs, unquote, urlparse
-import cloudinary_storage
 # Cargar variables de entorno desde .env explícitamente
 from dotenv import load_dotenv
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / '.env')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-import cloudinary
-
-# Cloudinary
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -149,8 +145,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
-    'cloudinary_storage',
-    'cloudinary',
     'excursiones',
     'playas',
     'ofertas',
@@ -330,24 +324,10 @@ else:
     # Fallback para desarrollo local si faltan credenciales SMTP
     EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 
-# Configuración de Cloudinary para almacenamiento de imágenes
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
+# Cloudflare Images — nuevo servicio de almacenamiento
+CLOUDFLARE_ACCOUNT_ID          = os.getenv('CLOUDFLARE_ACCOUNT_ID')
+CLOUDFLARE_API_TOKEN           = os.getenv('CLOUDFLARE_API_TOKEN')
+CLOUDFLARE_IMAGES_ACCOUNT_HASH = os.getenv('CLOUDFLARE_IMAGES_ACCOUNT_HASH')
 
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
-    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
-}
-
-# django-cloudinary-storage usa CLOUDINARY_STORAGE con CLOUD_NAME/API_KEY/API_SECRET (mayúsculas).
-# El SDK de cloudinary necesita las keys en minúscula — se configura por separado.
-cloudinary.config(
-    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
-    api_key=os.getenv('CLOUDINARY_API_KEY'),
-    api_secret=os.getenv('CLOUDINARY_API_SECRET'),
-)
-
-# Usar Cloudinary como backend de almacenamiento por defecto para archivos media
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# Backend de almacenamiento por defecto → Cloudflare Images
+DEFAULT_FILE_STORAGE = 'backend.cloudflare_storage.CloudflareImagesStorage'

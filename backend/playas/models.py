@@ -1,7 +1,6 @@
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
-from cloudinary.models import CloudinaryField
 
 
 class Playa(models.Model):
@@ -11,7 +10,7 @@ class Playa(models.Model):
     short_description = models.CharField(max_length=255)
     description = models.TextField()
 
-    image = CloudinaryField('image', folder='Vicente Viajes/playas')
+    image = models.ImageField(upload_to='Vicente Viajes/playas/', blank=True, null=True)
 
     # Localización
     location = models.CharField(max_length=100)

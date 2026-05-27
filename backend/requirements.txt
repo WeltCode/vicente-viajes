@@ -3,8 +3,6 @@ django
  django-cors-headers
  gunicorn
  pillow
- django-cloudinary-storage
- cloudinary
  psycopg2-binary
  python-dotenv
  anthropic

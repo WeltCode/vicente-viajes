@@ -1,5 +1,17 @@
+import re
+import urllib.parse
 from rest_framework import serializers
 from .models import Oferta
+
+
+def _cloudflare_image_id_from_url(url):
+    """
+    Extrae el image_id de una URL de Cloudflare Images.
+    Ejemplo: https://imagedelivery.net/HASH/Vicente%20Viajes/ofertas/file/public
+             → 'Vicente Viajes/ofertas/file'
+    """
+    match = re.search(r'imagedelivery\.net/[^/]+/(.+?)/[^/]+$', str(url))
+    return urllib.parse.unquote(match.group(1)) if match else None
 
 
 class OfertaSerializer(serializers.ModelSerializer):
@@ -41,14 +53,14 @@ class OfertaSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         image_url = validated_data.pop('image_url', None)
         if image_url:
-            instance.image = image_url
+            instance.image = _cloudflare_image_id_from_url(image_url) or image_url
         return super().update(instance, validated_data)
 
     def create(self, validated_data):
         image_url = validated_data.pop('image_url', None)
         instance = super().create(validated_data)
         if image_url:
-            instance.image = image_url
+            instance.image = _cloudflare_image_id_from_url(image_url) or image_url
             instance.save()
         return instance
 

@@ -1,15 +1,15 @@
-import os
-import cloudinary
-from cloudinary import api
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from backend.authentication import AdminTokenAuthentication
+from backend.cloudflare_storage import CloudflareImagesStorage
+
 
 class CloudinaryExcursionGalleryView(APIView):
     """
-    Devuelve la lista de imágenes de la carpeta de excursiones en Cloudinary.
+    Devuelve la lista de imágenes almacenadas en Cloudflare Images,
+    filtradas por carpeta (excursiones, playas, ofertas, estados).
     """
     authentication_classes = [AdminTokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -17,25 +17,25 @@ class CloudinaryExcursionGalleryView(APIView):
     def get(self, request):
         try:
             folder_param = request.query_params.get('folder', 'excursiones').strip().lower()
-            # Mapear a las carpetas reales de Cloudinary
             folder_map = {
                 'excursiones': 'Vicente Viajes/excursiones',
                 'playas': 'Vicente Viajes/playas',
                 'ofertas': 'Vicente Viajes/ofertas',
                 'estados': 'Vicente Viajes/estados',
             }
-            folder = folder_map.get(folder_param, 'Vicente Viajes/excursiones')
-            resources = api.resources(type='upload', prefix=folder, max_results=100)
+            folder_prefix = folder_map.get(folder_param, 'Vicente Viajes/excursiones')
+            storage = CloudflareImagesStorage()
+            cf_images = storage.list_images(folder_prefix=folder_prefix, per_page=200)
             images = [
                 {
-                    'url': r['secure_url'],
-                    'public_id': r['public_id'],
-                    'format': r['format'],
-                    'bytes': r['bytes'],
-                    'width': r['width'],
-                    'height': r['height'],
+                    'url': img['url'],
+                    'public_id': img['id'],
+                    'format': '',
+                    'bytes': 0,
+                    'width': 0,
+                    'height': 0,
                 }
-                for r in resources.get('resources', [])
+                for img in cf_images
             ]
             return Response({'images': images})
         except Exception as e:

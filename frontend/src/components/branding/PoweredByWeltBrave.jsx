@@ -15,7 +15,7 @@ export default function PoweredByWeltBrave({ className = "" }) {
             Welt<span className="text-[#E0E0E0]">Brave</span>
           </span>
           <img
-            src="https://res.cloudinary.com/da6ggvegj/image/upload/v1760310551/solo_logo_nv0q0b.png"
+            src="https://imagedelivery.net/R-q2Rr5YYY3Q3Z63Izst-Q/WeltBrave/logo/public"
             alt="WeltBrave Logo"
             className="h-5 w-5 rounded-sm"
           />
