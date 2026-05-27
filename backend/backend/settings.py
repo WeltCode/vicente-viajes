@@ -330,4 +330,12 @@ CLOUDFLARE_API_TOKEN           = os.getenv('CLOUDFLARE_API_TOKEN')
 CLOUDFLARE_IMAGES_ACCOUNT_HASH = os.getenv('CLOUDFLARE_IMAGES_ACCOUNT_HASH')
 
 # Backend de almacenamiento por defecto → Cloudflare Images
-DEFAULT_FILE_STORAGE = 'backend.cloudflare_storage.CloudflareImagesStorage'
+# Django 4.2+ requiere STORAGES; DEFAULT_FILE_STORAGE fue eliminado en Django 5.1
+STORAGES = {
+    "default": {
+        "BACKEND": "backend.cloudflare_storage.CloudflareImagesStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}

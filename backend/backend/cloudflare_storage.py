@@ -7,6 +7,7 @@ API base:       https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID>/image
 """
 
 import os
+import re
 import uuid
 import urllib.parse
 import requests
@@ -89,13 +90,23 @@ class CloudflareImagesStorage(Storage):
         """
         Construye la URL pública de entrega.
         https://imagedelivery.net/<HASH>/<IMAGE_ID>/public
+
+        Maneja tres formatos de entrada:
+          1. URL completa (http...): se devuelve tal cual
+          2. Path Cloudinary (image/upload/v123/folder/name.jpg): extrae el public_id
+          3. Public ID limpio (Vicente Viajes/excursiones/xyz): se usa directamente
         """
         if not name:
             return ""
-        # Si ya es una URL completa (migración en curso), devolverla tal cual
-        if str(name).startswith("http"):
-            return str(name)
-        encoded = urllib.parse.quote(str(name), safe="/")
+        name_str = str(name)
+        # Si ya es una URL completa, devolverla tal cual
+        if name_str.startswith("http"):
+            return name_str
+        # Normalizar formato Cloudinary: "image/upload/v1234567/folder/name.jpg" → "folder/name"
+        cloudinary_match = re.match(r'^image/upload/v\d+/(.+)$', name_str)
+        if cloudinary_match:
+            name_str = re.sub(r'\.[a-zA-Z]{2,4}$', '', cloudinary_match.group(1))
+        encoded = urllib.parse.quote(name_str, safe="/")
         return f"{CF_DELIVERY.format(account_hash=self.account_hash)}/{encoded}/public"
 
     # ──────────────────────────────────────────────────────────────────────────
