@@ -14,10 +14,11 @@ Aplicación web completa para la gestión y promoción de excursiones, playas, o
 - [Panel de administración](#panel-de-administración)
 - [Extracción de carteles con IA](#extracción-de-carteles-con-ia)
 - [Integración de vuelos y hoteles](#integración-de-vuelos-y-hoteles)
-- [Cloudinary — gestión de imágenes](#cloudinary--gestión-de-imágenes)
+- [Cloudflare Images — gestión de imágenes](#cloudflare-images--gestión-de-imágenes)
 - [Variables de entorno](#variables-de-entorno)
 - [Instalación en desarrollo](#instalación-en-desarrollo)
 - [Despliegue en producción](#despliegue-en-producción)
+- [Página 404 personalizada](#página-404-personalizada)
 - [Integración de proveedor externo en /hoteles y /vuelos](#integración-de-proveedor-externo-en-hoteles-y-vuelos)
 - [Cómo solicitar acceso al repositorio (dev externo)](#cómo-solicitar-acceso-al-repositorio-dev-externo--integración-hoteles-o-vuelos)
 
@@ -39,10 +40,10 @@ Aplicación web completa para la gestión y promoción de excursiones, playas, o
 ### Backend
 | Tecnología | Uso |
 |---|---|
-| Python + Django 5 | Framework web |
+| Python + Django 6 | Framework web |
 | Django REST Framework | API REST |
 | Token Authentication | Autenticación admin (expiry 8 h) |
-| Cloudinary + django-cloudinary-storage | Almacenamiento de imágenes |
+| Cloudflare Images (storage backend propio) | Almacenamiento de imágenes |
 | Anthropic Claude Opus 4.5 | OCR e extracción de datos con IA |
 | Resend (opcional) | Envío de emails de contacto |
 | PostgreSQL / SQLite | Base de datos (prod / dev) |
@@ -51,9 +52,10 @@ Aplicación web completa para la gestión y promoción de excursiones, playas, o
 ### Infraestructura
 | Servicio | Rol |
 |---|---|
-| Netlify | Hosting del frontend estático |
+| Hostgator | Hosting del frontend estático en producción |
+| Netlify | Entorno de pruebas/previews frontend |
 | Render | Hosting del backend Django |
-| Cloudinary | CDN de imágenes |
+| Cloudflare Images | CDN de imágenes |
 
 ---
 
@@ -61,7 +63,7 @@ Aplicación web completa para la gestión y promoción de excursiones, playas, o
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  FRONTEND (Netlify)                                              │
+│  FRONTEND (Hostgator / Netlify preview)                          │
 │  React + Vite — SPA pública + panel /admin/*                    │
 │                                                                  │
 │  Páginas públicas:  /  /excursiones  /playas  /ofertas          │
@@ -79,7 +81,7 @@ Aplicación web completa para la gestión y promoción de excursiones, playas, o
 └──────────┬───────────────────────┬──────────────────────────────┘
            │                       │
            ▼                       ▼
-    PostgreSQL (Render)    Cloudinary CDN
+    PostgreSQL (Render)    Cloudflare Images CDN
                                    │
                            Anthropic API (Claude)
 ```
@@ -96,7 +98,7 @@ vicente-viajes/
 │   │   ├── urls.py             # Router raíz
 │   │   ├── ai_views.py         # Endpoint IA extracción de carteles
 │   │   ├── authentication.py   # AdminTokenAuthentication (8 h expiry)
-│   │   └── gallery.py          # Vista galería Cloudinary para admin
+│   │   └── gallery.py          # Vista galería Cloudflare para admin
 │   ├── excursiones/            # App tours/excursiones
 │   ├── playas/                 # App playas y destinos costeros
 │   ├── ofertas/                # App ofertas especiales
@@ -132,7 +134,7 @@ vicente-viajes/
 ### excursiones
 Modelo central de la plataforma. Gestiona tours con itinerario por días, fechas de salida/regreso, precio, rating, campos de incluye/no incluye y SEO.
 
-Campos destacados: `title`, `slug`, `description`, `image` (Cloudinary), `location`, `price`, `departure_date`, `return_date`, `month`, `itinerary` (JSON), `includes`, `not_includes`, `is_featured`, `is_active`, `seo_title`, `seo_description`.
+Campos destacados: `title`, `slug`, `description`, `image` (Cloudflare Images), `location`, `price`, `departure_date`, `return_date`, `month`, `itinerary` (JSON), `includes`, `not_includes`, `is_featured`, `is_active`, `seo_title`, `seo_description`.
 
 ### playas
 Destinos costeros con características propias. Campos: `title`, `slug`, `description`, `image`, `location`, `price`, `rating`, `group_size`, `characteristics`.
@@ -204,7 +206,7 @@ Accesible en `/admin/login`. Requiere cuenta de usuario Django con `is_staff=Tru
 - El token también expira en el backend tras 8 horas.
 - Roles: `superuser` (todo), `editor` (CRUD contenido), `viewer` (solo lectura).
 - CRUD completo para excursiones, playas, ofertas y estados.
-- Subida de imágenes directa a Cloudinary con drag & drop o selección desde galería.
+- Subida de imágenes directa a Cloudflare Images con drag & drop o selección desde galería.
 - Reordenamiento de ofertas con drag & drop.
 - Botón de extracción con IA en el formulario de excursiones.
 
@@ -367,15 +369,19 @@ import { HotelSearch } from "@amadeus-it-group/hotel-widget";
 
 ---
 
-## Cloudinary — gestión de imágenes
+## Cloudflare Images — gestión de imágenes
 
-Todas las imágenes se almacenan en Cloudinary bajo la carpeta `Vicente Viajes/`:
+Todas las imágenes se almacenan en Cloudflare Images bajo la carpeta `Vicente Viajes/`:
 - `Vicente Viajes/excursiones/`
 - `Vicente Viajes/playas/`
 - `Vicente Viajes/ofertas/`
 - `Vicente Viajes/estados/`
 
 La galería del admin está disponible en `/admin/gallery/` y permite seleccionar imágenes ya subidas sin volver a cargarlas.
+
+Notas técnicas importantes:
+- El backend usa `STORAGES` en `settings.py` (requisito en Django 5.1+; `DEFAULT_FILE_STORAGE` ya no aplica).
+- El storage normaliza rutas antiguas tipo Cloudinary (`image/upload/v.../...`) para construir la URL final de Cloudflare y mantener compatibilidad con datos históricos.
 
 ---
 
@@ -409,10 +415,10 @@ CONTACT_RECIPIENT_EMAIL=info@vicenteviajes.com
 RESEND_API_KEY=re_...                      # Solo si CONTACT_EMAIL_PROVIDER=resend
 RESEND_FROM_EMAIL=no-reply@vicenteviajes.com
 
-# Cloudinary
-CLOUDINARY_CLOUD_NAME=tu_cloud_name
-CLOUDINARY_API_KEY=tu_api_key
-CLOUDINARY_API_SECRET=tu_api_secret
+# Cloudflare Images
+CLOUDFLARE_ACCOUNT_ID=tu_account_id
+CLOUDFLARE_API_TOKEN=tu_api_token
+CLOUDFLARE_IMAGES_ACCOUNT_HASH=tu_account_hash
 
 # Anthropic / Claude IA
 ANTHROPIC_API_KEY=sk-ant-api03-...
@@ -426,6 +432,8 @@ Variables del frontend en `frontend/.env.local`:
 VITE_API_URL=https://tu-backend.onrender.com/api
 VITE_FLIGHTS_API_KEY=...   # Opcional, para motor de vuelos externo
 ```
+
+Importante para producción: `VITE_API_URL` debe incluir `/api` al final para evitar 404 en rutas como `/estados/`, `/ofertas/`, `/me/`.
 
 ---
 
@@ -452,7 +460,7 @@ cd backend
 pip install -r requirements.txt
 
 # 4. Crear backend/.env con las variables mínimas:
-#    DJANGO_SECRET_KEY, CLOUDINARY_*, ANTHROPIC_API_KEY
+#    DJANGO_SECRET_KEY, CLOUDFLARE_*, ANTHROPIC_API_KEY
 
 # 5. Migraciones y arranque
 python manage.py migrate
@@ -476,17 +484,33 @@ El frontend queda disponible en `http://localhost:5173`.
 
 ## Despliegue en producción
 
-### Frontend → Netlify
-El archivo `netlify.toml` incluye build command, headers de seguridad (HSTS, CSP, X-Frame-Options) y redirect SPA. Solo hay que conectar el repositorio en Netlify y configurar la variable de entorno `VITE_API_URL`.
-
 ### Backend → Render
 1. Crear un Web Service en Render apuntando a la carpeta `backend/`.
-2. Start command: `gunicorn backend.wsgi:application`
-3. Configurar todas las variables de entorno del listado anterior.
-4. Crear un PostgreSQL en Render y añadir su URL a `DATABASE_URL`.
+2. Build command recomendado: `pip install -r requirements.txt && python manage.py migrate`
+3. Start command: `gunicorn backend.wsgi:application`
+4. Configurar todas las variables de entorno del listado anterior (incluyendo `CLOUDFLARE_*`).
+5. Crear un PostgreSQL en Render y añadir su URL a `DATABASE_URL`.
 
-### Cloudinary
-Las credenciales de Cloudinary son compartidas entre entornos. Usar una cuenta separada para desarrollo si se quiere aislar los assets.
+### Frontend → Hostgator (producción)
+1. Generar build local desde `frontend/`:
+  - PowerShell: `$env:VITE_API_URL="https://vicenteviajes-web.onrender.com/api"; npm run build`
+2. Subir el contenido completo de `frontend/dist/` al hosting (incluyendo `.htaccess`).
+3. Confirmar que exista fallback SPA en `.htaccess` para que rutas como `/excursiones` o cualquier 404 de React carguen `index.html`.
+
+### Frontend → Netlify (preview/pruebas)
+- Usar `netlify.toml` y/o `frontend/public/_redirects` para preview deployments.
+- Si se quiere proxy en Netlify, mantener regla `/api/* -> https://vicenteviajes-web.onrender.com/api/:splat 200`.
+
+### Cloudflare Images
+Las credenciales de Cloudflare Images son compartidas entre entornos. Usar token separado por entorno si se requiere aislamiento.
+
+---
+
+## Página 404 personalizada
+
+- Ruta definida en React Router con `path="*"` en `frontend/src/routes/AppRouter.jsx`.
+- Componente: `frontend/src/pages/NotFound404.jsx`.
+- Incluye Navbar y Footer del sitio para mantener navegación global en páginas no existentes.
 
 ---
 
