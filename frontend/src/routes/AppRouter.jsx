@@ -9,6 +9,7 @@ import Nosotros from "../pages/Nosotros";
 import Contacto from "../pages/Contacto";
 import Hoteles from "../pages/Hoteles";
 import Vuelos from "../pages/Vuelos";
+import NotFound404 from "../pages/NotFound404";
 import CondicionesGenerales from "../pages/legal/CondicionesGenerales";
 import ProteccionDatos from "../pages/legal/ProteccionDatos";
 import PoliticaPrivacidad from "../pages/legal/PoliticaPrivacidad";
@@ -45,6 +46,7 @@ export default function AppRouter() {
             <Route path="/equipaje-permitido" element={<EquipajePermitido />} />
             <Route path="/modificacion-cancelacion" element={<ModificacionCancelacion />} />
             <Route path="/formulario-ingreso-espana" element={<FormularioIngresoEspana />} />
+            <Route path="*" element={<NotFound404 />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
