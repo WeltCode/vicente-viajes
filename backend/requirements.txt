@@ -3,6 +3,7 @@ django
  django-cors-headers
  gunicorn
  pillow
+ requests
  psycopg2-binary
  python-dotenv
  anthropic
