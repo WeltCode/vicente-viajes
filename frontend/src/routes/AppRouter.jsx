@@ -7,8 +7,6 @@ import Ofertas from "../pages/Ofertas";
 import BuscarVuelos from "../pages/BuscarVuelos";
 import Nosotros from "../pages/Nosotros";
 import Contacto from "../pages/Contacto";
-import Hoteles from "../pages/Hoteles";
-import Vuelos from "../pages/Vuelos";
 import NotFound404 from "../pages/NotFound404";
 import CondicionesGenerales from "../pages/legal/CondicionesGenerales";
 import ProteccionDatos from "../pages/legal/ProteccionDatos";
@@ -29,10 +27,14 @@ export default function AppRouter() {
         <ScrollToTop />
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/vuelos" element={<Vuelos />} />
+          {/*
+            /vuelos y /hoteles NO son rutas de React: las sirve Apache como
+            directorios físicos (motores de Conecta Turismo). Se enlazan con
+            <a href="..."> para forzar carga completa de página. No declarar
+            aquí como <Route>. Ver CLAUDE.md → "Integración vuelos/hoteles".
+          */}
           <Route path="/excursiones" element={<Excursiones />} />
           <Route path="/playas" element={<Playas />} />
-          <Route path="/hoteles" element={<Hoteles />} />
           <Route path="/ofertas" element={<Ofertas />} />
           {/* Token de busqueda de vuelos codificado en URL para reconstruir payload. */}
           <Route path="/buscar/:searchToken" element={<BuscarVuelos />} />

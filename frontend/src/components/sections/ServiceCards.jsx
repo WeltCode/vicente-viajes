@@ -11,6 +11,7 @@ const services = [
       "Vuelos nacionales e internacionales al mejor precio. Comparamos cientos de aerolíneas para encontrarte la tarifa perfecta.",
     cta: "Buscar vuelos",
     path: "/vuelos",
+    external: true, // Servida por Apache (Conecta Turismo), no por React Router
     accent: "#0ea5e9",
     accentLight: "#f0f9ff",
   },
@@ -41,6 +42,7 @@ const services = [
       "Hospedaje de calidad garantizada para todos los presupuestos. Desde resorts de lujo hasta cómodas opciones familiares.",
     cta: "Ver hoteles",
     path: "/hoteles",
+    external: true, // Servida por Apache (Conecta Turismo), no por React Router
     accent: "#d97706",
     accentLight: "#fffbeb",
   },
@@ -82,6 +84,47 @@ const ServiceCards = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
           {services.map((service, index) => {
             const Icon = service.icon;
+            const cardClassName =
+              "group flex flex-col h-full rounded-3xl bg-card border border-border/60 hover:shadow-elevated p-6 transition-all duration-300 relative overflow-hidden";
+            // Contenido interno idéntico para <Link> y <a>.
+            const cardContent = (
+              <>
+                {/* Subtle hover bg */}
+                <div
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"
+                  style={{ backgroundColor: service.accentLight }}
+                />
+
+                <div className="relative z-10 flex flex-col h-full">
+                  {/* Icon */}
+                  <div
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm"
+                    style={{ backgroundColor: service.accentLight }}
+                  >
+                    <Icon
+                      className="w-7 h-7"
+                      style={{ color: service.accent }}
+                    />
+                  </div>
+
+                  <h3 className="text-base font-bold text-foreground mb-2 leading-tight">
+                    {service.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+                    {service.description}
+                  </p>
+
+                  {/* CTA */}
+                  <div
+                    className="mt-5 flex items-center gap-1 text-sm font-semibold group-hover:gap-2.5 transition-all duration-300"
+                    style={{ color: service.accent }}
+                  >
+                    {service.cta}
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </>
+            );
             return (
               <motion.div
                 key={service.title}
@@ -90,45 +133,20 @@ const ServiceCards = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
-                <Link
-                  to={service.path}
-                  className="group flex flex-col h-full rounded-3xl bg-card border border-border/60 hover:shadow-elevated p-6 transition-all duration-300 relative overflow-hidden"
-                >
-                  {/* Subtle hover bg */}
-                  <div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"
-                    style={{ backgroundColor: service.accentLight }}
-                  />
-
-                  <div className="relative z-10 flex flex-col h-full">
-                    {/* Icon */}
-                    <div
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm"
-                      style={{ backgroundColor: service.accentLight }}
-                    >
-                      <Icon
-                        className="w-7 h-7"
-                        style={{ color: service.accent }}
-                      />
-                    </div>
-
-                    <h3 className="text-base font-bold text-foreground mb-2 leading-tight">
-                      {service.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed flex-1">
-                      {service.description}
-                    </p>
-
-                    {/* CTA */}
-                    <div
-                      className="mt-5 flex items-center gap-1 text-sm font-semibold group-hover:gap-2.5 transition-all duration-300"
-                      style={{ color: service.accent }}
-                    >
-                      {service.cta}
-                      <ArrowRight className="w-4 h-4" />
-                    </div>
-                  </div>
-                </Link>
+                {/*
+                  /vuelos y /hoteles los sirve Apache (Conecta Turismo): anchor
+                  nativo para forzar carga completa de página. El resto navega
+                  en cliente con <Link>.
+                */}
+                {service.external ? (
+                  <a href={service.path} className={cardClassName}>
+                    {cardContent}
+                  </a>
+                ) : (
+                  <Link to={service.path} className={cardClassName}>
+                    {cardContent}
+                  </Link>
+                )}
               </motion.div>
             );
           })}

@@ -6,12 +6,16 @@ import { Menu, X } from "lucide-react";
 
 import logo from "../../assets/images/logo2vicentebg.png";
 
+// external: rutas servidas por Apache (Conecta Turismo), fuera de React Router.
+// Se enlazan con <a href> para forzar carga completa de página; con <Link> el
+// motor externo nunca llegaría a cargarse. Ver CLAUDE.md → "Integración
+// vuelos/hoteles".
 const navLinks = [
-  
+
   { name: "Excursiones", path: "/excursiones" },
   { name: "Playas", path: "/playas" },
-  { name: "Vuelos", path: "/vuelos", externalUrl: "https://aereo.vicenteviajes.com" },
-  { name: "Hoteles", path: "/hoteles" },
+  { name: "Vuelos", path: "/vuelos", external: true },
+  { name: "Hoteles", path: "/hoteles", external: true },
   { name: "Ofertas", path: "/ofertas" },
   { name: "Nosotros", path: "/nosotros" },
   { name: "Contacto", path: "/contacto" },
@@ -20,8 +24,6 @@ const navLinks = [
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
-  const isMainDomain = hostname === "vicenteviajes.com" || hostname === "www.vicenteviajes.com";
   const scrollToTop = () => window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 
   return (
@@ -46,13 +48,12 @@ export default function Navbar() {
           {/* Desktop Menu */}
           <div className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => {
-              const targetPath = link.externalUrl && isMainDomain ? link.externalUrl : link.path;
               const isActive = location.pathname === link.path;
-              if (link.externalUrl && isMainDomain) {
+              if (link.external) {
                 return (
                   <a
                     key={link.path}
-                    href={targetPath}
+                    href={link.path}
                     className="nav-link text-black/70"
                   >
                     {link.name}
@@ -62,7 +63,7 @@ export default function Navbar() {
               return (
                 <Link
                   key={link.path}
-                  to={targetPath}
+                  to={link.path}
                   className={`nav-link ${
                     isActive ? "text-teal" : "text-black/70"
                   }`}
@@ -111,9 +112,9 @@ export default function Navbar() {
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  {link.externalUrl && isMainDomain ? (
+                  {link.external ? (
                     <a
-                      href={link.externalUrl}
+                      href={link.path}
                       onClick={() => setIsOpen(false)}
                       className="block px-4 py-3 rounded-xl font-medium transition-colors text-black/70 hover:text-teal hover:bg-teal/5"
                     >
