@@ -109,13 +109,46 @@ proveedor externo (**Conecta Turismo**) desde **directorios físicos reales** en
 el servidor de Hostgator:
 
 ```
-/home3/elencue2/vicenteviajes.com/vuelos     → motor de vuelos
-/home3/elencue2/vicenteviajes.com/hoteles    → motor de hoteles
+/home3/elencue2/public_html/vuelos     → motor de vuelos
+/home3/elencue2/public_html/hoteles    → motor de hoteles
 ```
+
+> **Docroot real (verificado en producción, jul 2026):**
+> `/home3/elencue2/public_html/`. **NO** es `/home3/elencue2/vicenteviajes.com/`
+> como se documentó antes (esa carpeta no la sirve el dominio). Todo lo que deba
+> verse en `vicenteviajes.com/…` (incluido el build de Vite y los motores del
+> proveedor) tiene que vivir **dentro de `public_html/`**.
 
 Apache sirve esos directorios directamente. React **nunca** se ejecuta en esas
 URLs. El proveedor replica por su cuenta la cabecera y el pie del sitio para
 mantener la coherencia visual.
+
+### Cómo se montan `/vuelos` y `/hoteles` (symlinks — decisión adoptada)
+
+> **Estado: PENDIENTE de ejecutar.** Nombres de carpeta confirmados por el owner
+> (`aereo.vicenteviajes.com` para vuelos, `hoteles.vicenteviajes.com` para
+> hoteles). Los symlinks aún **no están creados**: ejecutar los comandos de abajo
+> por SSH cuando el owner lo indique. Conecta Turismo no necesita accesos nuevos.
+
+Los archivos reales del proveedor viven **fuera del docroot**, en
+`/home3/elencue2/motores/`, y se exponen dentro de `public_html/` con
+**enlaces simbólicos** (symlinks):
+
+```bash
+ln -s /home3/elencue2/motores/aereo.vicenteviajes.com   /home3/elencue2/public_html/vuelos
+ln -s /home3/elencue2/motores/hoteles.vicenteviajes.com /home3/elencue2/public_html/hoteles
+```
+
+Motivo: si se vacía o sincroniza `public_html`, solo se borra el **enlace** (un
+puntero), nunca el desarrollo real del proveedor en `motores/`. Basta recrear el
+symlink. Conecta Turismo sigue subiendo por FTP a `motores/` sin cambios.
+
+Requisitos: `Options +FollowSymLinks` activo (por defecto en Hostgator); cada
+carpeta en `motores/` debe tener un `index.html`/`index.php` de entrada; y las
+páginas del proveedor deben usar **rutas relativas** (o `<base href="/vuelos/">`
+/ `"/hoteles/"`), porque ahora se sirven desde un subdirectorio, no desde la raíz
+de un subdominio. La regla del `.htaccess` (`^(vuelos|hoteles)`) protege las
+subrutas del motor para que no las capture el fallback del SPA.
 
 ### Reglas permanentes
 
@@ -193,12 +226,13 @@ automáticas. **No lo es**, es esta SPA con despliegue manual.
 
 | Elemento | Estado |
 |---|---|
-| `vicenteviajes.com/vuelos` | Directorio real, motor de vuelos de Conecta Turismo |
-| `vicenteviajes.com/hoteles` | Directorio real, motor de hoteles de Conecta Turismo |
-| FTP `vuelos@vicenteviajes.com` | Enjaulada en `/vuelos` |
-| FTP `hoteles@vicenteviajes.com` | Enjaulada en `/hoteles` |
-| `/home3/elencue2/motores/` | Vacío, resto del planteamiento con iframe |
-| Subdominios `aereo.` y `hoteles.` | Vacíos; redirigen a `/vuelos` y `/hoteles`, o eliminados |
+| **Docroot de `vicenteviajes.com`** | `/home3/elencue2/public_html/` — aquí va el build de Vite (`index.html`, `assets/`, `.htaccess`) |
+| `vicenteviajes.com/vuelos` | Para servirse debe estar **dentro** del docroot: `public_html/vuelos` (motor de Conecta Turismo) |
+| `vicenteviajes.com/hoteles` | Para servirse debe estar **dentro** del docroot: `public_html/hoteles` (motor de Conecta Turismo) |
+| FTP `vuelos@vicenteviajes.com` | Enjaulada; debe resolver a `public_html/vuelos` (directo o vía symlink desde `motores/`) |
+| FTP `hoteles@vicenteviajes.com` | Enjaulada; debe resolver a `public_html/hoteles` (directo o vía symlink desde `motores/`) |
+| `/home3/elencue2/motores/` | **Fuera del docroot.** Contiene `aereo.vicenteviajes.com` y `hoteles.vicenteviajes.com` (docroots de subdominios del planteamiento iframe, descartado). Un directorio aquí **no** se sirve en `vicenteviajes.com/vuelos`; para exponerlo hay que moverlo a `public_html/` o enlazarlo con symlink. Ventaja: aislado de los cambios en `public_html`. |
+| Subdominios `aereo.` y `hoteles.` | Legado del iframe; vacíos o a eliminar |
 | `vuelos.vicenteviajes.com` | **EN USO** por `flightBridge.js` — no tocar |
 | `billetes.`, `pagos.`, `reserva-vuelos.` | Pendientes de revisar (probables restos de un WordPress anterior) |
 
@@ -267,10 +301,17 @@ Frontend (`frontend/.env.local`): `VITE_API_URL`, `VITE_FLIGHTS_API_KEY`.
 
 ### PELIGRO al desplegar el frontend
 
-Los directorios `vuelos/` y `hoteles/` viven **dentro del docroot**, junto a
-`index.html` y `assets/`. Contienen archivos del proveedor externo que **no
-están en este repositorio** y no se pueden regenerar.
+El docroot es **`/home3/elencue2/public_html/`** (no `vicenteviajes.com/`). Ahí
+van `index.html`, `assets/` y `.htaccess`. Los directorios `vuelos/` y
+`hoteles/` viven (o deben vivir) **dentro de ese mismo docroot**, junto a
+`index.html`. Contienen archivos del proveedor externo que **no están en este
+repositorio** y no se pueden regenerar.
 
+- Subir por FTP a `public_html/` **solo** `index.html`, `assets/` y `.htaccess`
+  (sobrescribiendo). Verificar tras subir que `index.html` referencia el hash de
+  JS nuevo (p. ej. abrir `https://vicenteviajes.com/assets/index-<hash>.js`).
+- Subir a la carpeta correcta: si los archivos acaban fuera de `public_html/`
+  (p. ej. en `/home3/elencue2/vicenteviajes.com/`), el sitio **no cambia**.
 - Subir por FTP **solo** `index.html`, `assets/` y `.htaccess`.
 - **Nunca** usar "sincronizar directorios", "espejo" ni vaciar el docroot antes
   de subir: borraría los motores de Conecta Turismo.
