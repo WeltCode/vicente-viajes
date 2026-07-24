@@ -1,168 +1,143 @@
 # Guía de integración — Motores externos de Vuelos y Hoteles
 
-> **Vicente Viajes** · Repositorio: [vicenteviajes/vicenteviajes-web](https://github.com/vicenteviajes/vicenteviajes-web)
+> **Vicente Viajes** · Integración con **Conecta Turismo**
 
 ---
 
-## ¿Cuál es tu rol?
-
-Eres el responsable de implementar los motores externos de búsqueda de **vuelos** y **hoteles** dentro del sitio web de Vicente Viajes.
-
-El equipo de Vicente Viajes ya ha preparado exactamente el espacio donde debe ir cada motor. **Tu trabajo consiste únicamente en colocar tu integración dentro de esos dos contenedores reservados.** El resto del sitio (diseño, navegación, estructura) no debe modificarse.
-
----
-
-## Visión general — qué puedes y no puedes tocar
-
-```
-vicenteviajes.com
-│
-├── /hoteles                          ← página de hoteles
-│   ├── Navbar                        ✗ NO TOCAR
-│   ├── Cabecera de página            ✗ NO TOCAR
-│   ├── ┌─────────────────────────┐
-│   │   │  id="hotel-search-root" │   ✅ AQUÍ VA TU MOTOR DE HOTELES
-│   │   └─────────────────────────┘
-│   └── Footer                        ✗ NO TOCAR
-│
-└── /vuelos                           ← página de vuelos
-    ├── Navbar                        ✗ NO TOCAR
-    ├── Cabecera de página            ✗ NO TOCAR
-    ├── ┌──────────────────────────┐
-    │   │ id="flight-search-root"  │   ✅ AQUÍ VA TU MOTOR DE VUELOS
-    │   └──────────────────────────┘
-    └── Footer                        ✗ NO TOCAR
-```
-
----
-
-## Archivos que puedes modificar (solo estos dos)
-
-| Archivo | Página | ID del contenedor |
-|---|---|---|
-| `frontend/src/pages/Hoteles.jsx` | `/hoteles` | `hotel-search-root` |
-| `frontend/src/pages/Vuelos.jsx` | `/vuelos` | `flight-search-root` |
-
-Cualquier otro archivo del repositorio está **fuera de tu alcance** y será rechazado en la revisión.
-
----
-
-## Configuración inicial
-
-### 1. Clona el repositorio y cambia a la rama de trabajo
-
-```bash
-git clone https://github.com/vicenteviajes/vicenteviajes-web.git
-cd vicenteviajes-web
-git checkout integracion/motores-externos
-```
-
-> ⚠️ Trabaja **siempre** en la rama `integracion/motores-externos`, nunca en `master`.
-
-### 2. Instala las dependencias del frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-El sitio arranca en `http://localhost:5173`. Navega a `/hoteles` o `/vuelos` para ver el área de integración.
-
----
-
-## Dónde exactamente va tu código
-
-### Motor de hoteles — `frontend/src/pages/Hoteles.jsx`
-
-Localiza este bloque en el archivo:
-
-```jsx
-<div
-  id="hotel-search-root"
-  data-integration="external-hotel-engine"
-  className="relative overflow-hidden rounded-2xl ..."
+> ⚠️ **ESTE DOCUMENTO SUSTITUYE POR COMPLETO A LA VERSIÓN ANTERIOR.**
 >
-  {/* 
-    ════════════════════════════════════════
-    ✅  TU INTEGRACIÓN VA AQUÍ DENTRO
-        Puedes sustituir el contenido de
-        este div por tu widget, iframe,
-        script o componente React.
-    ════════════════════════════════════════
-  */}
-</div>
-```
-
-### Motor de vuelos — `frontend/src/pages/Vuelos.jsx`
-
-Localiza este bloque en el archivo:
-
-```jsx
-<div
-  id="flight-search-root"
-  data-integration="external-flight-engine"
-  className="relative overflow-hidden rounded-2xl ..."
+> El planteamiento previo (clonar el repositorio, trabajar en la rama
+> `integracion/motores-externos` y editar `Hoteles.jsx` / `Vuelos.jsx`
+> insertando el motor dentro de contenedores `#hotel-search-root` /
+> `#flight-search-root` por iframe) quedó **DESCARTADO**: el buscador del
+> proveedor no puede incrustarse como iframe externo.
 >
-  {/* 
-    ════════════════════════════════════════
-    ✅  TU INTEGRACIÓN VA AQUÍ DENTRO
-        Puedes sustituir el contenido de
-        este div por tu widget, iframe,
-        script o componente React.
-    ════════════════════════════════════════
-  */}
-</div>
-```
+> **Si estabas trabajando con las instrucciones antiguas, detente y lee esto.**
+> Ya no se toca la aplicación React para nada.
 
 ---
 
-## Reglas de integración
+## Cómo funciona ahora
 
-| ✅ Permitido | ✗ No permitido |
+`/vuelos` y `/hoteles` **ya no pertenecen a la aplicación React**. Son
+**directorios físicos reales** en el servidor Apache de Hostgator, servidos
+directamente por el servidor. React nunca se ejecuta en esas URLs.
+
+```
+vicenteviajes.com/               ← SPA React (build de Vite: index.html + assets/)
+├── vuelos/                       ← motor de VUELOS de Conecta Turismo (archivos propios)
+└── hoteles/                      ← motor de HOTELES de Conecta Turismo (archivos propios)
+```
+
+Rutas físicas en el hosting:
+
+```
+/home3/elencue2/vicenteviajes.com/vuelos     → motor de vuelos
+/home3/elencue2/vicenteviajes.com/hoteles    → motor de hoteles
+```
+
+El `.htaccess` del docroot excluye esas dos rutas del *fallback* del SPA, de
+modo que Apache las sirve tal cual y no las reescribe a `index.html`:
+
+```apache
+# Rutas gestionadas por Conecta Turismo — NO ELIMINAR
+RewriteRule ^(vuelos|hoteles)(/|$) - [L]
+```
+
+Como tu buscador sirve **la página completa** (no se incrusta dentro del
+diseño React), **eres tú quien replica la cabecera y el pie** del sitio para
+mantener la coherencia visual. Para eso se te entrega el **kit de diseño**
+(ver más abajo).
+
+---
+
+## Qué tienes que hacer
+
+1. **Subir tu motor por FTP** al directorio que te corresponde. Tienes una
+   cuenta FTP *enjaulada* (chroot) apuntando directamente a tu carpeta, así
+   que no ves ni tocas el resto del sitio:
+
+   | Servicio | Directorio | Cuenta FTP |
+   |---|---|---|
+   | Vuelos  | `/vuelos`  | `vuelos@vicenteviajes.com`  |
+   | Hoteles | `/hoteles` | `hoteles@vicenteviajes.com` |
+
+2. **Replicar la cabecera (Navbar) y el pie (Footer)** del sitio en tus
+   páginas, usando el kit de diseño entregado. El objetivo es que un visitante
+   no note la diferencia entre la web principal y tu buscador.
+
+3. **Enlazar de vuelta al sitio principal** con URLs absolutas normales
+   (`https://vicenteviajes.com/`, `/excursiones`, `/contacto`, etc.). Los
+   enlaces de tu cabecera y pie deben apuntar a las mismas rutas que el sitio
+   original (ver la lista en el kit).
+
+---
+
+## Kit de diseño (cabecera y pie)
+
+Se te entrega un archivo **`kit-diseno-conecta-turismo.html`** autocontenido.
+Ábrelo en el navegador y verás la cabecera y el pie **exactamente** como se
+ven en producción, con el HTML y el CSS ya en plano (sin React ni Tailwind),
+listos para copiar. Incluye:
+
+- **Cabecera y pie** en HTML + CSS plano (sin dependencias de build).
+- **Botón flotante de WhatsApp** (esquina inferior derecha).
+- **Paleta de colores** con los hex exactos.
+- **Tipografía**: Poppins (Google Fonts), con el enlace de carga.
+- **Enlaces del menú** y del pie (legales, redes, contacto).
+- **Datos completos del pie**: dirección, teléfono, email, CIF, C.I.C.M.A. y
+  el sello "Powered by WeltBrave".
+- **Logotipos** (referenciados como `logo-navbar.png` y `logo-footer.png`;
+  se entregan junto al HTML).
+
+> El kit se te comparte **directamente** (no necesitas el repositorio): es un
+> archivo HTML junto con dos imágenes de logo (`logo-navbar.png` y
+> `logo-footer.png`). Ábrelo en el navegador y copia lo que necesites.
+
+---
+
+## Reglas importantes
+
+| ✅ Haz esto | ✗ No hagas esto |
 |---|---|
-| Modificar el contenido de `hotel-search-root` | Modificar Navbar, Footer o cualquier componente compartido |
-| Modificar el contenido de `flight-search-root` | Cambiar estilos globales (`index.css`, `tailwind.config.js`) |
-| Añadir imports en `Hoteles.jsx` o `Vuelos.jsx` | Tocar archivos de configuración (`vite.config`, `package.json`, etc.) |
-| Usar iframes, widgets o componentes React propios | Modificar rutas, contextos o servicios existentes |
-| Añadir dependencias npm **previa consulta** | Subir código directamente a `master` |
+| Sube tus archivos solo a `/vuelos` o `/hoteles` | Subir nada fuera de tu directorio enjaulado |
+| Replica cabecera y pie con el kit entregado | Modificar `index.html`, `assets/` o el `.htaccess` del docroot |
+| Usa rutas absolutas al enlazar al sitio (`/excursiones`, `/contacto`…) | Tocar la aplicación React o su repositorio |
+| Mantén tu propio `.htaccess` **dentro** de tu carpeta si lo necesitas | Vaciar o "sincronizar" el docroot completo |
+
+> **Nota sobre el `.htaccess`**: el `.htaccess` del docroot pertenece a Vicente
+> Viajes y contiene la regla que hace que tu carpeta funcione. **No lo
+> modifiques ni lo elimines.** Si necesitas reglas de reescritura propias,
+> ponlas en un `.htaccess` **dentro** de `/vuelos` o `/hoteles`.
 
 ---
 
-## Cómo entregar tu trabajo
+## Coordinación
 
-El flujo es simple: trabajas en tu rama y abres un Pull Request. El propietario lo revisa antes de publicarlo en producción.
+Antes de nada, coordina con el equipo de Vicente Viajes:
 
-```
-Tu rama local                GitHub                        Producción
-──────────────               ──────────────────────────    ──────────
-integracion/                 Pull Request                  master
-motores-externos  ─── push ─→ (revisión del propietario) ─→ (merge si OK)
-```
-
-### Pasos concretos
-
-```bash
-# 1. Guarda tus cambios
-git add frontend/src/pages/Hoteles.jsx
-git add frontend/src/pages/Vuelos.jsx
-
-# 2. Crea un commit descriptivo
-git commit -m "feat: integrate hotel and flight search engines"
-
-# 3. Sube tu rama
-git push origin integracion/motores-externos
-```
-
-Luego ve a `https://github.com/vicenteviajes/vicenteviajes-web` y verás el botón **"Compare & pull request"**. Abre el PR hacia `master` y el propietario recibirá la notificación automáticamente.
-
-> El PR será **rechazado automáticamente** si incluye cambios en archivos fuera de `Hoteles.jsx` y `Vuelos.jsx`.
+- Confirmación de las credenciales FTP y el directorio asignado.
+- Dominio y subdominios: la web principal **no es WordPress**; es una SPA React
+  con despliegue manual. No asumas actualizaciones automáticas ni estructura de
+  WordPress.
+- Cualquier necesidad de datos del backend (API, CORS): el backend es Django y
+  está en otro host (Render); habla con el equipo antes de depender de él.
 
 ---
 
-## ¿Dudas o necesitas coordinar algo?
+## Preguntas frecuentes
 
-Contacta al propietario del repositorio antes de:
-- Añadir cualquier dependencia npm nueva
-- Necesitar cambios en la estructura del contenedor
-- Tener problemas con CORS u otras restricciones del backend
+**¿Puedo usar iframe hacia mi propio dominio dentro de la carpeta?**
+Dentro de tu carpeta sirves lo que quieras (HTML, JS, iframe hacia tu sistema…).
+Lo que quedó descartado es incrustar tu buscador como iframe **dentro** de una
+página React del sitio principal.
+
+**¿Por qué debo replicar la cabecera y el pie en vez de reutilizar los del
+sitio?**
+Porque tus páginas las sirve Apache directamente, no React. No hay forma de
+"heredar" el Navbar/Footer de la SPA. El kit te da el markup y el CSS ya
+resueltos para que la copia sea fiel y rápida.
+
+**¿Qué pasa si el diseño del sitio cambia?**
+El equipo de Vicente Viajes te hará llegar una versión actualizada del kit.
+Mientras tanto, usa siempre la última versión que te hayan compartido.

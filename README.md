@@ -1,6 +1,6 @@
 # Vicente Viajes — Plataforma turística Full Stack
 
-Aplicación web completa para la gestión y promoción de excursiones, playas, ofertas y destinos turísticos. Incluye panel de administración privado, extracción de datos con IA y soporte para integración de motores externos de vuelos y hoteles.
+Aplicación web completa para la gestión y promoción de excursiones, playas, ofertas y destinos turísticos. Incluye panel de administración privado y extracción de datos con IA. Los buscadores de vuelos y hoteles los sirve un proveedor externo (Conecta Turismo) directamente desde el servidor Apache, fuera de la aplicación React.
 
 ---
 
@@ -20,7 +20,7 @@ Aplicación web completa para la gestión y promoción de excursiones, playas, o
 - [Despliegue en producción](#despliegue-en-producción)
 - [Página 404 personalizada](#página-404-personalizada)
 - [Integración de proveedor externo en /hoteles y /vuelos](#integración-de-proveedor-externo-en-hoteles-y-vuelos)
-- [Cómo solicitar acceso al repositorio (dev externo)](#cómo-solicitar-acceso-al-repositorio-dev-externo--integración-hoteles-o-vuelos)
+- [Acceso para el proveedor externo (Conecta Turismo)](#acceso-para-el-proveedor-externo-conecta-turismo)
 
 ---
 
@@ -67,8 +67,11 @@ Aplicación web completa para la gestión y promoción de excursiones, playas, o
 │  React + Vite — SPA pública + panel /admin/*                    │
 │                                                                  │
 │  Páginas públicas:  /  /excursiones  /playas  /ofertas          │
-│                     /vuelos  /hoteles  /contacto  /nosotros     │
+│                     /contacto  /nosotros                        │
 │  Panel admin:       /admin/login  /admin/excursiones  ...       │
+│                                                                  │
+│  /vuelos y /hoteles → NO son React: directorios físicos que     │
+│  sirve Apache (Conecta Turismo). Ver sección de integración.    │
 └──────────────────────────────┬──────────────────────────────────┘
                                │ HTTPS / REST
                                ▼
@@ -270,102 +273,47 @@ import AIExtractButton from "../components/AIExtractButton";
 
 ## Integración de vuelos y hoteles
 
-Ambas páginas (`/vuelos` y `/hoteles`) están diseñadas como **contenedores de integración** — mantienen el diseño visual del sitio y exponen puntos de montaje para motores externos.
+Los buscadores de **vuelos** y **hoteles** los sirve un proveedor externo (**Conecta Turismo**) directamente desde el servidor Apache de Hostgator. **No son páginas de React.**
 
-### `/vuelos` — Motor de búsqueda de vuelos
+### Cómo funciona
 
-**Punto de montaje HTML:**
-```html
-<div
-  id="flight-search-root"
-  data-integration="external-flight-engine"
->
-  <!-- El proveedor externo inyecta aquí su widget -->
-</div>
+`/vuelos` y `/hoteles` son **directorios físicos reales** dentro del mismo docroot donde se publica el build de Vite:
+
+```
+/home3/elencue2/vicenteviajes.com/vuelos     → motor de vuelos (Conecta Turismo)
+/home3/elencue2/vicenteviajes.com/hoteles    → motor de hoteles (Conecta Turismo)
 ```
 
-**Motor actual:** el buscador propio de Vicente Viajes conecta con `QueryBridge.aspx` en `https://vuelos.vicenteviajes.com/wtc/vv/vuelos/`. La lógica se encuentra en `frontend/src/services/flightBridge.js` e incluye:
+- Apache sirve esos directorios tal cual; **React nunca se ejecuta** en esas URLs.
+- El proveedor sirve **la página completa**, replicando la cabecera y el pie del sitio. Para ello se le entrega un kit de diseño: `docs/kit-diseno-conecta-turismo.html`.
+- El planteamiento anterior (incrustar el motor por iframe dentro de una página React con contenedores `#flight-search-root` / `#hotel-search-root`) quedó **descartado** porque el buscador del proveedor no admite incrustarse como iframe externo.
+
+### Reglas en el frontend React
+
+Para que Apache pueda servir esas rutas, React **no debe gestionarlas**:
+
+1. **No** declarar `/vuelos` ni `/hoteles` como rutas en `routes/AppRouter.jsx`.
+2. Enlazarlas **siempre con anchor nativo** `<a href="/vuelos">` / `<a href="/hoteles">`, **nunca** con `<Link to>` ni `navigate()`. Con `<Link>`, React Router intercepta el clic y hace navegación en cliente: el navegador no pide la URL al servidor y el motor externo no llega a cargarse (el usuario vería una pantalla en blanco o el 404 del SPA). Solo una carga completa de página funciona.
+3. El `.htaccess` del docroot excluye ambas rutas del *fallback* del SPA:
+   ```apache
+   # Rutas gestionadas por Conecta Turismo — NO ELIMINAR
+   RewriteRule ^(vuelos|hoteles)(/|$) - [L]
+   ```
+
+En desarrollo (`npm run dev`) esas URLs mostrarán el **404 del SPA**, porque los archivos del proveedor solo existen en el servidor de producción. Es el comportamiento esperado.
+
+> **Nota:** `pages/Vuelos.jsx` y `pages/Hoteles.jsx` (las antiguas páginas contenedor) permanecen en el repositorio pero **están desconectadas del router**. Se archivarán cuando se confirme que el motor externo funciona en producción.
+
+### Motor de vuelos propio (independiente de Conecta Turismo)
+
+Además del buscador de Conecta Turismo, existe un **motor de vuelos propio anterior** que sigue en uso y **no forma parte** de la integración descrita arriba:
+
+- Componente `frontend/src/components/FlightSearch.jsx` (se muestra en el Hero de la home).
+- Lógica en `frontend/src/services/flightBridge.js`, que conecta con `QueryBridge.aspx` en `https://vuelos.vicenteviajes.com/`.
 - Autocompletado de aeropuertos con base de datos local (`src/data/airports.json`).
-- Normalización tolerante a acentos y mayúsculas.
-- Generación de `searchToken` codificado en la URL para preservar la búsqueda al navegar a `/buscar/:searchToken`.
+- Genera un `searchToken` codificado en la URL y navega a la ruta React `/buscar/:searchToken` (`pages/BuscarVuelos.jsx`), que **sí** sigue gestionada por React.
 
-**Sustituir o añadir un proveedor alternativo:**
-
-Opción A — widget de terceros con `<script>`:
-```jsx
-// En Vuelos.jsx, dentro del <div id="flight-search-root">
-useEffect(() => {
-  const script = document.createElement("script");
-  script.src = "https://proveedor-vuelos.com/widget.js";
-  script.dataset.container = "flight-search-root";
-  script.dataset.apiKey = "TU_API_KEY";
-  document.getElementById("flight-search-root").appendChild(script);
-}, []);
-```
-
-Opción B — iframe del proveedor:
-```jsx
-// En Vuelos.jsx, sustituir el contenido de <div id="flight-search-root"> por:
-<iframe
-  src="https://proveedor-vuelos.com/embed?apiKey=TU_KEY"
-  className="w-full min-h-[600px] rounded-2xl border-0"
-  title="Buscador de vuelos"
-  allow="payment"
-/>
-```
-
-Opción C — componente React del proveedor:
-```jsx
-import { FlightSearchWidget } from "@proveedor/react-sdk";
-
-// Dentro del contenedor:
-<FlightSearchWidget
-  apiKey={import.meta.env.VITE_FLIGHTS_API_KEY}
-  locale="es"
-  currency="EUR"
-  onBooking={(booking) => console.log(booking)}
-/>
-```
-
-> La variable de entorno se añade en `frontend/.env.local`: `VITE_FLIGHTS_API_KEY=tu_clave`
-
----
-
-### `/hoteles` — Motor de búsqueda de hoteles
-
-**Punto de montaje HTML:**
-```html
-<div
-  id="hotel-search-root"
-  data-integration="external-hotel-engine"
->
-  <!-- El proveedor externo inyecta aquí su widget -->
-</div>
-```
-
-El patrón de integración es idéntico al de vuelos. Ejemplos con proveedores comunes:
-
-**Booking.com Affiliate:**
-```jsx
-<iframe
-  src="https://www.booking.com/searchresults.es.html?aid=TU_AFFILIATE_ID&label=search"
-  className="w-full min-h-[700px] rounded-2xl border-0"
-  title="Buscador de hoteles"
-/>
-```
-
-**Hotelbeds / Amadeus:**
-```jsx
-import { HotelSearch } from "@amadeus-it-group/hotel-widget";
-
-<HotelSearch
-  clientId={import.meta.env.VITE_AMADEUS_CLIENT_ID}
-  language="es"
-  currency="EUR"
-/>
-```
-
-**Nota de seguridad:** nunca expongas claves secretas de API en el frontend. Usa claves públicas/client-side del proveedor, o crea un endpoint proxy en el backend Django.
+Está pendiente de decisión del cliente si este motor propio se retira al entrar Conecta Turismo o si ambos conviven. Mientras tanto, **no se eliminan** `flightBridge.js`, `data/airports.json`, la ruta `/buscar/:searchToken` ni el subdominio `vuelos.vicenteviajes.com`.
 
 ---
 
@@ -516,116 +464,49 @@ Las credenciales de Cloudflare Images son compartidas entre entornos. Usar token
 
 ## Integración de proveedor externo en `/hoteles` y `/vuelos`
 
-Las páginas `/hoteles` y `/vuelos` son **contenedores de integración cerrados**: tienen el Navbar, Footer y estilos de Vicente Viajes ya montados. El proveedor externo **solo toca el bloque interior** delimitado por su `id`, sin acceso al resto del código.
+El proveedor (**Conecta Turismo**) **no trabaja sobre el repositorio ni sobre la aplicación React**. Sube sus archivos por FTP a directorios físicos aislados del servidor Apache, y sirve la página completa replicando la cabecera y el pie del sitio.
 
-### Puntos de montaje disponibles
+### Directorios y cuentas FTP
 
-| Página | ID del contenedor | Atributo de integración |
-|--------|-------------------|------------------------|
-| `/hoteles` | `hotel-search-root` | `data-integration="external-hotel-engine"` |
-| `/vuelos` | `flight-search-root` | `data-integration="external-flight-engine"` |
+| Servicio | Directorio | Cuenta FTP (enjaulada / chroot) |
+|---|---|---|
+| Vuelos  | `/vuelos`  | `vuelos@vicenteviajes.com`  |
+| Hoteles | `/hoteles` | `hoteles@vicenteviajes.com` |
 
-El proveedor puede inyectar su widget de tres formas (ver ejemplos completos en [Integración de vuelos y hoteles](#integración-de-vuelos-y-hoteles)):
-- **Opción A** — `<script>` externo montado con `useEffect`
-- **Opción B** — `<iframe>` apuntando al motor del proveedor
-- **Opción C** — Componente React del SDK del proveedor
+Cada cuenta FTP está enjaulada en su directorio: el proveedor no ve ni toca el resto del sitio.
 
-La variable de entorno del proveedor se añade en `frontend/.env.local`:
-```env
-VITE_FLIGHTS_API_KEY=tu_clave_publica
-VITE_HOTELS_API_KEY=tu_clave_publica
-```
+### Kit de diseño
 
-> **Regla de oro:** Solo se editan los archivos `frontend/src/pages/Vuelos.jsx` y/o `frontend/src/pages/Hoteles.jsx`. Cualquier otra modificación queda fuera del alcance del proveedor.
+Para que la cabecera y el pie sean idénticos a los del sitio, se le entrega:
+
+- Guía para el proveedor: [`.github/GUIA_INTEGRADOR_EXTERNO.md`](.github/GUIA_INTEGRADOR_EXTERNO.md)
+- Kit de diseño (cabecera + pie en HTML/CSS plano, sin React ni Tailwind, listo para copiar): `docs/kit-diseno-conecta-turismo.html` + `docs/logo-navbar.png` + `docs/logo-footer.png` (entregable interno; `docs/` no se versiona en git, se comparte directamente con el proveedor).
+
+> **Regla de oro:** el proveedor solo sube a su directorio (`/vuelos` o `/hoteles`). **No** toca `index.html`, `assets/` ni el `.htaccess` del docroot. Ver también la sección [Integración de vuelos y hoteles](#integración-de-vuelos-y-hoteles).
 
 ---
 
-## Cómo solicitar acceso al repositorio (dev externo — integración `/hoteles` o `/vuelos`)
+## Acceso para el proveedor externo (Conecta Turismo)
 
-> Esta sección está dirigida a **desarrolladores de terceros** que quieren integrar su motor de búsqueda en Vicente Viajes.
+El proveedor de vuelos/hoteles **ya no necesita acceso al repositorio de GitHub**: su integración se despliega **por FTP** sobre directorios físicos del servidor (ver [Integración de proveedor externo](#integración-de-proveedor-externo-en-hoteles-y-vuelos)), no editando código React.
 
-### Paso 1 — Contactar con el equipo
+Lo que se le entrega:
 
-Envía un correo a **info@vicenteviajes.com** o escribe por WhatsApp al número de Vicente Barahona con el asunto:
+1. **Credenciales FTP** de su directorio (`vuelos@vicenteviajes.com` o `hoteles@vicenteviajes.com`), enjaulado en `/vuelos` o `/hoteles`.
+2. **Guía de integración**: [`.github/GUIA_INTEGRADOR_EXTERNO.md`](.github/GUIA_INTEGRADOR_EXTERNO.md)
+3. **Kit de diseño** (cabecera + pie en HTML/CSS plano): `docs/kit-diseno-conecta-turismo.html` con `logo-navbar.png` y `logo-footer.png` (entregable interno en `docs/`, no versionado; se comparte directamente).
 
-```
-[Integración Web] Solicitud de acceso – /hoteles o /vuelos
-```
+No se le concede acceso a `master` ni a ninguna rama del repositorio, ni sube nada al build de Vite.
 
-Incluye en el mensaje:
-- Nombre completo y empresa
-- Servicio a integrar (hoteles / vuelos / ambos)
-- Nombre de usuario de GitHub con el que quieres acceder
-- Breve descripción técnica de cómo funciona tu widget (iframe, script, SDK React, etc.)
-
-### Paso 2 — Acceso de colaborador en GitHub
-
-El equipo de WeltBrave añadirá tu usuario de GitHub al repositorio [WeltCode/vicente-viajes](https://github.com/WeltCode/vicente-viajes) con el rol **Collaborator** de solo escritura en la rama designada.
-
-Se te creará una rama dedicada:
-```
-integration/hoteles-<tu-empresa>
-integration/vuelos-<tu-empresa>
-```
-
-Solo tendrás permisos de push sobre esa rama. **No se concede acceso a `master` ni a ninguna otra rama.**
-
-### Paso 3 — Archivos que puedes modificar
-
-Con el acceso concedido, tus cambios deben limitarse estrictamente a:
-
-```
-frontend/src/pages/Hoteles.jsx    ← si integras hoteles
-frontend/src/pages/Vuelos.jsx     ← si integras vuelos
-frontend/.env.local               ← añadir tu VITE_*_API_KEY (no se sube a git)
-```
-
-Cualquier cambio fuera de estos archivos será rechazado en la Pull Request.
-
-### Paso 4 — Pull Request y revisión
-
-Una vez lista tu integración:
-
-1. Abre una **Pull Request** desde tu rama `integration/...` hacia `master`.
-2. Describe qué motor has integrado y cómo probarlo localmente.
-3. El equipo de WeltBrave revisará que no rompa el diseño ni el resto de la web.
-4. Si todo está correcto, se aprueba y fusiona.
-
-### Paso 5 — Despliegue
-
-El merge a `master` dispara automáticamente el despliegue en Netlify. El proveedor recibirá confirmación cuando la integración esté en producción.
-
----
-
-### Preguntas frecuentes para el proveedor externo
-
-**¿Puedo ver el código antes de que me den acceso?**
-No. El repositorio es privado. Se facilita esta documentación y, si es necesario, una demo en entorno de staging.
-
-**¿Qué versión de React/Node necesito?**
-React 19, Node.js 20+. Ver el `package.json` del frontend para dependencias exactas una vez tengas acceso.
-
-**¿Cómo pruebo localmente?**
-```bash
-git clone https://github.com/WeltCode/vicente-viajes.git
-cd frontend
-npm install
-# Crea frontend/.env.local con VITE_API_URL y tu VITE_*_API_KEY
-npm run dev
-# Abre http://localhost:5173/hoteles o /vuelos
-```
-
-**¿Hay entorno de staging?**
-Consulta con WeltBrave. Se puede montar un preview en Netlify para validar antes de ir a producción.
-
-**¿Qué pasa si mi widget necesita un proxy backend?**
-Contacta con WeltBrave para valorar añadir un endpoint proxy en Django que no exponga tu clave secreta en el frontend.
+> Si en el futuro un desarrollador externo necesitara **tocar el código React** (no es el caso de Conecta Turismo), el flujo de acceso por GitHub — colaborador temporal, rama dedicada y PR con revisión de CODEOWNERS — se documenta en la sección interna [Gestión de acceso para integradores externos](#gestión-de-acceso-para-integradores-externos-uso-interno--weltcode).
 
 ---
 
 ## Gestión de acceso para integradores externos (uso interno — WeltCode)
 
 > Esta sección es para el dev principal (`WeltCode`). Documenta el flujo acordado para dar acceso temporal a desarrolladores externos.
+>
+> ⚠️ **La integración actual de vuelos/hoteles (Conecta Turismo) NO usa este flujo**: se despliega por FTP sobre directorios físicos del servidor, sin acceso al repositorio. Este mecanismo de colaborador + rama `integracion/motores-externos` + PR queda como referencia genérica por si en el futuro un dev externo necesita tocar el código React.
 
 ### Contexto del repo
 
