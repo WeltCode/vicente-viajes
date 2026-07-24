@@ -1,0 +1,20 @@
+Options -MultiViews
+RewriteEngine On
+
+# Redirige www a no-www (HTTPS)
+RewriteCond %{HTTP_HOST} ^www\.vicenteviajes\.com$ [NC]
+RewriteRule ^ https://vicenteviajes.com%{REQUEST_URI} [R=301,L]
+
+# Fuerza HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# Rutas gestionadas por Conecta Turismo — NO ELIMINAR
+# Sin esta regla, /vuelos y /hoteles se reescriben al SPA y el motor
+# externo deja de funcionar.
+RewriteRule ^(vuelos|hoteles)(/|$) - [L]
+
+# SPA fallback: todas las rutas sirven index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ /index.html [QSA,L]
