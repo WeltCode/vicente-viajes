@@ -47,13 +47,6 @@ const team = [
     phone: "34612477810",
   },
   {
-    name: "Luz Molina",
-    role: "Agente de Viajes",
-    image: "https://imagedelivery.net/R-q2Rr5YYY3Q3Z63Izst-Q/Vicente%20Viajes/Usuarios/mm3wpzbwbhav0qq6iomm/public",
-    specialty: "Experiencias Premium",
-    phone: "34626159245",
-  },
-  {
     name: "Raymundo Barahona",
     role: "Agente de Viajes",
     image: "https://imagedelivery.net/R-q2Rr5YYY3Q3Z63Izst-Q/Vicente%20Viajes/Usuarios/ray/public",
