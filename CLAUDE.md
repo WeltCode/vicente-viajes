@@ -153,6 +153,35 @@ páginas del proveedor deben usar **rutas relativas** (o `<base href="/vuelos/">
 de un subdominio. La regla del `.htaccess` (`^(vuelos|hoteles)`) protege las
 subrutas del motor para que no las capture el fallback del SPA.
 
+### Acceso al servidor y operaciones (Hostgator) — clave para mantenimiento
+
+> Conocimiento operativo aprendido en producción (jul 2026). No perderlo.
+
+- **El shell SSH está DESHABILITADO** en la cuenta. La autenticación por clave
+  funciona (host `mx64.hostgator.mx`, puerto `2222`, usuario `elencue2`), pero el
+  servidor responde *"Shell access is not enabled on your account"*. Además, este
+  cPanel **no tiene "Terminal"**. Para habilitar shell de verdad: activarlo en el
+  portal de Hostgator o por ticket de soporte.
+- **Cómo ejecutar comandos de shell SIN shell interactivo → Cron Job.** cPanel →
+  *Trabajos de cron*: el comando corre igual aunque el shell esté apagado. Truco de
+  verificación: redirigir la salida a un archivo dentro de `public_html` y leerlo por
+  la web; luego **borrar el cron y el archivo**. Así se crearon los symlinks.
+- **Recuperar los symlinks si se rompen** (p. ej. si un redeploy borra
+  `public_html/vuelos` o `/hoteles`): recrearlos con un Cron Job que corra:
+  ```bash
+  ln -s /home3/elencue2/motores/aereo.vicenteviajes.com /home3/elencue2/public_html/vuelos
+  ln -s /home3/elencue2/motores/hoteles.vicenteviajes.com /home3/elencue2/public_html/hoteles
+  ```
+  (`ln -s` no borra nada; si el enlace ya existe, solo falla. Reversible con `rm` del enlace.)
+- **Verificar un deploy del frontend:** abrir
+  `https://vicenteviajes.com/assets/index-<hash>.js` y confirmar el hash nuevo. Si
+  `/index.html` sigue apuntando al hash viejo (revisar sin caché), **no se sobrescribió**:
+  volver a subir `index.html` + `.htaccess` a `public_html/` con "mostrar archivos
+  ocultos" activado (el `.htaccess` es oculto y los clientes FTP lo saltan).
+- **Pendiente de seguridad:** la clave SSH `id_vicente` (generada y autorizada en cPanel
+  durante la puesta en marcha) quedó expuesta → conviene **borrarla/regenerarla** en
+  cPanel → *Administrar claves SSH*.
+
 ### Reglas permanentes
 
 1. **No definir** `/vuelos` ni `/hoteles` como rutas en `AppRouter.jsx` ni en
