@@ -273,18 +273,19 @@ import AIExtractButton from "../components/AIExtractButton";
 
 ## Integración de vuelos y hoteles
 
-Los buscadores de **vuelos** y **hoteles** los sirve un proveedor externo (**Conecta Turismo**) directamente desde el servidor Apache de Hostgator. **No son páginas de React.**
+Los buscadores de **vuelos** y **hoteles** los sirve un proveedor externo (**Conecta Turismo**) directamente desde el servidor Apache de Hostgator. **No son páginas de React.** Estado: **activo en producción** (jul 2026) en `vicenteviajes.com/vuelos/` y `/hoteles/`.
 
 ### Cómo funciona
 
-`/vuelos` y `/hoteles` son **directorios físicos reales** dentro del mismo docroot donde se publica el build de Vite:
+El docroot real de `vicenteviajes.com` es **`/home3/elencue2/public_html/`** (ahí va el build de Vite: `index.html`, `assets/`, `.htaccess`). Los archivos del proveedor viven **fuera** del docroot, en `/home3/elencue2/motores/`, y se exponen dentro de `public_html/` con **enlaces simbólicos (symlinks)**:
 
 ```
-/home3/elencue2/vicenteviajes.com/vuelos     → motor de vuelos (Conecta Turismo)
-/home3/elencue2/vicenteviajes.com/hoteles    → motor de hoteles (Conecta Turismo)
+public_html/vuelos   → symlink → /home3/elencue2/motores/aereo.vicenteviajes.com    (motor de vuelos)
+public_html/hoteles  → symlink → /home3/elencue2/motores/hoteles.vicenteviajes.com  (motor de hoteles)
 ```
 
-- Apache sirve esos directorios tal cual; **React nunca se ejecuta** en esas URLs.
+- Apache sirve esos symlinks tal cual; **React nunca se ejecuta** en esas URLs.
+- **Por qué symlinks:** si se vacía o sincroniza `public_html`, solo se borra el enlace (un puntero), nunca el desarrollo del proveedor en `motores/`. Basta recrear el symlink. El proveedor sigue subiendo por FTP a `motores/` sin cambios.
 - El proveedor sirve **la página completa**, replicando la cabecera y el pie del sitio. Para ello se le entrega un kit de diseño: `docs/kit-diseno-conecta-turismo.html`.
 - El planteamiento anterior (incrustar el motor por iframe dentro de una página React con contenedores `#flight-search-root` / `#hotel-search-root`) quedó **descartado** porque el buscador del proveedor no admite incrustarse como iframe externo.
 

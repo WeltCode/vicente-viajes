@@ -123,12 +123,15 @@ Apache sirve esos directorios directamente. React **nunca** se ejecuta en esas
 URLs. El proveedor replica por su cuenta la cabecera y el pie del sitio para
 mantener la coherencia visual.
 
-### Cómo se montan `/vuelos` y `/hoteles` (symlinks — decisión adoptada)
+### Cómo se montan `/vuelos` y `/hoteles` (symlinks — HECHO)
 
-> **Estado: PENDIENTE de ejecutar.** Nombres de carpeta confirmados por el owner
-> (`aereo.vicenteviajes.com` para vuelos, `hoteles.vicenteviajes.com` para
-> hoteles). Los symlinks aún **no están creados**: ejecutar los comandos de abajo
-> por SSH cuando el owner lo indique. Conecta Turismo no necesita accesos nuevos.
+> **Estado: CREADOS Y FUNCIONANDO (jul 2026).** Los symlinks ya existen y sirven
+> el motor de Conecta Turismo en `vicenteviajes.com/vuelos/` y `/hoteles/`.
+> Verificado en producción. Como la cuenta de Hostgator **no tiene shell SSH
+> habilitado**, los symlinks se crearon con un **Cron Job temporal** (el comando
+> `ln -s` corre igual por cron aunque el shell interactivo esté apagado); el cron
+> se borró después. Conecta Turismo no necesitó accesos nuevos: sigue subiendo por
+> FTP a `motores/` como siempre.
 
 Los archivos reales del proveedor viven **fuera del docroot**, en
 `/home3/elencue2/motores/`, y se exponen dentro de `public_html/` con
@@ -168,20 +171,27 @@ subrutas del motor para que no las capture el fallback del SPA.
 
 ### Estado de la migración
 
-Estado actual: **pendiente de aplicar en el código.** La infraestructura de
-servidor ya está lista; el frontend todavía tiene las rutas antiguas.
+Estado actual: **COMPLETADA y en producción (jul 2026).** React ya no gestiona
+`/vuelos` ni `/hoteles`; Apache las sirve vía symlink desde `motores/` y el motor
+de Conecta Turismo está activo en `vicenteviajes.com/vuelos/` y `/hoteles/`.
 
-- [ ] Eliminar las rutas `/vuelos` y `/hoteles` de `routes/AppRouter.jsx`.
-- [ ] Sustituir todos los `<Link to="/vuelos">` / `<Link to="/hoteles">` por
-      `<a href="...">` en todo el proyecto.
-- [ ] Buscar cualquier otra referencia a esas rutas: arrays de navegación,
-      constantes, `navigate()` programático, sitemap, tests.
-- [ ] **No borrar** `pages/Vuelos.jsx` ni `pages/Hoteles.jsx`: solo
-      desconectarlos del router. Se archivan más adelante.
-- [ ] Decidir el futuro de `services/flightBridge.js` (ver aviso abajo).
-- [ ] Verificar que el resto del SPA sigue funcionando.
+- [x] Eliminadas las rutas `/vuelos` y `/hoteles` de `routes/AppRouter.jsx`.
+- [x] Sustituidos los `<Link to="/vuelos">` / `<Link to="/hoteles">` por
+      `<a href="...">` (navbar desktop/móvil y cards de servicios).
+- [x] Revisadas otras referencias (navbar, footer, netlify, `.htaccess`). El
+      `.htaccess` de `public_html` lleva la regla `^(vuelos|hoteles)`.
+- [x] `pages/Vuelos.jsx` y `pages/Hoteles.jsx` **desconectados** del router (no
+      borrados; siguen en el repo para archivarse más adelante).
+- [x] `services/flightBridge.js` y `data/airports.json` **se conservan** (motor
+      de vuelos propio, ruta `/buscar/:searchToken` sigue en React).
+- [x] Verificado el resto del SPA (build OK; home, excursiones, playas, ofertas,
+      legales y buscador propio del hero funcionando).
+- [x] Symlinks creados y sirviendo el motor del proveedor (ver sección de arriba).
 
-Antes de aplicar, mostrar un resumen de los archivos que se van a tocar.
+**Pendiente (del lado de Conecta Turismo, no del repo):** su cabecera/pie
+replicados son de una versión antigua del sitio (teléfono/email/copyright
+desactualizados). Deben aplicar el **kit de diseño** (`docs/kit-diseno-conecta-turismo.html`)
+para que coincidan con el sitio actual.
 
 ### AVISO — `flightBridge.js` y `vuelos.vicenteviajes.com`
 
@@ -227,10 +237,10 @@ automáticas. **No lo es**, es esta SPA con despliegue manual.
 | Elemento | Estado |
 |---|---|
 | **Docroot de `vicenteviajes.com`** | `/home3/elencue2/public_html/` — aquí va el build de Vite (`index.html`, `assets/`, `.htaccess`) |
-| `vicenteviajes.com/vuelos` | Para servirse debe estar **dentro** del docroot: `public_html/vuelos` (motor de Conecta Turismo) |
-| `vicenteviajes.com/hoteles` | Para servirse debe estar **dentro** del docroot: `public_html/hoteles` (motor de Conecta Turismo) |
-| FTP `vuelos@vicenteviajes.com` | Enjaulada; debe resolver a `public_html/vuelos` (directo o vía symlink desde `motores/`) |
-| FTP `hoteles@vicenteviajes.com` | Enjaulada; debe resolver a `public_html/hoteles` (directo o vía symlink desde `motores/`) |
+| `vicenteviajes.com/vuelos` | ✅ **Activo.** `public_html/vuelos` es un **symlink** → `motores/aereo.vicenteviajes.com` (motor de vuelos de Conecta Turismo) |
+| `vicenteviajes.com/hoteles` | ✅ **Activo.** `public_html/hoteles` es un **symlink** → `motores/hoteles.vicenteviajes.com` (motor de hoteles de Conecta Turismo) |
+| FTP `vuelos@vicenteviajes.com` | Enjaulada en `motores/aereo.vicenteviajes.com` (el symlink la expone en `public_html/vuelos`) |
+| FTP `hoteles@vicenteviajes.com` | Enjaulada en `motores/hoteles.vicenteviajes.com` (el symlink la expone en `public_html/hoteles`) |
 | `/home3/elencue2/motores/` | **Fuera del docroot.** Contiene `aereo.vicenteviajes.com` y `hoteles.vicenteviajes.com` (docroots de subdominios del planteamiento iframe, descartado). Un directorio aquí **no** se sirve en `vicenteviajes.com/vuelos`; para exponerlo hay que moverlo a `public_html/` o enlazarlo con symlink. Ventaja: aislado de los cambios en `public_html`. |
 | Subdominios `aereo.` y `hoteles.` | Legado del iframe; vacíos o a eliminar |
 | `vuelos.vicenteviajes.com` | **EN USO** por `flightBridge.js` — no tocar |

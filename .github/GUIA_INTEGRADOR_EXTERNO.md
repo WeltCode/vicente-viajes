@@ -19,22 +19,24 @@
 
 ## Cómo funciona ahora
 
-`/vuelos` y `/hoteles` **ya no pertenecen a la aplicación React**. Son
-**directorios físicos reales** en el servidor Apache de Hostgator, servidos
-directamente por el servidor. React nunca se ejecuta en esas URLs.
+`/vuelos` y `/hoteles` **ya no pertenecen a la aplicación React**. Los sirve
+directamente el servidor Apache de Hostgator desde tus archivos. React nunca se
+ejecuta en esas URLs. **Estado: activo en producción** (jul 2026).
+
+Tú subes tu motor por FTP a tu carpeta en `/home3/elencue2/motores/` (igual que
+siempre). El equipo de Vicente Viajes la expone dentro del docroot con un
+**enlace simbólico (symlink)**:
 
 ```
-vicenteviajes.com/               ← SPA React (build de Vite: index.html + assets/)
-├── vuelos/                       ← motor de VUELOS de Conecta Turismo (archivos propios)
-└── hoteles/                      ← motor de HOTELES de Conecta Turismo (archivos propios)
+Docroot del sitio:  /home3/elencue2/public_html/   ← build de React (index.html + assets/)
+
+public_html/vuelos   → symlink → /home3/elencue2/motores/aereo.vicenteviajes.com    (tu motor de vuelos)
+public_html/hoteles  → symlink → /home3/elencue2/motores/hoteles.vicenteviajes.com  (tu motor de hoteles)
 ```
 
-Rutas físicas en el hosting:
-
-```
-/home3/elencue2/vicenteviajes.com/vuelos     → motor de vuelos
-/home3/elencue2/vicenteviajes.com/hoteles    → motor de hoteles
-```
+**Para ti no cambia nada:** sigues subiendo a tu carpeta en `motores/` por FTP.
+El symlink hace que se vea en `vicenteviajes.com/vuelos/` y `/hoteles/`. Ventaja:
+si el sitio principal se re-despliega, no se toca tu desarrollo.
 
 El `.htaccess` del docroot excluye esas dos rutas del *fallback* del SPA, de
 modo que Apache las sirve tal cual y no las reescribe a `index.html`:
@@ -49,6 +51,13 @@ diseño React), **eres tú quien replica la cabecera y el pie** del sitio para
 mantener la coherencia visual. Para eso se te entrega el **kit de diseño**
 (ver más abajo).
 
+> ⚠️ **Importante:** como ahora sirves desde un **subdirectorio** (`/vuelos/`,
+> `/hoteles/`) y no desde la raíz de un subdominio, usa **rutas relativas** para
+> tus CSS/JS/imágenes (o `<base href="/vuelos/">` / `"/hoteles/"`). Las rutas
+> absolutas desde raíz (`/css/...`) apuntarían a los archivos de React y se
+> romperían. Mantén también tu propio `.htaccess` **dentro** de tu carpeta para
+> las rutas internas de tu buscador.
+
 ---
 
 ## Qué tienes que hacer
@@ -57,14 +66,16 @@ mantener la coherencia visual. Para eso se te entrega el **kit de diseño**
    cuenta FTP *enjaulada* (chroot) apuntando directamente a tu carpeta, así
    que no ves ni tocas el resto del sitio:
 
-   | Servicio | Directorio | Cuenta FTP |
+   | Servicio | Tu carpeta FTP (en `motores/`) | Se ve en la web |
    |---|---|---|
-   | Vuelos  | `/vuelos`  | `vuelos@vicenteviajes.com`  |
-   | Hoteles | `/hoteles` | `hoteles@vicenteviajes.com` |
+   | Vuelos  | `aereo.vicenteviajes.com`   | `vicenteviajes.com/vuelos/`  |
+   | Hoteles | `hoteles.vicenteviajes.com` | `vicenteviajes.com/hoteles/` |
 
 2. **Replicar la cabecera (Navbar) y el pie (Footer)** del sitio en tus
    páginas, usando el kit de diseño entregado. El objetivo es que un visitante
-   no note la diferencia entre la web principal y tu buscador.
+   no note la diferencia entre la web principal y tu buscador. **Usa siempre la
+   última versión del kit** (la cabecera/pie cambian con el tiempo: teléfono,
+   email, menú, etc.).
 
 3. **Enlazar de vuelta al sitio principal** con URLs absolutas normales
    (`https://vicenteviajes.com/`, `/excursiones`, `/contacto`, etc.). Los
