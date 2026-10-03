@@ -17,11 +17,54 @@ from .models import mensaje_contacto
     CONTACT_RECIPIENT_EMAIL="info@vicenteviajes.com",
     CONTACT_EMAIL_PROVIDER="django",
     CONTACT_EMAIL_ASYNC=True,
+    # Turnstile desactivado por defecto en los tests (fail-open); los tests que lo
+    # prueban activan su propia secret con @override_settings.
+    TURNSTILE_SECRET_KEY="",
 )
 class ContactoEmailTests(TestCase):
     def setUp(self):
         # Evita que el rate limiting (throttle) arrastre estado entre tests.
         cache.clear()
+
+    @override_settings(TURNSTILE_SECRET_KEY="0xsecret")
+    @patch("contacto.views.Thread")
+    def test_turnstile_bloquea_envio_sin_token(self, mock_thread):
+        """Con Turnstile activo, un envío sin token se rechaza (400), sin guardar ni email."""
+        payload = {
+            "nombre": "Juan Pérez",
+            "email": "juan@example.com",
+            "telefono": "600123123",
+            "asunto": "reserva",
+            "mensaje": "Quiero información sobre un viaje.",
+            # sin cf_turnstile_response
+        }
+
+        response = self.client.post("/api/contacto/enviar/", data=payload, content_type="application/json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(mensaje_contacto.objects.count(), 0)
+        mock_thread.assert_not_called()
+
+    @override_settings(TURNSTILE_SECRET_KEY="0xsecret")
+    @patch("contacto.views.urlopen")
+    @patch("contacto.views.Thread")
+    def test_turnstile_acepta_token_valido(self, mock_thread, mock_urlopen):
+        """Con Turnstile activo y token válido (Cloudflare responde success), el envío pasa."""
+        mock_urlopen.return_value.__enter__.return_value.read.return_value = b'{"success": true}'
+        payload = {
+            "nombre": "Juan Pérez",
+            "email": "juan@example.com",
+            "telefono": "",
+            "asunto": "reserva",
+            "mensaje": "Quiero información sobre un viaje.",
+            "cf_turnstile_response": "token-valido-123",
+        }
+
+        response = self.client.post("/api/contacto/enviar/", data=payload, content_type="application/json")
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(mensaje_contacto.objects.count(), 1)
+        mock_thread.assert_called_once()
 
     @patch("contacto.views.Thread")
     def test_honeypot_descarta_spam_en_silencio(self, mock_thread):

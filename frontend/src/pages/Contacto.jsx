@@ -1,7 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { MapPin, Phone, Mail, Clock, Send, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+
+// Cloudflare Turnstile (CAPTCHA invisible). Si no hay site key configurada, el
+// widget no se muestra y el envío funciona igual (la validación real la decide
+// el backend). La secret key vive solo en el backend, nunca aquí.
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "";
+const TURNSTILE_SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import PageHeader from "../components/sections/PageHeader";
@@ -62,27 +68,81 @@ export default function Contacto() {
     website: "", // Honeypot anti-spam: debe quedar vacío (los humanos no lo ven).
   });
   const [cargando, setCargando] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const turnstileRef = useRef(null);
+  const widgetIdRef = useRef(null);
+
+  // Carga el script de Turnstile y renderiza el widget (render explícito).
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY) return; // sin clave -> no se monta el widget
+
+    const renderWidget = () => {
+      if (!window.turnstile || !turnstileRef.current || widgetIdRef.current != null) return;
+      widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        callback: (token) => setTurnstileToken(token),
+        "expired-callback": () => setTurnstileToken(""),
+        "error-callback": () => setTurnstileToken(""),
+      });
+    };
+
+    if (window.turnstile) {
+      renderWidget();
+    } else {
+      let script = document.querySelector(`script[src="${TURNSTILE_SCRIPT_SRC}"]`);
+      if (!script) {
+        script = document.createElement("script");
+        script.src = TURNSTILE_SCRIPT_SRC;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+      script.addEventListener("load", renderWidget);
+    }
+
+    return () => {
+      if (widgetIdRef.current != null && window.turnstile) {
+        window.turnstile.remove(widgetIdRef.current);
+        widgetIdRef.current = null;
+      }
+    };
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const resetTurnstile = () => {
+    setTurnstileToken("");
+    if (widgetIdRef.current != null && window.turnstile) {
+      window.turnstile.reset(widgetIdRef.current);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Si Turnstile está activo, exige la verificación antes de enviar.
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      toast.error("Completa la verificación anti-spam antes de enviar.");
+      return;
+    }
+
     setCargando(true);
-    
+
     try {
       const response = await fetch(apiUrl("contacto/enviar/"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, cf_turnstile_response: turnstileToken }),
       });
 
       if (response.ok) {
         toast.success("¡Mensaje enviado correctamente! Nos pondremos en contacto contigo pronto.");
         setFormData({ nombre: "", email: "", telefono: "", asunto: "", mensaje: "", website: "" });
+        resetTurnstile();
       } else {
         let errorMessage = "Error al enviar el mensaje. Intenta nuevamente.";
         const contentType = response.headers.get("content-type") || "";
@@ -91,10 +151,12 @@ export default function Contacto() {
           errorMessage = errorData.error || errorMessage;
         }
         toast.error(errorMessage);
+        resetTurnstile();
       }
     } catch (error) {
       toast.error("Error de conexión. Intenta nuevamente.");
       console.error("Error:", error);
+      resetTurnstile();
     } finally {
       setCargando(false);
     }
@@ -268,6 +330,10 @@ export default function Contacto() {
                         placeholder="Cuéntanos cómo podemos ayudarte..."
                       />
                     </div>
+                    {/* Widget Cloudflare Turnstile (se monta solo si hay site key) */}
+                    {TURNSTILE_SITE_KEY && (
+                      <div ref={turnstileRef} className="flex justify-center md:justify-start" />
+                    )}
                     <motion.button
                       type="submit"
                       whileHover={{ scale: 1.02 }}

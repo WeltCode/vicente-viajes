@@ -32,6 +32,37 @@ HONEYPOT_FIELD = 'website'
 BRAND_NAME = 'Vicente Viajes'
 BRAND_DOMAIN = 'VicenteViajes.com'
 RESEND_API_URL = 'https://api.resend.com/emails'
+TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
+
+
+def _verify_turnstile(token):
+    """Verifica el token de Cloudflare Turnstile contra su API.
+
+    - Si no hay secret configurada -> no bloquea (fail-open), para no romper el
+      formulario mientras no estén las claves.
+    - Si hay secret pero falta el token -> bloquea.
+    - Si Cloudflare no responde -> no bloquea (fail-open), para no perder mensajes
+      legítimos durante una caída del servicio.
+    """
+    secret = str(getattr(settings, 'TURNSTILE_SECRET_KEY', '') or '').strip()
+    if not secret:
+        return True
+    if not str(token or '').strip():
+        return False
+    body = json.dumps({'secret': secret, 'response': token}).encode('utf-8')
+    request = Request(
+        TURNSTILE_VERIFY_URL,
+        data=body,
+        headers={'Content-Type': 'application/json'},
+        method='POST',
+    )
+    try:
+        with urlopen(request, timeout=10) as response:
+            result = json.loads(response.read().decode('utf-8'))
+            return bool(result.get('success'))
+    except (HTTPError, URLError, OSError, ValueError, TimeoutError) as e:
+        logger.warning("No se pudo verificar Turnstile (se deja pasar): %s", e)
+        return True
 
 
 def _get_logo_src():
@@ -115,6 +146,15 @@ def enviar_mensaje_contacto(request):
         return Response(
             {'message': 'Mensaje recibido correctamente', 'email_queued': True},
             status=status.HTTP_201_CREATED,
+        )
+
+    # Cloudflare Turnstile (CAPTCHA invisible). Si la secret no está configurada,
+    # _verify_turnstile devuelve True y no bloquea.
+    if not _verify_turnstile(request.data.get('cf_turnstile_response')):
+        logger.info("Contacto rechazado: verificación Turnstile fallida.")
+        return Response(
+            {'error': 'No se pudo verificar que eres una persona. Recarga la página e inténtalo de nuevo.'},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     serializer = MensajeContactoSerializer(data=request.data)

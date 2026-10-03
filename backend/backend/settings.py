@@ -319,6 +319,11 @@ CONTACT_EMAIL_ASYNC = _env_to_bool(os.getenv('CONTACT_EMAIL_ASYNC'), default=Tru
 RESEND_API_KEY = os.getenv('RESEND_API_KEY', '').strip()
 RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', DEFAULT_FROM_EMAIL).strip()
 
+# Cloudflare Turnstile (anti-spam del formulario de contacto). La secret key es
+# privada (solo backend); la site key es pública y va en el frontend
+# (VITE_TURNSTILE_SITE_KEY). Si está vacía, la verificación no bloquea (fail-open).
+TURNSTILE_SECRET_KEY = os.getenv('TURNSTILE_SECRET_KEY', '').strip()
+
 # Anthropic / Claude
 ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY', '').strip()
 
