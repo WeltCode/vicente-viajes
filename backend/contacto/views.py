@@ -59,6 +59,11 @@ def _verify_turnstile(token):
     try:
         with urlopen(request, timeout=10) as response:
             result = json.loads(response.read().decode('utf-8'))
+            if not result.get('success'):
+                # error-codes típicos: invalid-input-response (token inválido o de
+                # otro site key), timeout-or-duplicate (token reusado/expirado),
+                # invalid-input-secret (secret no coincide con el site key).
+                logger.warning("Turnstile rechazó el token. error-codes=%s", result.get('error-codes'))
             return bool(result.get('success'))
     except (HTTPError, URLError, OSError, ValueError, TimeoutError) as e:
         logger.warning("No se pudo verificar Turnstile (se deja pasar): %s", e)
