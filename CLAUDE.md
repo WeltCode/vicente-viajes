@@ -74,7 +74,14 @@ frontend/src/
 - **estados**: timeline/carteles; se desactivan al pasar `excursion_date`
   (middleware `estados.middleware.EstadoExpirySyncMiddleware`).
 - **contacto**: email del formulario; proveedor `django` (SMTP) o `resend`
-  según `CONTACT_EMAIL_PROVIDER`.
+  según `CONTACT_EMAIL_PROVIDER`. **Anti-spam** en `POST /contacto/enviar/`
+  (3 capas): (1) **honeypot** — campo oculto `website`; si llega con contenido
+  se descarta en silencio (responde 201 falso, sin guardar ni enviar email);
+  (2) **rate limit por IP** — DRF `AnonRateThrottle` scope `contacto` = `5/hour`;
+  (3) **Cloudflare Turnstile** — el frontend manda `cf_turnstile_response` y el
+  backend lo verifica contra Cloudflare (`_verify_turnstile` en `views.py`).
+  Turnstile es **fail-open**: si no hay `TURNSTILE_SECRET_KEY` o Cloudflare no
+  responde, no bloquea (el honeypot queda como respaldo).
 
 ## API (base dev `http://127.0.0.1:8000/api/`)
 - Público GET: `/excursiones/ /playas/ /ofertas/ /estados/`; POST `/contacto/`.
@@ -330,8 +337,13 @@ Notas:
 `DJANGO_CORS_ALLOWED_ORIGINS`, `DJANGO_CSRF_TRUSTED_ORIGINS`,
 `DATABASE_URL` (+`DATABASE_CONN_MAX_AGE`), email/`RESEND_*`,
 `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_IMAGES_ACCOUNT_HASH`,
-`ANTHROPIC_API_KEY`, `ADMIN_TOKEN_MAX_AGE_SECONDS` (28800 = 8 h).
-Frontend (`frontend/.env.local`): `VITE_API_URL`, `VITE_FLIGHTS_API_KEY`.
+`ANTHROPIC_API_KEY`, `ADMIN_TOKEN_MAX_AGE_SECONDS` (28800 = 8 h),
+`TURNSTILE_SECRET_KEY` (anti-spam contacto; privada, **solo backend**).
+Frontend (`frontend/.env.local` / `.env.production`): `VITE_API_URL`,
+`VITE_FLIGHTS_API_KEY`, `VITE_TURNSTILE_SITE_KEY` (site key **pública** de Turnstile).
+> En producción, `TURNSTILE_SECRET_KEY` se setea en el dashboard de **Render**
+> (los `.env` están gitignored y no llegan al servidor); la site key se hornea en
+> el build de Vite que se sube a Hostgator.
 
 ## Despliegue
 - Backend → Render: build `pip install -r requirements.txt && python manage.py migrate`; start `gunicorn backend.wsgi:application`; PostgreSQL de Render en `DATABASE_URL`.

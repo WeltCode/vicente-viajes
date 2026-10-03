@@ -149,9 +149,14 @@ Paquetes con descuento. El porcentaje de descuento se calcula automáticamente e
 Publicaciones de estado/timeline de una excursión (cartel con fecha). Se desactivan automáticamente cuando `excursion_date` supera la fecha actual.
 
 ### contacto
-Recibe mensajes del formulario público y los envía por email. Soporta dos proveedores configurables por variable de entorno:
+Recibe mensajes del formulario público (`POST /api/contacto/enviar/`), los persiste en BD y los envía por email. Soporta dos proveedores configurables por variable de entorno:
 - `CONTACT_EMAIL_PROVIDER=django` → SMTP estándar
 - `CONTACT_EMAIL_PROVIDER=resend` → API de [Resend](https://resend.com)
+
+**Protección anti-spam (3 capas)** en ese endpoint público:
+1. **Honeypot** — el formulario incluye un campo oculto `website` que los humanos no ven ni llenan. Si llega con contenido, es un bot: el backend lo descarta en silencio (responde `201` falso, sin guardar ni enviar email).
+2. **Rate limit por IP** — DRF `AnonRateThrottle` con scope `contacto` (`5/hour`, configurable en `REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']`). Nota: sin una caché compartida configurada, el conteo es por proceso.
+3. **Cloudflare Turnstile** (CAPTCHA invisible) — el frontend genera un token (`cf_turnstile_response`) y el backend lo verifica contra Cloudflare (`_verify_turnstile` en `contacto/views.py`). Es **fail-open**: si no hay `TURNSTILE_SECRET_KEY` configurada o Cloudflare no responde, no bloquea (el honeypot queda como respaldo). Claves: `TURNSTILE_SECRET_KEY` (backend) y `VITE_TURNSTILE_SITE_KEY` (frontend, pública).
 
 ### backend (config)
 - `authentication.py`: `AdminTokenAuthentication` extiende DRF `TokenAuthentication` añadiendo expiración configurable (por defecto 8 horas via `ADMIN_TOKEN_MAX_AGE_SECONDS`).
@@ -173,7 +178,7 @@ Base URL en desarrollo: `http://127.0.0.1:8000/api/`
 | GET | `/api/playas/<id>/` | Detalle de playa |
 | GET | `/api/ofertas/` | Listar ofertas activas |
 | GET | `/api/estados/` | Listar estados activos |
-| POST | `/api/contacto/` | Enviar mensaje de contacto |
+| POST | `/api/contacto/enviar/` | Enviar mensaje de contacto (con anti-spam: honeypot + rate limit + Turnstile) |
 
 ### Endpoints de autenticación
 
@@ -372,14 +377,19 @@ CLOUDFLARE_IMAGES_ACCOUNT_HASH=tu_account_hash
 # Anthropic / Claude IA
 ANTHROPIC_API_KEY=sk-ant-api03-...
 
+# Cloudflare Turnstile (anti-spam contacto) — secret privada, SOLO backend
+TURNSTILE_SECRET_KEY=0x...   # vacío = no bloquea (fail-open)
+
 # Sesión admin (segundos, por defecto 28800 = 8 horas)
 ADMIN_TOKEN_MAX_AGE_SECONDS=28800
 ```
+> En producción (**Render**), `TURNSTILE_SECRET_KEY` se configura en el dashboard de Render, no en el `.env` (que está gitignored y no llega al servidor).
 
-Variables del frontend en `frontend/.env.local`:
+Variables del frontend en `frontend/.env.local` / `.env.production`:
 ```env
 VITE_API_URL=https://tu-backend.onrender.com/api
-VITE_FLIGHTS_API_KEY=...   # Opcional, para motor de vuelos externo
+VITE_FLIGHTS_API_KEY=...        # Opcional, para motor de vuelos externo
+VITE_TURNSTILE_SITE_KEY=0x...   # Site key pública de Cloudflare Turnstile (anti-spam contacto)
 ```
 
 Importante para producción: `VITE_API_URL` debe incluir `/api` al final para evitar 404 en rutas como `/estados/`, `/ofertas/`, `/me/`.
