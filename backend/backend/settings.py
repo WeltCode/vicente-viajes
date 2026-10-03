@@ -289,6 +289,12 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
+    # Límite anti-abuso por IP para endpoints públicos con scope propio
+    # (p. ej. el formulario de contacto). No afecta a los demás endpoints,
+    # porque se aplica solo en las vistas que declaran el throttle.
+    'DEFAULT_THROTTLE_RATES': {
+        'contacto': '5/hour',
+    },
 }
 
 ADMIN_TOKEN_MAX_AGE_SECONDS = int(os.getenv('ADMIN_TOKEN_MAX_AGE_SECONDS', '600'))

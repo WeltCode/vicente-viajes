@@ -59,6 +59,7 @@ export default function Contacto() {
     telefono: "",
     asunto: "",
     mensaje: "",
+    website: "", // Honeypot anti-spam: debe quedar vacío (los humanos no lo ven).
   });
   const [cargando, setCargando] = useState(false);
 
@@ -81,7 +82,7 @@ export default function Contacto() {
 
       if (response.ok) {
         toast.success("¡Mensaje enviado correctamente! Nos pondremos en contacto contigo pronto.");
-        setFormData({ nombre: "", email: "", telefono: "", asunto: "", mensaje: "" });
+        setFormData({ nombre: "", email: "", telefono: "", asunto: "", mensaje: "", website: "" });
       } else {
         let errorMessage = "Error al enviar el mensaje. Intenta nuevamente.";
         const contentType = response.headers.get("content-type") || "";
@@ -175,6 +176,20 @@ export default function Contacto() {
                 <div className="bg-card rounded-2xl shadow-card p-8">
                   <h2 className="text-2xl font-bold text-foreground mb-6">Envíanos un mensaje</h2>
                   <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Honeypot anti-spam: oculto para humanos; si un bot lo llena,
+                        el backend descarta el envío en silencio. No quitar. */}
+                    <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", overflow: "hidden" }}>
+                      <label htmlFor="website">No rellenar este campo</label>
+                      <input
+                        type="text"
+                        id="website"
+                        name="website"
+                        tabIndex={-1}
+                        autoComplete="off"
+                        value={formData.website}
+                        onChange={handleChange}
+                      />
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">

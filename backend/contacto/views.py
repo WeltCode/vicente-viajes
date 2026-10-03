@@ -9,13 +9,25 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
 
 from .serializers import MensajeContactoSerializer
 
 logger = logging.getLogger(__name__)
+
+
+class ContactoAnonThrottle(AnonRateThrottle):
+    # Limita los envíos por IP del formulario público. El rate se toma de
+    # REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['contacto'] en settings.py.
+    scope = 'contacto'
+
+
+# Nombre del campo señuelo (honeypot). Debe coincidir con el input oculto del
+# frontend (Contacto.jsx). Los humanos no lo ven ni lo llenan; los bots sí.
+HONEYPOT_FIELD = 'website'
 
 BRAND_NAME = 'Vicente Viajes'
 BRAND_DOMAIN = 'VicenteViajes.com'
@@ -92,10 +104,21 @@ def _send_contact_email(asunto, mensaje_email, mensaje_email_html, payload):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([ContactoAnonThrottle])
 def enviar_mensaje_contacto(request):
     """Recibe contacto publico, persiste en DB y notifica por email."""
+    # Honeypot anti-spam: campo señuelo invisible para humanos. Si llega con
+    # contenido, es un bot: respondemos "ok" falso (para que no reintente ni se
+    # adapte) y descartamos sin guardar en DB ni enviar email.
+    if str(request.data.get(HONEYPOT_FIELD, '')).strip():
+        logger.info("Contacto descartado por honeypot (posible bot).")
+        return Response(
+            {'message': 'Mensaje recibido correctamente', 'email_queued': True},
+            status=status.HTTP_201_CREATED,
+        )
+
     serializer = MensajeContactoSerializer(data=request.data)
-    
+
     if serializer.is_valid():
         # Primero se persiste el mensaje para no perder trazabilidad.
         serializer.save()

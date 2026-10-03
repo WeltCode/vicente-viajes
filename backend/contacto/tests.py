@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from django.conf import settings
 from django.core import mail
+from django.core.cache import cache
 from django.test import TestCase, override_settings
 
 from .models import mensaje_contacto
@@ -18,6 +19,28 @@ from .models import mensaje_contacto
     CONTACT_EMAIL_ASYNC=True,
 )
 class ContactoEmailTests(TestCase):
+    def setUp(self):
+        # Evita que el rate limiting (throttle) arrastre estado entre tests.
+        cache.clear()
+
+    @patch("contacto.views.Thread")
+    def test_honeypot_descarta_spam_en_silencio(self, mock_thread):
+        """Un envío con el honeypot lleno se descarta: 'ok' falso, sin guardar ni enviar email."""
+        payload = {
+            "nombre": "AqqVtkEAeyLsbtoqB",
+            "email": "bot@example.com",
+            "telefono": "5772934615",
+            "asunto": "reserva",
+            "mensaje": "GcmXnlUUzTOYPTCu",
+            "website": "http://spam.example.com",  # honeypot lleno = bot
+        }
+
+        response = self.client.post("/api/contacto/enviar/", data=payload, content_type="application/json")
+
+        self.assertEqual(response.status_code, 201)            # respuesta "ok" falsa
+        self.assertEqual(mensaje_contacto.objects.count(), 0)  # NO se guarda
+        mock_thread.assert_not_called()                        # NO se envía email
+
     @patch("contacto.views.Thread")
     def test_contact_message_is_saved_and_email_queued(self, mock_thread):
         payload = {
